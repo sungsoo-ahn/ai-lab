@@ -439,13 +439,13 @@ def page(title: str, body: str, current: str = "") -> str:
     nav = f"""
     <header class="site-header">
       <a class="brand" href="{current}index.html">
-        <span class="brand-mark">A</span>
-        <span><strong>Agent System</strong><small>Research dashboard</small></span>
+        <span class="brand-mark">R</span>
+        <span><strong>Agent Research Log</strong><small>Evidence-first status</small></span>
       </a>
       <nav>
-        <a href="{current}index.html">System</a>
+        <a href="{current}index.html">Current</a>
         <a href="{current}index.html#projects">Projects</a>
-        <a href="{current}index.html#activity">Activity</a>
+        <a href="{current}index.html#activity">Log</a>
       </nav>
     </header>
     """
@@ -517,13 +517,13 @@ def build_home(projects: list[dict[str, Any]]) -> str:
     <section class="hero">
       <div>
         <p class="eyebrow">Research operations</p>
-        <h1>A readable trail of current agent work.</h1>
-        <p class="lede">A public status page for active research: what changed, what matters, and where the evidence lives.</p>
+        <h1>Current research, with receipts.</h1>
+        <p class="lede">A compact public log of what changed, what matters, and where the supporting reports live.</p>
       </div>
       <div class="hero-panel">
         <span class="label">Latest state</span>
-        <strong>{completed_hypotheses}/{total_hypotheses or 0} work units complete</strong>
-        <p>Generated from the repo's Markdown and YAML reports, with source material kept one click away.</p>
+        <strong>{completed_hypotheses} of {total_hypotheses or 0} work units closed</strong>
+        <p>The summary is curated; the source reports remain available without taking over the page.</p>
       </div>
     </section>
     <section class="metric-strip">
@@ -710,7 +710,7 @@ def main() -> None:
 
 CSS = r"""
 :root {
-  --bg: #f4f5f4;
+  --bg: #f7f8f6;
   --surface: #ffffff;
   --surface-soft: #ebf8f0;
   --ink: #181d18;
@@ -722,7 +722,8 @@ CSS = r"""
   --orange: #9e5f24;
   --red: #bc4629;
   --blue: #155dfc;
-  --shadow: 0 18px 48px rgba(24, 29, 24, 0.08);
+  --shadow: 0 16px 40px rgba(24, 29, 24, 0.055);
+  --shadow-soft: 0 8px 22px rgba(24, 29, 24, 0.045);
 }
 
 * { box-sizing: border-box; }
@@ -738,34 +739,51 @@ a:hover { text-decoration: underline; }
 main { width: min(1180px, calc(100% - 40px)); margin: 0 auto 72px; }
 .site-header {
   width: min(1180px, calc(100% - 40px));
-  margin: 18px auto 0;
+  margin: 20px auto 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 20px;
-  padding: 12px 0 28px;
+  padding: 10px 0 24px;
 }
 .brand { display: flex; align-items: center; gap: 12px; color: var(--ink); }
 .brand:hover { text-decoration: none; }
 .brand-mark {
   display: grid;
   place-items: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  background: var(--ink);
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: var(--green-strong);
   color: #fff;
   font-weight: 750;
 }
 .brand small { display: block; color: var(--muted); font-size: 12px; margin-top: 1px; }
-nav { display: flex; gap: 18px; font-size: 14px; }
+nav {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgba(255,255,255,0.7);
+  font-size: 14px;
+}
+nav a {
+  color: #334337;
+  border-radius: 999px;
+  padding: 7px 12px;
+}
+nav a:hover {
+  background: var(--surface-soft);
+  text-decoration: none;
+}
 .hero {
-  min-height: 410px;
+  min-height: 360px;
   display: grid;
   grid-template-columns: minmax(0, 1.4fr) minmax(280px, 0.6fr);
-  gap: 28px;
+  gap: 34px;
   align-items: end;
-  padding: 74px 0 44px;
+  padding: 58px 0 42px;
 }
 .eyebrow {
   margin: 0 0 12px;
@@ -776,7 +794,7 @@ nav { display: flex; gap: 18px; font-size: 14px; }
   text-transform: uppercase;
 }
 h1, h2, h3 { line-height: 1.05; letter-spacing: 0; }
-h1 { margin: 0; font-size: clamp(46px, 8vw, 92px); max-width: 930px; }
+h1 { margin: 0; font-size: clamp(44px, 7vw, 82px); max-width: 900px; }
 h2 { margin: 0; font-size: 34px; }
 h3 { margin: 0 0 12px; font-size: 20px; }
 .lede {
@@ -785,14 +803,15 @@ h3 { margin: 0 0 12px; font-size: 20px; }
   font-size: 20px;
   margin: 22px 0 0;
 }
-.hero-panel, .card, .article, .metric-strip, .table-wrap {
+.hero-panel, .card, .article, .table-wrap {
   border: 1px solid var(--line);
   background: rgba(255,255,255,0.76);
-  box-shadow: var(--shadow);
+  box-shadow: var(--shadow-soft);
 }
 .hero-panel {
-  padding: 24px;
+  padding: 22px;
   border-radius: 8px;
+  background: #ffffff;
 }
 .hero-panel .label {
   display: block;
@@ -808,6 +827,8 @@ h3 { margin: 0 0 12px; font-size: 20px; }
   border-radius: 8px;
   overflow: hidden;
   margin-bottom: 58px;
+  border: 1px solid var(--line);
+  background: #ffffff;
 }
 .metric-strip div { padding: 20px; border-right: 1px solid var(--line); }
 .metric-strip div:last-child { border-right: 0; }
@@ -819,6 +840,7 @@ h3 { margin: 0 0 12px; font-size: 20px; }
 .card {
   border-radius: 8px;
   padding: 22px;
+  box-shadow: none;
 }
 .card p { color: #34483a; margin: 0 0 18px; }
 .takeaway-grid {
@@ -835,9 +857,10 @@ h3 { margin: 0 0 12px; font-size: 20px; }
   gap: 20px;
   border: 1px solid #cfe2d5;
   border-radius: 8px;
-  background: linear-gradient(180deg, #ffffff 0%, #ebf8f0 100%);
+  background: #ffffff;
   padding: 24px;
   box-shadow: var(--shadow);
+  border-top: 4px solid var(--green);
 }
 .takeaway span {
   color: var(--green);
@@ -867,8 +890,9 @@ h3 { margin: 0 0 12px; font-size: 20px; }
 .summary-card {
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: rgba(255,255,255,0.82);
+  background: #ffffff;
   padding: 20px;
+  box-shadow: none;
 }
 .summary-card-head {
   display: flex;
