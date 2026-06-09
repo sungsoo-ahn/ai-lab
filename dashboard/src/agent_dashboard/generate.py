@@ -733,6 +733,42 @@ def build_project(project: dict[str, Any]) -> str:
             f"<td>{inline_md(excerpt(str(asset.get('description') or asset.get('role') or ''), 160))}</td>"
             "</tr>"
         )
+    work_units_section = (
+        f"""
+        <section class="section">
+          <div class="section-head"><p class="eyebrow">Work units</p><h2>Current work</h2></div>
+          <div class="summary-grid">{''.join(hypothesis_cards)}</div>
+        </section>
+        """
+        if hypothesis_cards
+        else """
+        <section class="section">
+          <article class="empty-state">
+            <span>Work units</span>
+            <h2>No tracked work units yet</h2>
+            <p>This project is still at the project-report stage. When focused experiments or implementation passes are opened, they will appear here as separate work units.</p>
+          </article>
+        </section>
+        """
+    )
+    assets_section = (
+        f"""
+        <section class="section">
+          <div class="section-head"><p class="eyebrow">Materials</p><h2>Assets</h2></div>
+          <div class="table-wrap"><table><thead><tr><th>Asset</th><th>Type</th><th>Description</th></tr></thead><tbody>{''.join(asset_rows)}</tbody></table></div>
+        </section>
+        """
+        if asset_rows
+        else """
+        <section class="section">
+          <article class="empty-state">
+            <span>Materials</span>
+            <h2>No registered assets yet</h2>
+            <p>Datasets, repositories, result bundles, and other reusable materials will be listed here once the project registers them in its asset file.</p>
+          </article>
+        </section>
+        """
+    )
     body = f"""
     <section class="page-title">
       <p class="eyebrow">Project</p>
@@ -747,14 +783,8 @@ def build_project(project: dict[str, Any]) -> str:
       <div><span>Evidence</span><strong>Reports</strong></div>
       <div><span>State</span><strong>{html.escape(report.status)}</strong></div>
     </section>
-    <section class="section">
-      <div class="section-head"><p class="eyebrow">Work units</p><h2>Current work</h2></div>
-      <div class="summary-grid">{''.join(hypothesis_cards) or '<p>No work units found.</p>'}</div>
-    </section>
-    <section class="section">
-      <div class="section-head"><p class="eyebrow">Materials</p><h2>Assets</h2></div>
-      <div class="table-wrap"><table><thead><tr><th>Asset</th><th>Type</th><th>Description</th></tr></thead><tbody>{''.join(asset_rows)}</tbody></table></div>
-    </section>
+    {work_units_section}
+    {assets_section}
     {source_report(report.markdown, "Read full project report")}
     """
     return page(str(project["metadata"].get("title") or display_name(project["id"])), body, current="../../")
@@ -1165,6 +1195,29 @@ h3 { margin: 0 0 12px; font-size: 20px; }
   color: #26382c;
   font-size: 20px;
   line-height: 1.35;
+}
+.empty-state {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 26px;
+}
+.empty-state span {
+  display: block;
+  color: var(--green);
+  font-size: 12px;
+  font-weight: 720;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+.empty-state h2 {
+  margin-bottom: 12px;
+}
+.empty-state p {
+  max-width: 720px;
+  margin: 0;
+  color: #3e5144;
+  font-size: 18px;
 }
 .summary-grid {
   display: grid;
