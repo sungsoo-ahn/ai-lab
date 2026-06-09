@@ -281,7 +281,7 @@ def load_report(path: Path, kind: str, metadata: dict[str, Any], project_id: str
     sections = parse_sections(markdown)
     title = markdown.splitlines()[0].lstrip("# ").strip() if markdown.splitlines() else path.stem
     inferred_status = "proposal" if path.name == "proposal.md" else "unknown"
-    status = str(metadata.get("status") or extract_field(markdown, "Status") or inferred_status)
+    status = str(extract_field(markdown, "Status") or metadata.get("status") or inferred_status)
     date = str(extract_field(markdown, "Date") or metadata.get("updated_at") or metadata.get("created_at") or "")
     return Report(
         kind=kind,
@@ -320,6 +320,10 @@ def summary_for(report: Report) -> str:
         ],
     )
     return summary or first_paragraph(report.markdown) or "No summary available yet."
+
+
+def recommendation_for(report: Report) -> str:
+    return first_match(report.sections, ["Recommendation", "Next Step", "Open Questions"])
 
 
 def load_projects() -> list[dict[str, Any]]:
@@ -469,16 +473,27 @@ def build_home(projects: list[dict[str, Any]]) -> str:
 def build_project(project: dict[str, Any]) -> str:
     report: Report = project["report"]
     hypotheses = project["hypotheses"]
-    rows = []
+    hypothesis_cards = []
     for hyp in hypotheses:
         hyp_report: Report = hyp["report"]
         href = f"hypotheses/{hyp['id']}/index.html"
-        rows.append(
-            "<tr>"
-            f"<td><a href=\"{html.escape(href)}\">{html.escape(hyp['id'])}</a></td>"
-            f"<td>{badge(hyp_report.status)}</td>"
-            f"<td>{inline_md(excerpt(summary_for(hyp_report), 180))}</td>"
-            "</tr>"
+        recommendation = recommendation_for(hyp_report)
+        recommendation_html = (
+            f"<p><span class=\"label-inline\">Next</span> {inline_md(excerpt(recommendation, 260))}</p>"
+            if recommendation
+            else ""
+        )
+        hypothesis_cards.append(
+            f"""
+            <article class="summary-card">
+              <div class="summary-card-head">
+                <h3><a href="{html.escape(href)}">{html.escape(hyp['id'])}</a></h3>
+                {badge(hyp_report.status)}
+              </div>
+              <p>{inline_md(excerpt(summary_for(hyp_report), 360))}</p>
+              {recommendation_html}
+            </article>
+            """
         )
     assets = project.get("assets", [])
     asset_rows = []
@@ -507,7 +522,7 @@ def build_project(project: dict[str, Any]) -> str:
     </section>
     <section class="section">
       <div class="section-head"><p class="eyebrow">Work units</p><h2>Hypotheses</h2></div>
-      <div class="table-wrap"><table><thead><tr><th>Hypothesis</th><th>Status</th><th>Summary</th></tr></thead><tbody>{''.join(rows)}</tbody></table></div>
+      <div class="summary-grid">{''.join(hypothesis_cards) or '<p>No hypotheses found.</p>'}</div>
     </section>
     <section class="section">
       <div class="section-head"><p class="eyebrow">Materials</p><h2>Assets</h2></div>
@@ -716,6 +731,39 @@ h3 { margin: 0 0 12px; font-size: 20px; }
   padding: 22px;
 }
 .card p { color: #34483a; margin: 0 0 18px; }
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 16px;
+}
+.summary-card {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255,255,255,0.82);
+  padding: 20px;
+}
+.summary-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+.summary-card h3 {
+  overflow-wrap: anywhere;
+  margin-bottom: 0;
+}
+.summary-card p {
+  color: #34483a;
+  margin: 0 0 12px;
+}
+.summary-card p:last-child { margin-bottom: 0; }
+.label-inline {
+  color: var(--green);
+  font-size: 12px;
+  font-weight: 720;
+  text-transform: uppercase;
+}
 .meta-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; color: var(--muted); font-size: 13px; }
 .badge {
   display: inline-flex;
