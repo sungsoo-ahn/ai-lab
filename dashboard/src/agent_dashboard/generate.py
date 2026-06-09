@@ -709,6 +709,7 @@ def build_project(project: dict[str, Any]) -> str:
 def build_hypothesis(project: dict[str, Any], hyp: dict[str, Any]) -> str:
     report: Report = hyp["report"]
     project_id = project["id"]
+    project_title = display_name(project_id)
     recommendation = recommendation_for(report)
     next_step = (
         f"""
@@ -724,13 +725,14 @@ def build_hypothesis(project: dict[str, Any], hyp: dict[str, Any]) -> str:
     )
     body = f"""
     <section class="page-title">
-      <p class="eyebrow">{html.escape(display_name(project_id))} / work unit</p>
+      <p class="breadcrumb"><a href="../../index.html">Back to {html.escape(project_title)}</a></p>
+      <p class="eyebrow">{html.escape(project_title)} / work unit</p>
       <h1>{html.escape(display_name(hyp['id']))}</h1>
       <div class="meta-row">{badge(report.status)}<span>{html.escape(report.date)}</span><span>{html.escape(source_label(report))}</span></div>
       <p class="lede">{inline_md(excerpt(summary_for(report), 420))}</p>
     </section>
     <section class="metric-strip">
-      <div><span>Project</span><strong>{html.escape(display_name(project_id))}</strong></div>
+      <div><span>Project</span><strong><a href="../../index.html">{html.escape(project_title)}</a></strong></div>
       <div><span>Status</span><strong>{html.escape(report.status)}</strong></div>
       <div><span>Evidence</span><strong>report.md</strong></div>
       <div><span>Type</span><strong>Work unit</strong></div>
@@ -1037,6 +1039,7 @@ h3 { margin: 0 0 12px; font-size: 20px; }
 .metric-strip div:last-child { border-right: 0; }
 .metric-strip span { display: block; color: var(--muted); font-size: 13px; }
 .metric-strip strong { display: block; margin-top: 4px; font-size: 22px; }
+.metric-strip strong a { color: inherit; }
 .section { margin-top: 58px; }
 .section-head { display: flex; justify-content: space-between; align-items: end; margin-bottom: 18px; }
 .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 18px; }
@@ -1167,6 +1170,17 @@ h3 { margin: 0 0 12px; font-size: 20px; }
 .timeline time { color: var(--green); font-weight: 700; }
 .timeline small { grid-column: 2; color: var(--muted); }
 .page-title { padding: 56px 0 30px; }
+.breadcrumb {
+  margin: 0 0 18px;
+  font-size: 14px;
+  font-weight: 680;
+}
+.breadcrumb a {
+  color: var(--muted);
+}
+.breadcrumb a:hover {
+  color: var(--green-strong);
+}
 .page-title h1 { font-size: clamp(40px, 7vw, 78px); }
 .article {
   border-radius: 8px;

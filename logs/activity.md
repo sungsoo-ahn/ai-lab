@@ -22,3 +22,4 @@ Use this file for significant local setup, policy, and organization changes.
 | 2026-06-10 | Reframed GitHub Pages home as project page | Shifted the generated home page toward project introduction, workspace purpose, and active project context before the operational status dashboard. |
 | 2026-06-10 | Simplified dashboard home hierarchy | Replaced a repeated status block with a four-layer reading guide for projects, work units, evidence, and memory. |
 | 2026-06-10 | Clarified project page decisions | Added a project-level current-read and next-step panel, and renamed prominent hypothesis labels to work units. |
+| 2026-06-10 | Improved work-unit navigation | Added parent-project links to work-unit pages so individual reports have clearer context and return paths. |
