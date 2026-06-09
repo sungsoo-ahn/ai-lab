@@ -57,6 +57,10 @@ def repo_rel(path: Path) -> str:
 def redact(text: str) -> str:
     text = text.replace(str(REPO_ROOT), "<repo>")
     text = text.replace(str(REPO_ROOT.parent), "<home>")
+    text = text.replace("/Users/sungs/agent-system", "<repo>")
+    text = text.replace("/Users/sungs", "<home>")
+    text = re.sub(r"/home/runner/work/agent-system/agent-system", "<repo>", text)
+    text = re.sub(r"/home/runner/work/agent-system", "<home>", text)
     return TOKEN_RE.sub("[REDACTED]", text)
 
 
