@@ -522,14 +522,13 @@ def build_home(projects: list[dict[str, Any]]) -> str:
     latest_date = recent_rows[0]["date"] if recent_rows else "n/a"
     project_cards = []
     project_intro_cards = []
-    takeaway_cards = []
     for project in projects:
         report: Report = project["report"]
         href = f"projects/{project['id']}/index.html"
         title = str(project["metadata"].get("title") or display_name(project["id"]))
         body = f"""
         <p>{inline_md(project_takeaway(project))}</p>
-        <div class="meta-row">{badge(report.status)}<span>{len(project['hypotheses'])} hypotheses</span></div>
+        <div class="meta-row">{badge(report.status)}<span>{len(project['hypotheses'])} work units</span></div>
         """
         project_cards.append(card(title, body, href))
         project_intro_cards.append(
@@ -541,16 +540,6 @@ def build_home(projects: list[dict[str, Any]]) -> str:
               </div>
               <p>{inline_md(excerpt(summary_for(report), 300))}</p>
               <a href="{html.escape(href)}">Read the project report</a>
-            </article>
-            """
-        )
-        takeaway_cards.append(
-            f"""
-            <article class="takeaway">
-              <span>{html.escape(title)}</span>
-              <h3>{inline_md(project_takeaway(project))}</h3>
-              <p>{inline_md(project_next_step(project))}</p>
-              <a href="{html.escape(href)}">Open project</a>
             </article>
             """
         )
@@ -583,8 +572,33 @@ def build_home(projects: list[dict[str, Any]]) -> str:
       </article>
       <article>
         <span>Current shape</span>
-        <p>There are {len(projects)} active projects and {total_hypotheses} tracked work units. The operational dashboard remains below for status, evidence, and recent changes.</p>
+        <p>There are {len(projects)} active projects and {total_hypotheses} tracked work units. The site keeps the public read concise while leaving source reports one click away.</p>
       </article>
+    </section>
+    <section class="section">
+      <div class="section-head"><p class="eyebrow">How to read it</p><h2>The workspace has four layers</h2></div>
+      <div class="capability-grid">
+        <article>
+          <span>01</span>
+          <h3>Projects</h3>
+          <p>Each active topic has a current report, source map, and asset registry. Start here when you want the present state.</p>
+        </article>
+        <article>
+          <span>02</span>
+          <h3>Work units</h3>
+          <p>Focused work units record what was tried, what changed, and whether the result is ready for follow-up.</p>
+        </article>
+        <article>
+          <span>03</span>
+          <h3>Evidence</h3>
+          <p>Reports point back to source maps, assets, and run records so claims can be checked without reading every log.</p>
+        </article>
+        <article>
+          <span>04</span>
+          <h3>Memory</h3>
+          <p>Reusable context lives outside the public summary, giving future sessions enough history to restart cleanly.</p>
+        </article>
+      </div>
     </section>
     <section class="section">
       <div class="section-head"><p class="eyebrow">Active work</p><h2>Projects in progress</h2></div>
@@ -595,10 +609,6 @@ def build_home(projects: list[dict[str, Any]]) -> str:
       <div><span>Work units</span><strong>{total_hypotheses}</strong></div>
       <div><span>Latest log</span><strong>{html.escape(latest_date)}</strong></div>
       <div><span>Publication</span><strong>Public-safe</strong></div>
-    </section>
-    <section class="section">
-      <div class="section-head"><p class="eyebrow">Status</p><h2>Current read</h2></div>
-      <div class="takeaway-grid">{''.join(takeaway_cards)}</div>
     </section>
     <section id="projects" class="section">
       <div class="section-head"><p class="eyebrow">Project index</p><h2>Reports and work units</h2></div>
@@ -964,6 +974,36 @@ h3 { margin: 0 0 12px; font-size: 20px; }
   color: var(--blue);
   font-weight: 720;
 }
+.capability-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--line);
+}
+.capability-grid article {
+  min-height: 250px;
+  padding: 22px;
+  background: #ffffff;
+}
+.capability-grid span {
+  display: block;
+  width: fit-content;
+  margin-bottom: 44px;
+  color: var(--green-strong);
+  font-size: 13px;
+  font-weight: 760;
+}
+.capability-grid h3 {
+  margin-bottom: 12px;
+  font-size: 24px;
+}
+.capability-grid p {
+  margin: 0;
+  color: #3e5144;
+}
 .metric-strip {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -986,45 +1026,6 @@ h3 { margin: 0 0 12px; font-size: 20px; }
   box-shadow: none;
 }
 .card p { color: #34483a; margin: 0 0 18px; }
-.takeaway-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: 18px;
-}
-.takeaway {
-  position: relative;
-  min-height: 260px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  gap: 20px;
-  border: 1px solid #cfe2d5;
-  border-radius: 8px;
-  background: #ffffff;
-  padding: 24px;
-  box-shadow: var(--shadow);
-  border-top: 4px solid var(--green);
-}
-.takeaway span {
-  color: var(--green);
-  font-size: 12px;
-  font-weight: 720;
-  text-transform: uppercase;
-}
-.takeaway h3 {
-  max-width: 820px;
-  margin: 0;
-  font-size: 26px;
-  line-height: 1.12;
-}
-.takeaway p {
-  margin: 0;
-  color: var(--muted);
-}
-.takeaway a {
-  width: fit-content;
-  font-weight: 720;
-}
 .summary-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
@@ -1218,6 +1219,7 @@ tr:last-child td { border-bottom: 0; }
   .hero { grid-template-columns: 1fr; min-height: unset; padding-top: 44px; }
   .intro-band { grid-template-columns: 1fr; }
   .project-intro-grid { grid-template-columns: 1fr; }
+  .capability-grid { grid-template-columns: 1fr 1fr; }
   .metric-strip { grid-template-columns: 1fr 1fr; }
   .metric-strip div:nth-child(2) { border-right: 0; }
   .metric-strip div { border-bottom: 1px solid var(--line); }
@@ -1229,6 +1231,7 @@ tr:last-child td { border-bottom: 0; }
 @media (max-width: 520px) {
   h1 { font-size: 42px; }
   .lede { font-size: 17px; }
+  .capability-grid { grid-template-columns: 1fr; }
   .metric-strip { grid-template-columns: 1fr; }
   .metric-strip div { border-right: 0; }
   .article { padding: 24px 18px; }

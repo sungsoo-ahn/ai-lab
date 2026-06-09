@@ -20,3 +20,4 @@ Use this file for significant local setup, policy, and organization changes.
 | 2026-06-10 | Added agent-system dashboard generator | Added a dependency-free Python/`uv` static dashboard, Rowan-inspired CSS, GitHub Pages workflow, and local build docs. Verified build, `py_compile`, link resolution, and generated-output redaction scan. |
 | 2026-06-10 | Published tutorial in GitHub Pages output | Added the existing `docs/tutorial.md` to the generated dashboard site and linked it from the Pages navigation. |
 | 2026-06-10 | Reframed GitHub Pages home as project page | Shifted the generated home page toward project introduction, workspace purpose, and active project context before the operational status dashboard. |
+| 2026-06-10 | Simplified dashboard home hierarchy | Replaced a repeated status block with a four-layer reading guide for projects, work units, evidence, and memory. |
