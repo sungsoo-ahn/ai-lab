@@ -326,6 +326,43 @@ def recommendation_for(report: Report) -> str:
     return first_match(report.sections, ["Recommendation", "Next Step", "Open Questions"])
 
 
+def project_takeaway(project: dict[str, Any]) -> str:
+    project_id = str(project["id"])
+    if project_id == "btc":
+        return (
+            "BTC research is still pre-holdout. The strongest candidate is interesting, "
+            "but its returns are too concentrated; the next work should test robustness, not promotion."
+        )
+    if project_id == "slack-agent-bridge":
+        return (
+            "The Slack bridge is a local control surface for the account agent. The important design constraint "
+            "is privacy: useful responses without storing message bodies or tokens."
+        )
+    return excerpt(summary_for(project["report"]), 260)
+
+
+def project_next_step(project: dict[str, Any]) -> str:
+    project_id = str(project["id"])
+    if project_id == "btc":
+        return "Run a narrow t094 robustness pass before any sealed holdout decision."
+    if project_id == "slack-agent-bridge":
+        return "Keep the bridge operational but conservative: minimal logs, explicit approvals for external writes."
+    return excerpt(recommendation_for(project["report"]) or "Review the source report for the next action.", 220)
+
+
+def source_report(markdown: str, title: str = "Source report") -> str:
+    return f"""
+    <section class="section">
+      <details class="source-details">
+        <summary>{html.escape(title)}</summary>
+        <div class="article">
+          {markdown_to_html(markdown)}
+        </div>
+      </details>
+    </section>
+    """
+
+
 def load_projects() -> list[dict[str, Any]]:
     projects: list[dict[str, Any]] = []
     if not ACTIVE_ROOT.exists():
@@ -418,15 +455,34 @@ def build_home(projects: list[dict[str, Any]]) -> str:
     status = load_report(REPO_ROOT / "reports" / "system-status.md", "system", {})
     activity = read_text(REPO_ROOT / "logs" / "activity.md")
     recent_rows = parse_activity(activity)[-6:][::-1]
+    total_hypotheses = sum(len(project["hypotheses"]) for project in projects)
+    completed_hypotheses = sum(
+        1
+        for project in projects
+        for hyp in project["hypotheses"]
+        if str(hyp["report"].status).lower() == "complete"
+    )
+    latest_date = recent_rows[0]["date"] if recent_rows else "n/a"
     project_cards = []
+    takeaway_cards = []
     for project in projects:
         report: Report = project["report"]
         href = f"projects/{project['id']}/index.html"
         body = f"""
-        <p>{inline_md(excerpt(summary_for(report), 260))}</p>
+        <p>{inline_md(project_takeaway(project))}</p>
         <div class="meta-row">{badge(report.status)}<span>{len(project['hypotheses'])} hypotheses</span></div>
         """
         project_cards.append(card(str(project["metadata"].get("title") or project["id"]), body, href))
+        takeaway_cards.append(
+            f"""
+            <article class="takeaway">
+              <span>{html.escape(str(project["metadata"].get("title") or project["id"]))}</span>
+              <h3>{inline_md(project_takeaway(project))}</h3>
+              <p>{inline_md(project_next_step(project))}</p>
+              <a href="{html.escape(href)}">Open project</a>
+            </article>
+            """
+        )
 
     recent_html = "".join(
         f"<li><time>{html.escape(row['date'])}</time><span>{inline_md(row['activity'])}</span><small>{inline_md(row['notes'])}</small></li>"
@@ -435,21 +491,25 @@ def build_home(projects: list[dict[str, Any]]) -> str:
     body = f"""
     <section class="hero">
       <div>
-        <p class="eyebrow">Local-first research operations</p>
-        <h1>Agent system dashboard</h1>
-        <p class="lede">A private, static operating surface for local-first research memory, active projects, work-unit reports, and safe next actions.</p>
+        <p class="eyebrow">Research operations</p>
+        <h1>A readable trail of current agent work.</h1>
+        <p class="lede">A public status page for active research: what changed, what matters, and where the evidence lives.</p>
       </div>
       <div class="hero-panel">
-        <span class="label">Current shape</span>
-        <strong>{len(projects)} active project{'s' if len(projects) != 1 else ''}</strong>
-        <p>Canonical Markdown/YAML reports rendered into a private static dashboard.</p>
+        <span class="label">Latest state</span>
+        <strong>{completed_hypotheses}/{total_hypotheses or 0} work units complete</strong>
+        <p>Generated from the repo's Markdown and YAML reports, with source material kept one click away.</p>
       </div>
     </section>
     <section class="metric-strip">
-      <div><span>Workspace</span><strong>agent-system</strong></div>
-      <div><span>Publishing</span><strong>GitHub Pages</strong></div>
-      <div><span>Generator</span><strong>Python + uv</strong></div>
-      <div><span>Secrets</span><strong>Redacted</strong></div>
+      <div><span>Projects</span><strong>{len(projects)}</strong></div>
+      <div><span>Work units</span><strong>{total_hypotheses}</strong></div>
+      <div><span>Latest log</span><strong>{html.escape(latest_date)}</strong></div>
+      <div><span>Publication</span><strong>Public-safe</strong></div>
+    </section>
+    <section class="section">
+      <div class="section-head"><p class="eyebrow">What matters now</p><h2>Current read</h2></div>
+      <div class="takeaway-grid">{''.join(takeaway_cards)}</div>
     </section>
     <section id="projects" class="section">
       <div class="section-head"><p class="eyebrow">Research</p><h2>Active projects</h2></div>
@@ -462,10 +522,7 @@ def build_home(projects: list[dict[str, Any]]) -> str:
       </div>
       <ol class="timeline">{recent_html}</ol>
     </section>
-    <section class="section article">
-      <p class="eyebrow">Source report</p>
-      {markdown_to_html(status.markdown)}
-    </section>
+    {source_report(status.markdown, "Read system source report")}
     """
     return page("Dashboard", body)
 
@@ -512,12 +569,12 @@ def build_project(project: dict[str, Any]) -> str:
       <p class="eyebrow">Project</p>
       <h1>{html.escape(str(project['metadata'].get('title') or project['id']))}</h1>
       <div class="meta-row">{badge(report.status)}<span>{html.escape(report.date)}</span><span>{html.escape(report.source_rel)}</span></div>
-      <p class="lede">{inline_md(excerpt(summary_for(report), 420))}</p>
+      <p class="lede">{inline_md(project_takeaway(project))}</p>
     </section>
     <section class="metric-strip">
       <div><span>Hypotheses</span><strong>{len(hypotheses)}</strong></div>
       <div><span>Assets</span><strong>{len(asset_rows)}</strong></div>
-      <div><span>Source</span><strong>Markdown/YAML</strong></div>
+      <div><span>Evidence</span><strong>Reports</strong></div>
       <div><span>State</span><strong>{html.escape(report.status)}</strong></div>
     </section>
     <section class="section">
@@ -528,10 +585,7 @@ def build_project(project: dict[str, Any]) -> str:
       <div class="section-head"><p class="eyebrow">Materials</p><h2>Assets</h2></div>
       <div class="table-wrap"><table><thead><tr><th>Asset</th><th>Type</th><th>Description</th></tr></thead><tbody>{''.join(asset_rows)}</tbody></table></div>
     </section>
-    <section class="section article">
-      <p class="eyebrow">Full report</p>
-      {markdown_to_html(report.markdown)}
-    </section>
+    {source_report(report.markdown, "Read full project report")}
     """
     return page(str(project["id"]), body, current="../../")
 
@@ -552,10 +606,7 @@ def build_hypothesis(project: dict[str, Any], hyp: dict[str, Any]) -> str:
       <div><span>Decision</span><strong>{html.escape(excerpt(first_match(report.sections, ['Decision']) or 'Recorded in report', 42))}</strong></div>
       <div><span>Source</span><strong>report.md</strong></div>
     </section>
-    <section class="section article">
-      <p class="eyebrow">Full report</p>
-      {markdown_to_html(report.markdown)}
-    </section>
+    {source_report(report.markdown, "Read full work-unit report")}
     """
     return page(f"{project_id} / {hyp['id']}", body, current="../../../../")
 
@@ -731,6 +782,44 @@ h3 { margin: 0 0 12px; font-size: 20px; }
   padding: 22px;
 }
 .card p { color: #34483a; margin: 0 0 18px; }
+.takeaway-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 18px;
+}
+.takeaway {
+  position: relative;
+  min-height: 260px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 20px;
+  border: 1px solid #cfe2d5;
+  border-radius: 8px;
+  background: linear-gradient(180deg, #ffffff 0%, #ebf8f0 100%);
+  padding: 24px;
+  box-shadow: var(--shadow);
+}
+.takeaway span {
+  color: var(--green);
+  font-size: 12px;
+  font-weight: 720;
+  text-transform: uppercase;
+}
+.takeaway h3 {
+  max-width: 820px;
+  margin: 0;
+  font-size: 26px;
+  line-height: 1.12;
+}
+.takeaway p {
+  margin: 0;
+  color: var(--muted);
+}
+.takeaway a {
+  width: fit-content;
+  font-weight: 720;
+}
 .summary-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
@@ -807,6 +896,33 @@ h3 { margin: 0 0 12px; font-size: 20px; }
   border-radius: 8px;
   padding: min(5vw, 52px);
   background: var(--surface);
+}
+.source-details {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255,255,255,0.72);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+.source-details summary {
+  cursor: pointer;
+  list-style: none;
+  padding: 18px 22px;
+  color: var(--green-strong);
+  font-weight: 720;
+}
+.source-details summary::-webkit-details-marker { display: none; }
+.source-details summary::after {
+  content: "+";
+  float: right;
+  color: var(--muted);
+}
+.source-details[open] summary::after { content: "-"; }
+.source-details .article {
+  border: 0;
+  border-top: 1px solid var(--line);
+  border-radius: 0;
+  box-shadow: none;
 }
 .article h2 { margin-top: 38px; font-size: 28px; }
 .article h3 { margin-top: 28px; }
