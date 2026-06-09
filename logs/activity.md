@@ -25,3 +25,4 @@ Use this file for significant local setup, policy, and organization changes.
 | 2026-06-10 | Improved work-unit navigation | Added parent-project links to work-unit pages so individual reports have clearer context and return paths. |
 | 2026-06-10 | Polished shared site chrome | Replaced the placeholder brand mark and added a quiet footer explaining the generated public dashboard. |
 | 2026-06-10 | Polished source report metadata | Rendered report date and status as compact metadata chips instead of raw Markdown lead-in text. |
+| 2026-06-10 | Updated Pages workflow Node runtime | Opted GitHub Actions JavaScript actions into Node 24 to remove Node 20 deprecation noise from dashboard deployments. |
