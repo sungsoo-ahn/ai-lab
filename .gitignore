@@ -1,0 +1,16 @@
+# Local/transient agent artifacts
+.DS_Store
+*.tmp
+*.log
+
+# Python and tool caches
+.venv/
+.ruff_cache/
+.pytest_cache/
+__pycache__/
+
+# Keep raw private exports and bulky generated artifacts out of the audit repo.
+inbox/raw/
+research/active/tmp/
+research/active/*-raw/
+
