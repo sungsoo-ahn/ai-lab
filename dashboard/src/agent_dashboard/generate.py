@@ -267,6 +267,26 @@ def markdown_to_html(markdown: str) -> str:
     return "\n".join(out)
 
 
+def markdown_body_to_html(markdown: str) -> str:
+    lines = markdown.splitlines()
+    if lines and lines[0].lstrip().startswith("# "):
+        return markdown_to_html("\n".join(lines[1:]).lstrip())
+    return markdown_to_html(markdown)
+
+
+def markdown_without_title_and_intro(markdown: str) -> str:
+    lines = markdown.splitlines()
+    if lines and lines[0].lstrip().startswith("# "):
+        lines = lines[1:]
+    while lines and not lines[0].strip():
+        lines = lines[1:]
+    while lines and lines[0].strip() and not SECTION_RE.match(lines[0]):
+        lines = lines[1:]
+    while lines and not lines[0].strip():
+        lines = lines[1:]
+    return markdown_to_html("\n".join(lines))
+
+
 def split_table_row(row: str) -> list[str]:
     row = row.strip()
     if row.startswith("|"):
@@ -391,7 +411,7 @@ def source_report(markdown: str, title: str = "Source report") -> str:
       <details class="source-details">
         <summary>{html.escape(title)}</summary>
         <div class="article">
-          {markdown_to_html(markdown)}
+          {markdown_body_to_html(markdown)}
         </div>
       </details>
     </section>
@@ -671,7 +691,7 @@ def build_tutorial() -> str:
     </section>
     <section class="section">
       <article class="article">
-        {markdown_to_html(tutorial.markdown)}
+        {markdown_without_title_and_intro(tutorial.markdown)}
       </article>
     </section>
     """
@@ -1006,8 +1026,9 @@ h3 { margin: 0 0 12px; font-size: 20px; }
 .page-title h1 { font-size: clamp(40px, 7vw, 78px); }
 .article {
   border-radius: 8px;
-  padding: min(5vw, 52px);
+  padding: min(5vw, 54px);
   background: var(--surface);
+  max-width: 920px;
 }
 .source-details {
   border: 1px solid var(--line);
@@ -1031,14 +1052,37 @@ h3 { margin: 0 0 12px; font-size: 20px; }
 }
 .source-details[open] summary::after { content: "-"; }
 .source-details .article {
+  max-width: none;
   border: 0;
   border-top: 1px solid var(--line);
   border-radius: 0;
   box-shadow: none;
 }
-.article h2 { margin-top: 38px; font-size: 28px; }
-.article h3 { margin-top: 28px; }
-.article p, .article li { color: #29372d; }
+.article h2 {
+  margin: 44px 0 16px;
+  font-size: 28px;
+}
+.article h2:first-child { margin-top: 0; }
+.article h3 {
+  margin: 34px 0 12px;
+  font-size: 20px;
+}
+.article p {
+  max-width: 760px;
+  margin: 0 0 16px;
+  color: #29372d;
+}
+.article ul,
+.article ol {
+  max-width: 780px;
+  margin: 0 0 22px;
+  padding-left: 24px;
+}
+.article li {
+  color: #29372d;
+  margin: 7px 0;
+  padding-left: 3px;
+}
 .article code {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: 0.92em;
@@ -1052,7 +1096,8 @@ pre {
   border-radius: 8px;
   background: #191d1c;
   color: #d4d4d4;
-  padding: 18px;
+  padding: 18px 20px;
+  margin: 18px 0 24px;
 }
 pre code {
   background: transparent !important;
