@@ -470,22 +470,23 @@ def page(title: str, body: str, current: str = "") -> str:
     <header class="site-header">
       <a class="brand" href="{current}index.html">
         <span class="brand-mark">R</span>
-        <span><strong>Agent Research Log</strong><small>Evidence-first status</small></span>
+        <span><strong>Agent System</strong><small>Local-first research workspace</small></span>
       </a>
       <nav>
-        <a href="{current}index.html">Current</a>
+        <a href="{current}index.html">Overview</a>
         <a href="{current}index.html#projects">Projects</a>
-        <a href="{current}tutorial/index.html">Tutorial</a>
-        <a href="{current}index.html#activity">Log</a>
+        <a href="{current}tutorial/index.html">Guide</a>
+        <a href="{current}index.html#activity">Activity</a>
       </nav>
     </header>
     """
+    document_title = "Agent System" if title == "Agent System" else f"{title} - Agent System"
     return f"""<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{html.escape(title)} - Agent System</title>
+  <title>{html.escape(document_title)}</title>
   <link rel="stylesheet" href="{current}assets/styles.css">
 </head>
 <body>
@@ -520,19 +521,33 @@ def build_home(projects: list[dict[str, Any]]) -> str:
     )
     latest_date = recent_rows[0]["date"] if recent_rows else "n/a"
     project_cards = []
+    project_intro_cards = []
     takeaway_cards = []
     for project in projects:
         report: Report = project["report"]
         href = f"projects/{project['id']}/index.html"
+        title = str(project["metadata"].get("title") or display_name(project["id"]))
         body = f"""
         <p>{inline_md(project_takeaway(project))}</p>
         <div class="meta-row">{badge(report.status)}<span>{len(project['hypotheses'])} hypotheses</span></div>
         """
-        project_cards.append(card(str(project["metadata"].get("title") or display_name(project["id"])), body, href))
+        project_cards.append(card(title, body, href))
+        project_intro_cards.append(
+            f"""
+            <article class="project-intro">
+              <div>
+                <span>{html.escape(report.status)}</span>
+                <h3><a href="{html.escape(href)}">{html.escape(title)}</a></h3>
+              </div>
+              <p>{inline_md(excerpt(summary_for(report), 300))}</p>
+              <a href="{html.escape(href)}">Read the project report</a>
+            </article>
+            """
+        )
         takeaway_cards.append(
             f"""
             <article class="takeaway">
-              <span>{html.escape(str(project["metadata"].get("title") or display_name(project["id"])))}</span>
+              <span>{html.escape(title)}</span>
               <h3>{inline_md(project_takeaway(project))}</h3>
               <p>{inline_md(project_next_step(project))}</p>
               <a href="{html.escape(href)}">Open project</a>
@@ -547,15 +562,33 @@ def build_home(projects: list[dict[str, Any]]) -> str:
     body = f"""
     <section class="hero">
       <div>
-        <p class="eyebrow">Research operations</p>
-        <h1>Current research, with receipts.</h1>
-        <p class="lede">A compact public log of what changed, what matters, and where the supporting reports live.</p>
+        <p class="eyebrow">Project overview</p>
+        <h1>Agent System</h1>
+        <p class="lede">A local-first research workspace for turning open-ended work into tracked projects, source maps, reports, and reusable memory.</p>
       </div>
       <div class="hero-panel">
-        <span class="label">Latest state</span>
-        <strong>{completed_hypotheses} of {total_hypotheses or 0} work units closed</strong>
-        <p>The summary is curated; the source reports remain available without taking over the page.</p>
+        <span class="label">Project purpose</span>
+        <strong>Research that can be restarted.</strong>
+        <p>The system keeps canonical Markdown/YAML records, generated indexes, and public-safe pages so context survives between sessions.</p>
       </div>
+    </section>
+    <section class="intro-band">
+      <article>
+        <span>What it is</span>
+        <p>A Codex-native account workspace for research operations: active projects live under <code>research/active</code>, reusable context lives under <code>memory</code>, and evidence is summarized through source maps and reports.</p>
+      </article>
+      <article>
+        <span>How it works</span>
+        <p>Each project has a current report, asset registry, and optional work-unit reports. The public site is generated from those files, so the page introduces the work without replacing the repository as the source of truth.</p>
+      </article>
+      <article>
+        <span>Current shape</span>
+        <p>There are {len(projects)} active projects and {total_hypotheses} tracked work units. The operational dashboard remains below for status, evidence, and recent changes.</p>
+      </article>
+    </section>
+    <section class="section">
+      <div class="section-head"><p class="eyebrow">Active work</p><h2>Projects in progress</h2></div>
+      <div class="project-intro-grid">{''.join(project_intro_cards) or '<p>No active projects found.</p>'}</div>
     </section>
     <section class="metric-strip">
       <div><span>Projects</span><strong>{len(projects)}</strong></div>
@@ -564,11 +597,11 @@ def build_home(projects: list[dict[str, Any]]) -> str:
       <div><span>Publication</span><strong>Public-safe</strong></div>
     </section>
     <section class="section">
-      <div class="section-head"><p class="eyebrow">What matters now</p><h2>Current read</h2></div>
+      <div class="section-head"><p class="eyebrow">Status</p><h2>Current read</h2></div>
       <div class="takeaway-grid">{''.join(takeaway_cards)}</div>
     </section>
     <section id="projects" class="section">
-      <div class="section-head"><p class="eyebrow">Research</p><h2>Active projects</h2></div>
+      <div class="section-head"><p class="eyebrow">Project index</p><h2>Reports and work units</h2></div>
       <div class="grid">{''.join(project_cards) or '<p>No active projects found.</p>'}</div>
     </section>
     <section id="activity" class="section split">
@@ -580,7 +613,7 @@ def build_home(projects: list[dict[str, Any]]) -> str:
     </section>
     {source_report(status.markdown, "Read system source report")}
     """
-    return page("Dashboard", body)
+    return page("Agent System", body)
 
 
 def build_project(project: dict[str, Any]) -> str:
@@ -870,12 +903,73 @@ h3 { margin: 0 0 12px; font-size: 20px; }
 }
 .hero-panel strong { display: block; font-size: 30px; line-height: 1.1; }
 .hero-panel p { color: var(--muted); margin-bottom: 0; }
+.intro-band {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--line);
+  margin-bottom: 58px;
+}
+.intro-band article {
+  min-height: 220px;
+  padding: 24px;
+  background: #ffffff;
+}
+.intro-band span,
+.project-intro span {
+  display: block;
+  color: var(--green);
+  font-size: 12px;
+  font-weight: 720;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+.intro-band p {
+  max-width: 620px;
+  margin: 0;
+  color: #29372d;
+  font-size: 18px;
+}
+.project-intro-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+  gap: 18px;
+}
+.project-intro {
+  display: flex;
+  min-height: 300px;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 24px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 26px;
+  box-shadow: var(--shadow-soft);
+}
+.project-intro h3 {
+  margin: 0;
+  font-size: 30px;
+}
+.project-intro p {
+  margin: 0;
+  color: #34483a;
+  font-size: 18px;
+}
+.project-intro a:last-child {
+  width: fit-content;
+  color: var(--blue);
+  font-weight: 720;
+}
 .metric-strip {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   border-radius: 8px;
   overflow: hidden;
-  margin-bottom: 58px;
+  margin: 58px 0;
   border: 1px solid var(--line);
   background: #ffffff;
 }
@@ -1122,6 +1216,8 @@ tr:last-child td { border-bottom: 0; }
   .site-header { align-items: flex-start; flex-direction: column; }
   nav { width: 100%; justify-content: space-between; }
   .hero { grid-template-columns: 1fr; min-height: unset; padding-top: 44px; }
+  .intro-band { grid-template-columns: 1fr; }
+  .project-intro-grid { grid-template-columns: 1fr; }
   .metric-strip { grid-template-columns: 1fr 1fr; }
   .metric-strip div:nth-child(2) { border-right: 0; }
   .metric-strip div { border-bottom: 1px solid var(--line); }

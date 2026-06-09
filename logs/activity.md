@@ -19,3 +19,4 @@ Use this file for significant local setup, policy, and organization changes.
 | 2026-06-10 | Verified Slack agent bridge prototype | Added unit tests, aligned Codex exec with account approval/search flags, and verified `uv sync`, tests, `py_compile`, and CLI help. |
 | 2026-06-10 | Added agent-system dashboard generator | Added a dependency-free Python/`uv` static dashboard, Rowan-inspired CSS, GitHub Pages workflow, and local build docs. Verified build, `py_compile`, link resolution, and generated-output redaction scan. |
 | 2026-06-10 | Published tutorial in GitHub Pages output | Added the existing `docs/tutorial.md` to the generated dashboard site and linked it from the Pages navigation. |
+| 2026-06-10 | Reframed GitHub Pages home as project page | Shifted the generated home page toward project introduction, workspace purpose, and active project context before the operational status dashboard. |
