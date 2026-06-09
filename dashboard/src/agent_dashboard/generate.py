@@ -172,6 +172,7 @@ def markdown_to_html(markdown: str) -> str:
     out: list[str] = []
     paragraph: list[str] = []
     list_items: list[str] = []
+    list_tag = "ul"
     in_code = False
     code_lines: list[str] = []
     table_lines: list[str] = []
@@ -185,7 +186,7 @@ def markdown_to_html(markdown: str) -> str:
     def flush_list() -> None:
         nonlocal list_items
         if list_items:
-            out.append("<ul>" + "".join(f"<li>{inline_md(item)}</li>" for item in list_items) + "</ul>")
+            out.append(f"<{list_tag}>" + "".join(f"<li>{inline_md(item)}</li>" for item in list_items) + f"</{list_tag}>")
             list_items = []
 
     def flush_table() -> None:
@@ -244,7 +245,16 @@ def markdown_to_html(markdown: str) -> str:
             out.append(f"<h{level} id=\"{slugify(text)}\">{inline_md(text)}</h{level}>")
         elif stripped.startswith(("- ", "* ")):
             flush_paragraph()
+            if list_items and list_tag != "ul":
+                flush_list()
+            list_tag = "ul"
             list_items.append(stripped[2:].strip())
+        elif re.match(r"^\d+\.\s+", stripped):
+            flush_paragraph()
+            if list_items and list_tag != "ol":
+                flush_list()
+            list_tag = "ol"
+            list_items.append(re.sub(r"^\d+\.\s+", "", stripped))
         elif not stripped:
             flush_paragraph()
             flush_list()
@@ -445,6 +455,7 @@ def page(title: str, body: str, current: str = "") -> str:
       <nav>
         <a href="{current}index.html">Current</a>
         <a href="{current}index.html#projects">Projects</a>
+        <a href="{current}tutorial/index.html">Tutorial</a>
         <a href="{current}index.html#activity">Log</a>
       </nav>
     </header>
@@ -650,6 +661,23 @@ def build_hypothesis(project: dict[str, Any], hyp: dict[str, Any]) -> str:
     return page(f"{display_name(project_id)} / {display_name(hyp['id'])}", body, current="../../../../")
 
 
+def build_tutorial() -> str:
+    tutorial = load_report(REPO_ROOT / "docs" / "tutorial.md", "tutorial", {})
+    body = f"""
+    <section class="page-title">
+      <p class="eyebrow">Guide</p>
+      <h1>{html.escape(tutorial.title)}</h1>
+      <p class="lede">{inline_md(first_paragraph(tutorial.markdown))}</p>
+    </section>
+    <section class="section">
+      <article class="article">
+        {markdown_to_html(tutorial.markdown)}
+      </article>
+    </section>
+    """
+    return page(tutorial.title, body, current="../")
+
+
 def parse_activity(markdown: str) -> list[dict[str, str]]:
     rows: list[dict[str, str]] = []
     for line in markdown.splitlines():
@@ -681,6 +709,7 @@ def build() -> None:
     projects = load_projects()
     write_file(DIST_ROOT / "assets" / "styles.css", CSS)
     write_file(DIST_ROOT / "index.html", build_home(projects))
+    write_file(DIST_ROOT / "tutorial" / "index.html", build_tutorial())
     for project in projects:
         project_dir = DIST_ROOT / "projects" / project["id"]
         write_file(project_dir / "index.html", build_project(project))

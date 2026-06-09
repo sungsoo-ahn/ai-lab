@@ -18,3 +18,4 @@ Use this file for significant local setup, policy, and organization changes.
 | 2026-06-09 | Prepared BTC overnight research run | Added overnight run policy, command helper, runbook, work-unit reports, and project status for `overnight-2026-06-09`. Silent Python package installs are allowed for this run through project-local `uv` workflows only. |
 | 2026-06-10 | Verified Slack agent bridge prototype | Added unit tests, aligned Codex exec with account approval/search flags, and verified `uv sync`, tests, `py_compile`, and CLI help. |
 | 2026-06-10 | Added agent-system dashboard generator | Added a dependency-free Python/`uv` static dashboard, Rowan-inspired CSS, GitHub Pages workflow, and local build docs. Verified build, `py_compile`, link resolution, and generated-output redaction scan. |
+| 2026-06-10 | Published tutorial in GitHub Pages output | Added the existing `docs/tutorial.md` to the generated dashboard site and linked it from the Pages navigation. |
