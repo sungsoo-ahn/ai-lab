@@ -1,0 +1,2 @@
+"""Agent system dashboard generator."""
+

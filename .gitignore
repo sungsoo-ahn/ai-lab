@@ -14,6 +14,7 @@ __pycache__/
 # Generated memory/search indexes
 memory/*.sqlite
 research/active/*/state/*.sqlite
+dashboard/dist/
 
 # Keep raw private exports and bulky generated artifacts out of the audit repo.
 inbox/raw/
