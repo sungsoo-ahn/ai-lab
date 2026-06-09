@@ -354,6 +354,27 @@ def project_next_step(project: dict[str, Any]) -> str:
     return excerpt(recommendation_for(project["report"]) or "Review the source report for the next action.", 220)
 
 
+def display_name(value: str) -> str:
+    overrides = {
+        "btc": "BTC Research",
+        "slack-agent-bridge": "Slack Agent Bridge",
+        "baseline_reproduction": "Baseline reproduction",
+        "horizon_h4_audit": "Horizon-matched H4 audit",
+        "pipeline_audit": "Pipeline audit",
+        "regime_filter_probe": "Regime filter probe",
+        "report_synthesis": "Report synthesis",
+    }
+    if value in overrides:
+        return overrides[value]
+    return value.replace("_", " ").replace("-", " ").strip().title()
+
+
+def source_label(report: Report) -> str:
+    if report.path.name == "proposal.md":
+        return "proposal.md"
+    return "report.md"
+
+
 def source_report(markdown: str, title: str = "Source report") -> str:
     return f"""
     <section class="section">
@@ -476,11 +497,11 @@ def build_home(projects: list[dict[str, Any]]) -> str:
         <p>{inline_md(project_takeaway(project))}</p>
         <div class="meta-row">{badge(report.status)}<span>{len(project['hypotheses'])} hypotheses</span></div>
         """
-        project_cards.append(card(str(project["metadata"].get("title") or project["id"]), body, href))
+        project_cards.append(card(str(project["metadata"].get("title") or display_name(project["id"])), body, href))
         takeaway_cards.append(
             f"""
             <article class="takeaway">
-              <span>{html.escape(str(project["metadata"].get("title") or project["id"]))}</span>
+              <span>{html.escape(str(project["metadata"].get("title") or display_name(project["id"])))}</span>
               <h3>{inline_md(project_takeaway(project))}</h3>
               <p>{inline_md(project_next_step(project))}</p>
               <a href="{html.escape(href)}">Open project</a>
@@ -548,7 +569,7 @@ def build_project(project: dict[str, Any]) -> str:
             f"""
             <article class="summary-card">
               <div class="summary-card-head">
-                <h3><a href="{html.escape(href)}">{html.escape(hyp['id'])}</a></h3>
+                <h3><a href="{html.escape(href)}">{html.escape(display_name(hyp['id']))}</a></h3>
                 {badge(hyp_report.status)}
               </div>
               <p>{inline_md(excerpt(summary_for(hyp_report), 360))}</p>
@@ -571,8 +592,8 @@ def build_project(project: dict[str, Any]) -> str:
     body = f"""
     <section class="page-title">
       <p class="eyebrow">Project</p>
-      <h1>{html.escape(str(project['metadata'].get('title') or project['id']))}</h1>
-      <div class="meta-row">{badge(report.status)}<span>{html.escape(report.date)}</span><span>{html.escape(report.source_rel)}</span></div>
+      <h1>{html.escape(str(project['metadata'].get('title') or display_name(project['id'])))}</h1>
+      <div class="meta-row">{badge(report.status)}<span>{html.escape(report.date)}</span><span>{html.escape(source_label(report))}</span></div>
       <p class="lede">{inline_md(project_takeaway(project))}</p>
     </section>
     <section class="metric-strip">
@@ -591,28 +612,42 @@ def build_project(project: dict[str, Any]) -> str:
     </section>
     {source_report(report.markdown, "Read full project report")}
     """
-    return page(str(project["id"]), body, current="../../")
+    return page(str(project["metadata"].get("title") or display_name(project["id"])), body, current="../../")
 
 
 def build_hypothesis(project: dict[str, Any], hyp: dict[str, Any]) -> str:
     report: Report = hyp["report"]
     project_id = project["id"]
+    recommendation = recommendation_for(report)
+    next_step = (
+        f"""
+        <section class="section">
+          <article class="next-panel">
+            <span>Recommended next step</span>
+            <p>{inline_md(excerpt(recommendation, 520))}</p>
+          </article>
+        </section>
+        """
+        if recommendation
+        else ""
+    )
     body = f"""
     <section class="page-title">
-      <p class="eyebrow">Hypothesis / work unit</p>
-      <h1>{html.escape(hyp['id'])}</h1>
-      <div class="meta-row">{badge(report.status)}<span>{html.escape(report.date)}</span><span>{html.escape(report.source_rel)}</span></div>
+      <p class="eyebrow">{html.escape(display_name(project_id))} / work unit</p>
+      <h1>{html.escape(display_name(hyp['id']))}</h1>
+      <div class="meta-row">{badge(report.status)}<span>{html.escape(report.date)}</span><span>{html.escape(source_label(report))}</span></div>
       <p class="lede">{inline_md(excerpt(summary_for(report), 420))}</p>
     </section>
     <section class="metric-strip">
-      <div><span>Project</span><strong>{html.escape(project_id)}</strong></div>
+      <div><span>Project</span><strong>{html.escape(display_name(project_id))}</strong></div>
       <div><span>Status</span><strong>{html.escape(report.status)}</strong></div>
-      <div><span>Decision</span><strong>{html.escape(excerpt(first_match(report.sections, ['Decision']) or 'Recorded in report', 42))}</strong></div>
-      <div><span>Source</span><strong>report.md</strong></div>
+      <div><span>Evidence</span><strong>report.md</strong></div>
+      <div><span>Type</span><strong>Work unit</strong></div>
     </section>
+    {next_step}
     {source_report(report.markdown, "Read full work-unit report")}
     """
-    return page(f"{project_id} / {hyp['id']}", body, current="../../../../")
+    return page(f"{display_name(project_id)} / {display_name(hyp['id'])}", body, current="../../../../")
 
 
 def parse_activity(markdown: str) -> list[dict[str, str]]:
@@ -856,6 +891,26 @@ h3 { margin: 0 0 12px; font-size: 20px; }
   font-size: 12px;
   font-weight: 720;
   text-transform: uppercase;
+}
+.next-panel {
+  border: 1px solid #cfe2d5;
+  border-radius: 8px;
+  background: #ebf8f0;
+  padding: 22px 24px;
+}
+.next-panel span {
+  display: block;
+  color: var(--green);
+  font-size: 12px;
+  font-weight: 720;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.next-panel p {
+  max-width: 900px;
+  margin: 0;
+  color: #26382c;
+  font-size: 19px;
 }
 .meta-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; color: var(--muted); font-size: 13px; }
 .badge {
