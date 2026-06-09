@@ -28,3 +28,4 @@ Use this file for significant local setup, policy, and organization changes.
 | 2026-06-10 | Updated Pages workflow action majors | Moved GitHub Pages workflow actions to current Node 24-compatible major versions to remove Node 20 deprecation noise. |
 | 2026-06-10 | Improved empty project sections | Replaced blank work-unit and asset sections with intentional empty states for proposal-stage projects. |
 | 2026-06-10 | Curated public activity feed | Filtered dashboard-maintenance entries from the homepage feed so recent changes emphasize research and system work. |
+| 2026-06-10 | Polished public status labels | Rendered status values as display labels in badges and metric strips while preserving raw report status values. |

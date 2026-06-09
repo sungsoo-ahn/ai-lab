@@ -552,9 +552,13 @@ def page(title: str, body: str, current: str = "") -> str:
 
 
 def badge(text: str) -> str:
-    value = html.escape(str(text))
+    value = html.escape(status_label(str(text)))
     cls = slugify(str(text))
     return f'<span class="badge badge-{cls}">{value}</span>'
+
+
+def status_label(text: str) -> str:
+    return display_name(str(text).strip())
 
 
 def card(title: str, body: str, href: str | None = None) -> str:
@@ -589,7 +593,7 @@ def build_home(projects: list[dict[str, Any]]) -> str:
             f"""
             <article class="project-intro">
               <div>
-                <span>{html.escape(report.status)}</span>
+                <span>{html.escape(status_label(report.status))}</span>
                 <h3><a href="{html.escape(href)}">{html.escape(title)}</a></h3>
               </div>
               <p>{inline_md(excerpt(summary_for(report), 300))}</p>
@@ -781,7 +785,7 @@ def build_project(project: dict[str, Any]) -> str:
       <div><span>Work units</span><strong>{len(hypotheses)}</strong></div>
       <div><span>Assets</span><strong>{len(asset_rows)}</strong></div>
       <div><span>Evidence</span><strong>Reports</strong></div>
-      <div><span>State</span><strong>{html.escape(report.status)}</strong></div>
+      <div><span>State</span><strong>{html.escape(status_label(report.status))}</strong></div>
     </section>
     {work_units_section}
     {assets_section}
@@ -817,7 +821,7 @@ def build_hypothesis(project: dict[str, Any], hyp: dict[str, Any]) -> str:
     </section>
     <section class="metric-strip">
       <div><span>Project</span><strong><a href="../../index.html">{html.escape(project_title)}</a></strong></div>
-      <div><span>Status</span><strong>{html.escape(report.status)}</strong></div>
+      <div><span>Status</span><strong>{html.escape(status_label(report.status))}</strong></div>
       <div><span>Evidence</span><strong>report.md</strong></div>
       <div><span>Type</span><strong>Work unit</strong></div>
     </section>
