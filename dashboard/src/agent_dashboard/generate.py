@@ -565,7 +565,7 @@ def card(title: str, body: str, href: str | None = None) -> str:
 def build_home(projects: list[dict[str, Any]]) -> str:
     status = load_report(REPO_ROOT / "reports" / "system-status.md", "system", {})
     activity = read_text(REPO_ROOT / "logs" / "activity.md")
-    recent_rows = parse_activity(activity)[-6:][::-1]
+    recent_rows = public_activity_rows(parse_activity(activity), 6)
     total_hypotheses = sum(len(project["hypotheses"]) for project in projects)
     completed_hypotheses = sum(
         1
@@ -671,7 +671,7 @@ def build_home(projects: list[dict[str, Any]]) -> str:
     <section id="activity" class="section split">
       <div>
         <p class="eyebrow">Recent changes</p>
-        <h2>Activity log</h2>
+        <h2>Research log</h2>
       </div>
       <ol class="timeline">{recent_html}</ol>
     </section>
@@ -853,6 +853,34 @@ def parse_activity(markdown: str) -> list[dict[str, str]]:
         if len(cells) >= 3:
             rows.append({"date": cells[0], "activity": cells[1], "notes": cells[2]})
     return rows
+
+
+PUBLIC_ACTIVITY_SKIP = (
+    "dashboard",
+    "github pages",
+    "pages workflow",
+    "site chrome",
+    "source report metadata",
+    "empty project sections",
+    "work-unit navigation",
+    "project page decisions",
+    "home hierarchy",
+    "tutorial in github pages",
+    "account-agent launcher",
+    "homebrew baseline",
+)
+
+
+def public_activity_rows(rows: list[dict[str, str]], limit: int) -> list[dict[str, str]]:
+    curated = [
+        row
+        for row in rows
+        if not any(
+            marker in f"{row['activity']} {row['notes']}".lower()
+            for marker in PUBLIC_ACTIVITY_SKIP
+        )
+    ]
+    return curated[-limit:][::-1]
 
 
 def excerpt(text: str, limit: int) -> str:

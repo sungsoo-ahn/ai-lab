@@ -27,3 +27,4 @@ Use this file for significant local setup, policy, and organization changes.
 | 2026-06-10 | Polished source report metadata | Rendered report date and status as compact metadata chips instead of raw Markdown lead-in text. |
 | 2026-06-10 | Updated Pages workflow action majors | Moved GitHub Pages workflow actions to current Node 24-compatible major versions to remove Node 20 deprecation noise. |
 | 2026-06-10 | Improved empty project sections | Replaced blank work-unit and asset sections with intentional empty states for proposal-stage projects. |
+| 2026-06-10 | Curated public activity feed | Filtered dashboard-maintenance entries from the homepage feed so recent changes emphasize research and system work. |
