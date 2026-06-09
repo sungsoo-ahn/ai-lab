@@ -1,4 +1,4 @@
-# btc_autoresearch Runs
+# btc Runs
 
 Agent-facing run records and artifacts for this project live here.
 

@@ -1,4 +1,4 @@
-# btc_autoresearch Project Memory
+# btc Project Memory
 
 Agent-facing durable memory for this project lives here.
 

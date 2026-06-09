@@ -28,3 +28,13 @@ Use `bin/agent-memory index` to rebuild the generated SQLite search index. Use `
 ## Self-Evolution
 
 Low-risk local memory, report, template, and index updates may be applied inside `/Users/sungs/agent-system`. Package, runtime, shell, connector, account config, and out-of-zone changes require explicit approval and must follow update policy.
+
+## Overnight Research Runs
+
+If the user explicitly authorizes an overnight run with silent package installs, agents may install missing Python project dependencies using project-local `uv` workflows. They must not install Homebrew, Node, Docker, system packages, connector integrations, or account configuration silently.
+
+For detached account-level `codex exec` runs, pass account-level flags before `exec` and use `--skip-git-repo-check` when launching from `/Users/sungs`. Known-good pattern:
+
+```sh
+codex --ask-for-approval never --search exec --cd /Users/sungs --skip-git-repo-check -
+```

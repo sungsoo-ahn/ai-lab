@@ -50,6 +50,8 @@ bin/agent-project status <project_id>
 bin/agent-project restart <project_id>
 bin/agent-hypothesis init <project_id> <hypothesis_id>
 bin/agent-hypothesis close <project_id> <hypothesis_id>
+bin/agent-overnight prepare <project_id>
+bin/agent-overnight prompt <project_id>
 bin/agent-memory index
 bin/agent-memory search <query>
 bin/agent-memory audit

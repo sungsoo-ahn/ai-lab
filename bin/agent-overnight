@@ -1,0 +1,278 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+
+import argparse
+import datetime as dt
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[1]
+ACTIVE = ROOT / "research" / "active"
+WORK_UNITS = {
+    "baseline_reproduction": {
+        "purpose": "Build readiness, run tests, build required data, reproduce the 60-trial baseline, and run M5.5 audit.",
+        "scope": "BTC project files, hypothesis report, and BTC AutoResearch repo generated data/results.",
+    },
+    "pipeline_audit": {
+        "purpose": "Audit leakage, cost, holdout, and reproducibility risks; produce actionable blockers and safe next steps.",
+        "scope": "Read-only code inspection plus hypothesis report updates.",
+    },
+    "horizon_h4_audit": {
+        "purpose": "Investigate the documented H=4 horizon-matched lead after baseline artifacts exist.",
+        "scope": "Own hypothesis report and isolated generated outputs; no core evaluation rule changes.",
+    },
+    "regime_filter_probe": {
+        "purpose": "Try a bounded volatility/regime-filter workstream after baseline reproduction passes.",
+        "scope": "Own branch/patch or isolated worktree if code edits are needed.",
+    },
+    "report_synthesis": {
+        "purpose": "Summarize all overnight results, negative findings, package installs, and next actions for the user.",
+        "scope": "Project report, run summary, and work-unit reports.",
+    },
+}
+
+
+def today() -> str:
+    return dt.date.today().isoformat()
+
+
+def timestamp() -> str:
+    return dt.datetime.now(dt.timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+
+
+def write_new(path: Path, text: str) -> None:
+    if path.exists():
+        return
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(text, encoding="utf-8")
+
+
+def project_dir(project_id: str) -> Path:
+    if "/" in project_id or project_id in {"", ".", ".."}:
+        raise SystemExit("Invalid project_id.")
+    p = ACTIVE / project_id
+    if not p.exists():
+        raise SystemExit(f"Project not found: {project_id}")
+    return p
+
+
+def init_work_unit(project_id: str, work_unit_id: str, purpose: str, scope: str) -> None:
+    p = project_dir(project_id)
+    h = p / "hypotheses" / work_unit_id
+    h.mkdir(parents=True, exist_ok=True)
+    for d in ["memory", "runs"]:
+        (h / d).mkdir(exist_ok=True)
+    write_new(
+        h / "README.md",
+        f"""# Work Unit: {work_unit_id}
+
+This is a hypothesis/work-unit workspace for the `{project_id}` project.
+
+Purpose: {purpose}
+
+Allowed write scope: {scope}
+""",
+    )
+    write_new(
+        h / "hypothesis.yaml",
+        f"""hypothesis_id: {work_unit_id}
+project_id: {project_id}
+status: active
+created_at: {today()}
+updated_at: {today()}
+statement: {purpose}
+method: Overnight research work unit.
+expected_signal: Useful project knowledge, verified baseline state, or bounded improvement candidate.
+assets_used:
+  - upstream_repo
+  - btcusdt_futures_1h_dataset
+evaluation_plan: Follow the overnight runbook and write a complete work-unit report.
+outcome: null
+promotion_decision: pending
+reports:
+  current: report.md
+""",
+    )
+    write_new(
+        h / "report.md",
+        f"""# Work Unit Report: {work_unit_id}
+
+Date: {today()}
+Status: active
+
+## Purpose
+
+{purpose}
+
+## Commands Run
+
+```sh
+none yet
+```
+
+## Package Installs
+
+none yet
+
+## Files Changed
+
+- none yet
+
+## Outputs
+
+- none yet
+
+## Result
+
+No result yet.
+
+## Safety Checklist
+
+- Sealed holdout used: no
+- Failed trials preserved: not applicable
+- Backtester/accounting rules changed: no
+- Live trading/API keys used: no
+
+## Recommendation
+
+continue
+""",
+    )
+    write_new(h / "memory" / "README.md", "# Work Unit Memory\n\nAgent-facing work-unit memory lives here.\n")
+    write_new(h / "runs" / "README.md", "# Work Unit Runs\n\nRun records for this work unit live here.\n")
+
+
+def cmd_prepare(args: argparse.Namespace) -> None:
+    p = project_dir(args.project_id)
+    run_id = args.run_id or f"overnight-{timestamp()}"
+    run_dir = p / "runs" / run_id
+    run_dir.mkdir(parents=True, exist_ok=True)
+    for work_unit_id, meta in WORK_UNITS.items():
+        init_work_unit(args.project_id, work_unit_id, meta["purpose"], meta["scope"])
+    write_new(
+        p / "overnight-runbook.md",
+        f"""# Overnight Runbook: {args.project_id}
+
+Date: {today()}
+Status: ready
+Run ID: {run_id}
+
+## Goal
+
+Run a full BTC research loop overnight. First verify environment, data, and baseline reproduction. Then let bounded hypothesis/work units pursue useful observations or improvements.
+
+## Autonomy
+
+- Agents may run a full research loop.
+- Agents may silently install missing Python project dependencies using project-local `uv` workflows.
+- Agents may edit code only in isolated work units, branches, worktrees, or clearly owned file scopes.
+- Agents may not silently install Homebrew, Node, Docker, system packages, connector integrations, shell configuration, or account configuration.
+
+## Gates
+
+1. Run tests or install missing Python deps with `uv` and record the install.
+2. Build required BTCUSDT 1h futures candles if missing.
+3. Build funding data if needed for audit.
+4. Reproduce 60-trial baseline and M5.5 audit.
+5. Launch parallel improvement/knowledge work only after baseline status is known.
+
+## Baseline Commands
+
+```sh
+cd /Users/sungs/agent-system/inbox/repos/btc_autoresearch
+PYTHONDONTWRITEBYTECODE=1 pytest -q -p no:cacheprovider
+python -m src.data.download_binance --market futures_um --symbol BTCUSDT --interval 1h --start 2019-09-01
+python -m src.data.impute --market futures_um --symbol BTCUSDT --interval 1h --policy flat_bar_fill
+python -m src.data.validate_data --market futures_um --symbol BTCUSDT --interval 1h
+python -m src.data.download_derivatives --kind funding --symbol BTCUSDT --start 2019-09-09
+python -m scripts.run_autoresearch --max-trials 60 --seed 42
+python -m scripts.run_m5_5_audit
+```
+
+## Work Units
+
+| Work Unit | Purpose | Write Scope |
+| --- | --- | --- |
+{work_unit_rows()}
+
+## Required Final Outputs
+
+- Update `research/active/{args.project_id}/report.md`.
+- Update every work-unit `report.md`.
+- Write `research/active/{args.project_id}/runs/{run_id}/overnight-summary.md`.
+- Record package installs, commands, failures, outputs, and safety status.
+""",
+    )
+    write_new(
+        run_dir / "overnight-summary.md",
+        f"""# Overnight Summary: {args.project_id}
+
+Date: {today()}
+Run ID: {run_id}
+Status: prepared
+
+## Summary
+
+The overnight run has been prepared but not completed.
+
+## Work Units
+
+{chr(10).join(f'- `{key}`: prepared' for key in WORK_UNITS)}
+
+## Package Installs
+
+none recorded yet
+
+## Final Result
+
+No result yet.
+""",
+    )
+    print(f"Prepared {args.project_id} overnight run: {run_id}")
+    print(p / "overnight-runbook.md")
+    print(run_dir / "overnight-summary.md")
+
+
+def work_unit_rows() -> str:
+    return "\n".join(f"| `{key}` | {meta['purpose']} | {meta['scope']} |" for key, meta in WORK_UNITS.items())
+
+
+def cmd_prompt(args: argparse.Namespace) -> None:
+    p = project_dir(args.project_id)
+    print(
+        f"""Use the account agent setup. Read ~/AGENTS.md and continue from ~/agent-system.
+
+/goal Run the overnight BTC research orchestration for project `{args.project_id}`.
+
+Read:
+- {p / 'project.md'}
+- {p / 'project.yaml'}
+- {p / 'assets.yaml'}
+- {p / 'task.md'}
+- {p / 'overnight-runbook.md'}
+
+Operate as the orchestration agent. Use hypothesis/work-unit folders under `{p / 'hypotheses'}`. First complete the readiness and baseline-reproduction gate. If missing Python dependencies block progress, install them silently with project-local uv workflows and record the exact command. Do not install Homebrew, Node, Docker, connector integrations, shell config, or account config silently.
+
+After baseline status is known, run bounded work units. Preserve failed trials, never touch sealed holdout during research, never place live orders or use private API keys, and never weaken accounting/cost/timestamp/split rules to improve results.
+
+Before stopping, update `{p / 'report.md'}`, each work-unit report, and the active overnight summary under `{p / 'runs'}`.
+"""
+    )
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Prepare and describe overnight project runs.")
+    sub = parser.add_subparsers(dest="cmd", required=True)
+    p = sub.add_parser("prepare", help="create overnight runbook and work-unit scaffolding")
+    p.add_argument("project_id")
+    p.add_argument("--run-id")
+    p.set_defaults(func=cmd_prepare)
+    p = sub.add_parser("prompt", help="print an orchestration prompt")
+    p.add_argument("project_id")
+    p.set_defaults(func=cmd_prompt)
+    args = parser.parse_args()
+    args.func(args)
+
+
+if __name__ == "__main__":
+    main()

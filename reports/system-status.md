@@ -13,7 +13,7 @@ Date: 2026-06-09
 
 ## Active Projects
 
-- `btc_autoresearch`: BTC short-horizon trading AutoResearch task extracted from the local cloned repository.
+- `btc`: BTC research project. Current workstream is the short-horizon trading AutoResearch task extracted from the local cloned repository.
 - `slack-agent-bridge`: setup proposal and local service scaffold.
 
 ## User-Facing Entry Points

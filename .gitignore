@@ -2,6 +2,8 @@
 .DS_Store
 *.tmp
 *.log
+.env
+*.env
 
 # Python and tool caches
 .venv/

@@ -19,6 +19,8 @@ New Python work must use:
 
 Do not install packages into Apple system Python. Avoid direct `pip`, manual `venv`, Poetry, Pipenv, and Conda unless maintaining an inherited project that already uses them.
 
+For explicitly authorized overnight research runs, missing Python dependencies may be installed silently through project-local `uv` workflows. Record the command and result in the project or hypothesis report.
+
 ## JavaScript And TypeScript
 
 Do not install Node globally by default. Add Node only when a concrete project needs frontend, TypeScript, or MCP tooling. Prefer a per-project version manager when Node is introduced.
@@ -30,4 +32,3 @@ Do not install Docker Desktop by default. Add container tooling only when a proj
 ## Shell And Configuration
 
 Keep shell startup changes minimal and documented. Prefer reproducible manifests over one-off install commands. Validate shell scripts with `shellcheck` and format with `shfmt` when scripts are part of maintained tooling.
-
