@@ -25,3 +25,13 @@ This directory is the local-first workspace for the Codex-native research agent 
 ## Package Baseline
 
 The lean package baseline is recorded in `Brewfile`. Homebrew owns OS-level CLI tools; `uv` owns Python environments and Python CLIs.
+
+## Starting Codex
+
+Use `codex-agent` to start a new session with the account-agent prompt and `/Users/sungs` as the working root.
+
+You can pass an initial task:
+
+```sh
+codex-agent 'Use $research-agent to research <topic>.'
+```
