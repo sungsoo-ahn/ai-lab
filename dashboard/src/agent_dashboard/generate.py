@@ -405,13 +405,53 @@ def source_label(report: Report) -> str:
     return "report.md"
 
 
+def report_metadata(markdown: str) -> tuple[str, str]:
+    date = ""
+    status = ""
+    for line in markdown.splitlines()[:12]:
+        if line.startswith("Date:"):
+            rest = line[len("Date:") :].strip()
+            if " Status:" in rest:
+                date, status = [part.strip() for part in rest.split(" Status:", 1)]
+            else:
+                date = rest
+        elif line.startswith("Status:"):
+            status = line[len("Status:") :].strip()
+    return date, status
+
+
+def markdown_report_body_to_html(markdown: str) -> str:
+    lines = markdown.splitlines()
+    if lines and lines[0].lstrip().startswith("# "):
+        lines = lines[1:]
+    while lines and not lines[0].strip():
+        lines = lines[1:]
+    if lines and lines[0].startswith("Date:"):
+        lines = lines[1:]
+    while lines and not lines[0].strip():
+        lines = lines[1:]
+    if lines and lines[0].startswith("Status:"):
+        lines = lines[1:]
+    while lines and not lines[0].strip():
+        lines = lines[1:]
+    return markdown_to_html("\n".join(lines))
+
+
 def source_report(markdown: str, title: str = "Source report") -> str:
+    date, status = report_metadata(markdown)
+    chips = "".join(
+        f"<span>{html.escape(value)}</span>"
+        for value in [date, status]
+        if value
+    )
+    meta = f'<div class="source-meta">{chips}</div>' if chips else ""
     return f"""
     <section class="section">
       <details class="source-details">
         <summary>{html.escape(title)}</summary>
+        {meta}
         <div class="article">
-          {markdown_body_to_html(markdown)}
+          {markdown_report_body_to_html(markdown)}
         </div>
       </details>
     </section>
@@ -1257,6 +1297,24 @@ h3 { margin: 0 0 12px; font-size: 20px; }
   color: var(--muted);
 }
 .source-details[open] summary::after { content: "-"; }
+.source-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 0 22px 18px;
+}
+.source-meta span {
+  display: inline-flex;
+  min-height: 26px;
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 3px 10px;
+  color: var(--muted);
+  background: #ffffff;
+  font-size: 12px;
+  font-weight: 680;
+}
 .source-details .article {
   max-width: none;
   border: 0;
