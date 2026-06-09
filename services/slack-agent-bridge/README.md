@@ -45,5 +45,6 @@ SLACK_AGENT_CODEX_TIMEOUT=1200 scripts/run-slack-agent-bridge
 
 ```sh
 uv sync
+PYTHONPATH=src uv run --no-sync python -m unittest discover -s tests -v
 PYTHONPATH=src uv run --no-sync python -m slack_agent_bridge.app --help
 ```

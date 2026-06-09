@@ -53,6 +53,9 @@ def run_codex(user_text: str, *, slack_user: str | None, channel: str, timeout_s
     with tempfile.NamedTemporaryFile(prefix="slack-agent-", suffix=".txt") as output_file:
         cmd = [
             "codex",
+            "--ask-for-approval",
+            "never",
+            "--search",
             "exec",
             "--cd",
             str(HOME),
