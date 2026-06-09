@@ -629,6 +629,22 @@ def build_home(projects: list[dict[str, Any]]) -> str:
 def build_project(project: dict[str, Any]) -> str:
     report: Report = project["report"]
     hypotheses = project["hypotheses"]
+    takeaway = project_takeaway(project)
+    next_step = project_next_step(project)
+    project_brief = f"""
+    <section class="section">
+      <div class="decision-grid">
+        <article class="decision-panel">
+          <span>Current read</span>
+          <p>{inline_md(takeaway)}</p>
+        </article>
+        <article class="decision-panel decision-panel-muted">
+          <span>Recommended next step</span>
+          <p>{inline_md(next_step)}</p>
+        </article>
+      </div>
+    </section>
+    """
     hypothesis_cards = []
     for hyp in hypotheses:
         hyp_report: Report = hyp["report"]
@@ -668,17 +684,18 @@ def build_project(project: dict[str, Any]) -> str:
       <p class="eyebrow">Project</p>
       <h1>{html.escape(str(project['metadata'].get('title') or display_name(project['id'])))}</h1>
       <div class="meta-row">{badge(report.status)}<span>{html.escape(report.date)}</span><span>{html.escape(source_label(report))}</span></div>
-      <p class="lede">{inline_md(project_takeaway(project))}</p>
+      <p class="lede">{inline_md(excerpt(summary_for(report), 320))}</p>
     </section>
+    {project_brief}
     <section class="metric-strip">
-      <div><span>Hypotheses</span><strong>{len(hypotheses)}</strong></div>
+      <div><span>Work units</span><strong>{len(hypotheses)}</strong></div>
       <div><span>Assets</span><strong>{len(asset_rows)}</strong></div>
       <div><span>Evidence</span><strong>Reports</strong></div>
       <div><span>State</span><strong>{html.escape(report.status)}</strong></div>
     </section>
     <section class="section">
-      <div class="section-head"><p class="eyebrow">Work units</p><h2>Hypotheses</h2></div>
-      <div class="summary-grid">{''.join(hypothesis_cards) or '<p>No hypotheses found.</p>'}</div>
+      <div class="section-head"><p class="eyebrow">Work units</p><h2>Current work</h2></div>
+      <div class="summary-grid">{''.join(hypothesis_cards) or '<p>No work units found.</p>'}</div>
     </section>
     <section class="section">
       <div class="section-head"><p class="eyebrow">Materials</p><h2>Assets</h2></div>
@@ -757,7 +774,10 @@ def excerpt(text: str, limit: int) -> str:
     compact = re.sub(r"^[-*]\s+", "", compact)
     if len(compact) <= limit:
         return compact
-    return compact[: limit - 1].rstrip() + "..."
+    clipped = compact[: limit - 1].rstrip()
+    if " " in clipped:
+        clipped = clipped.rsplit(" ", 1)[0].rstrip(" ,;:")
+    return clipped + "..."
 
 
 def write_file(path: Path, content: str) -> None:
@@ -1026,6 +1046,35 @@ h3 { margin: 0 0 12px; font-size: 20px; }
   box-shadow: none;
 }
 .card p { color: #34483a; margin: 0 0 18px; }
+.decision-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(280px, 0.85fr);
+  gap: 18px;
+}
+.decision-panel {
+  border: 1px solid #cfe2d5;
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 24px;
+  box-shadow: var(--shadow-soft);
+}
+.decision-panel-muted {
+  background: #ebf8f0;
+}
+.decision-panel span {
+  display: block;
+  color: var(--green);
+  font-size: 12px;
+  font-weight: 720;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+.decision-panel p {
+  margin: 0;
+  color: #26382c;
+  font-size: 20px;
+  line-height: 1.35;
+}
 .summary-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
@@ -1220,6 +1269,7 @@ tr:last-child td { border-bottom: 0; }
   .intro-band { grid-template-columns: 1fr; }
   .project-intro-grid { grid-template-columns: 1fr; }
   .capability-grid { grid-template-columns: 1fr 1fr; }
+  .decision-grid { grid-template-columns: 1fr; }
   .metric-strip { grid-template-columns: 1fr 1fr; }
   .metric-strip div:nth-child(2) { border-right: 0; }
   .metric-strip div { border-bottom: 1px solid var(--line); }
