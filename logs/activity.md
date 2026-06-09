@@ -23,3 +23,4 @@ Use this file for significant local setup, policy, and organization changes.
 | 2026-06-10 | Simplified dashboard home hierarchy | Replaced a repeated status block with a four-layer reading guide for projects, work units, evidence, and memory. |
 | 2026-06-10 | Clarified project page decisions | Added a project-level current-read and next-step panel, and renamed prominent hypothesis labels to work units. |
 | 2026-06-10 | Improved work-unit navigation | Added parent-project links to work-unit pages so individual reports have clearer context and return paths. |
+| 2026-06-10 | Polished shared site chrome | Replaced the placeholder brand mark and added a quiet footer explaining the generated public dashboard. |

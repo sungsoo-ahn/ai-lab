@@ -469,7 +469,7 @@ def page(title: str, body: str, current: str = "") -> str:
     nav = f"""
     <header class="site-header">
       <a class="brand" href="{current}index.html">
-        <span class="brand-mark">R</span>
+        <span class="brand-mark">AS</span>
         <span><strong>Agent System</strong><small>Local-first research workspace</small></span>
       </a>
       <nav>
@@ -479,6 +479,19 @@ def page(title: str, body: str, current: str = "") -> str:
         <a href="{current}index.html#activity">Activity</a>
       </nav>
     </header>
+    """
+    footer = f"""
+    <footer class="site-footer">
+      <div>
+        <strong>Agent System</strong>
+        <p>Generated from Markdown and YAML reports. Public pages are summaries; source reports remain available for audit.</p>
+      </div>
+      <nav class="footer-links" aria-label="Footer">
+        <a href="{current}index.html">Overview</a>
+        <a href="{current}tutorial/index.html">Guide</a>
+        <a href="https://github.com/sungsoo-ahn/agent-system">GitHub</a>
+      </nav>
+    </footer>
     """
     document_title = "Agent System" if title == "Agent System" else f"{title} - Agent System"
     return f"""<!doctype html>
@@ -492,6 +505,7 @@ def page(title: str, body: str, current: str = "") -> str:
 <body>
   {nav}
   <main>{body}</main>
+  {footer}
 </body>
 </html>
 """
@@ -870,6 +884,7 @@ main { width: min(1180px, calc(100% - 40px)); margin: 0 auto 72px; }
   border-radius: 8px;
   background: var(--green-strong);
   color: #fff;
+  font-size: 12px;
   font-weight: 750;
 }
 .brand small { display: block; color: var(--muted); font-size: 12px; margin-top: 1px; }
@@ -890,6 +905,39 @@ nav a {
 nav a:hover {
   background: var(--surface-soft);
   text-decoration: none;
+}
+.site-footer {
+  width: min(1180px, calc(100% - 40px));
+  margin: 0 auto 32px;
+  padding: 28px 0 0;
+  border-top: 1px solid var(--line);
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  color: var(--muted);
+}
+.site-footer strong {
+  color: var(--ink);
+}
+.site-footer p {
+  max-width: 620px;
+  margin: 6px 0 0;
+  font-size: 14px;
+}
+.footer-links {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 0;
+  align-items: flex-start;
+}
+.footer-links a {
+  padding: 0;
+  color: var(--muted);
+}
+.footer-links a:hover {
+  background: transparent;
+  color: var(--green-strong);
 }
 .hero {
   min-height: 360px;
@@ -1276,9 +1324,11 @@ td { color: #29372d; }
 tr:last-child td { border-bottom: 0; }
 
 @media (max-width: 820px) {
-  main, .site-header { width: min(100% - 28px, 1180px); }
+  main, .site-header, .site-footer { width: min(100% - 28px, 1180px); }
   .site-header { align-items: flex-start; flex-direction: column; }
+  .site-footer { flex-direction: column; }
   nav { width: 100%; justify-content: space-between; }
+  .footer-links { width: auto; justify-content: flex-start; }
   .hero { grid-template-columns: 1fr; min-height: unset; padding-top: 44px; }
   .intro-band { grid-template-columns: 1fr; }
   .project-intro-grid { grid-template-columns: 1fr; }
