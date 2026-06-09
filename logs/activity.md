@@ -9,3 +9,7 @@ Use this file for significant local setup, policy, and organization changes.
 | 2026-06-09 | Installed lean Homebrew baseline | `brew bundle check` passed; verified Homebrew `uv`, git, gh, rg, fd, jq, yq, shellcheck, shfmt, pre-commit, and Homebrew SQLite. |
 | 2026-06-09 | Cleaned redundant setup artifacts | Removed standalone `~/.local/bin/uv`, `~/.local/bin/uvx`, and `/tmp/codex-uv-smoke`; Homebrew `uv` remains first in PATH. Manual `/opt/homebrew` ownership fix still needed for `brew doctor`. |
 | 2026-06-09 | Added account-agent launcher | Added `codex-agent` wrapper and put `agent-system/bin` on interactive zsh PATH. |
+| 2026-06-09 | Updated account-agent launcher approvals | Added `--ask-for-approval never` to `codex-agent` so sessions started by the wrapper do not prompt for command approval. |
+| 2026-06-09 | Scaffolded Slack agent bridge | Added Socket Mode Python service proposal and local `uv` project. `py_compile`, `--help`, and `shellcheck` passed; `uv sync`/`uv lock` could not resolve Slack dependencies because PyPI DNS/network access was blocked in-session. |
+| 2026-06-09 | Added `tmux` to Homebrew baseline | Updated `Brewfile`; `brew bundle` could not install `tmux` because `/opt/homebrew` lock/config directories are not writable. Run Homebrew ownership remediation manually, then rerun `brew bundle --file /Users/sungs/agent-system/Brewfile`. |
+| 2026-06-09 | Finished Slack agent bridge setup | Slack bridge local verification passed; Slack-side app setup completed by user. |

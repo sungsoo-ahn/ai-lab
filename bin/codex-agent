@@ -4,7 +4,7 @@ set -eu
 prompt="Use the account agent setup. Read ~/AGENTS.md and continue from ~/agent-system."
 
 if [ "$#" -gt 0 ]; then
-  exec codex --cd "$HOME" "$prompt $*"
+  exec codex --cd "$HOME" --ask-for-approval never "$prompt $*"
 fi
 
-exec codex --cd "$HOME" "$prompt"
+exec codex --cd "$HOME" --ask-for-approval never "$prompt"
