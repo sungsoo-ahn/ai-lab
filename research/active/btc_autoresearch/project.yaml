@@ -1,0 +1,32 @@
+project_id: btc_autoresearch
+title: BTC Short-Horizon Trading AutoResearch
+status: active
+created_at: 2026-06-09
+updated_at: 2026-06-09
+objective: Improve the BTCUSDT short-horizon AutoResearch pipeline to find a better backtested candidate while preserving causal, comparable, cost-correct evaluation.
+success_criteria:
+  - Beat the current t054 baseline under official backtester and 1x cost assumptions.
+  - Preserve data validation, timestamp alignment, transaction-cost accounting, walk-forward splits, and sealed holdout protection.
+  - Report trial counts, rejected candidates, audit findings, fold stability, random baseline comparison, and cost sensitivity.
+scope:
+  in:
+    - Feature sets and presets.
+    - Model families and hyperparameters.
+    - Search spaces and trial scheduling.
+    - Decision rules and thresholds.
+    - Risk, volatility, drawdown, and regime filters.
+    - Candidate ranking, reviewer logic, and reports.
+  out:
+    - Live trading.
+    - Private API key usage.
+    - Backtester accounting changes that inflate performance.
+    - Sealed holdout use during research.
+restart_policy: archive_then_clean_restart
+memory_scope: project
+asset_registry: assets.yaml
+active_hypotheses: []
+source_maps:
+  - source-map.md
+reports:
+  current: report.md
+archives: []

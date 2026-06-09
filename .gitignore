@@ -9,8 +9,11 @@
 .pytest_cache/
 __pycache__/
 
+# Generated memory/search indexes
+memory/*.sqlite
+research/active/*/state/*.sqlite
+
 # Keep raw private exports and bulky generated artifacts out of the audit repo.
 inbox/raw/
 research/active/tmp/
 research/active/*-raw/
-

@@ -1,0 +1,133 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+
+import argparse
+import datetime as dt
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[1]
+ACTIVE = ROOT / "research" / "active"
+
+
+def today() -> str:
+    return dt.date.today().isoformat()
+
+
+def safe_id(value: str, label: str) -> str:
+    if "/" in value or value in {"", ".", ".."}:
+        raise SystemExit(f"Invalid {label}.")
+    return value
+
+
+def write_new(path: Path, text: str) -> None:
+    if path.exists():
+        return
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(text, encoding="utf-8")
+
+
+def hypothesis_dir(project_id: str, hypothesis_id: str) -> Path:
+    project_id = safe_id(project_id, "project_id")
+    hypothesis_id = safe_id(hypothesis_id, "hypothesis_id")
+    project = ACTIVE / project_id
+    if not project.exists():
+        raise SystemExit(f"Project not found: {project_id}")
+    return project / "hypotheses" / hypothesis_id
+
+
+def cmd_init(args: argparse.Namespace) -> None:
+    h = hypothesis_dir(args.project_id, args.hypothesis_id)
+    h.mkdir(parents=True, exist_ok=True)
+    for d in ["memory", "runs"]:
+        (h / d).mkdir(exist_ok=True)
+    write_new(
+        h / "README.md",
+        f"""# Hypothesis: {args.hypothesis_id}
+
+This file explains the hypothesis from scratch for a user returning to the project.
+
+Read `hypothesis.yaml` for structured metadata and `report.md` for the current result.
+""",
+    )
+    write_new(
+        h / "hypothesis.yaml",
+        f"""hypothesis_id: {args.hypothesis_id}
+project_id: {args.project_id}
+status: active
+created_at: {today()}
+updated_at: {today()}
+statement: Define the hypothesis statement.
+method: Define the method or subtask.
+expected_signal: Define the expected signal.
+assets_used: []
+evaluation_plan: Define the evaluation plan.
+outcome: null
+promotion_decision: pending
+reports:
+  current: report.md
+""",
+    )
+    write_new(
+        h / "report.md",
+        f"""# Hypothesis Report: {args.hypothesis_id}
+
+Date: {today()}
+Status: active
+
+## Summary
+
+This hypothesis has been initialized. Define the method, assets, and evaluation plan before relying on it.
+
+## Result
+
+No result yet.
+
+## Evidence
+
+- None yet.
+
+## Decision
+
+continue
+
+## Next Step
+
+Define the first experiment or analysis.
+""",
+    )
+    write_new(h / "memory" / "README.md", "# Hypothesis Memory\n\nAgent-facing hypothesis memory lives here.\n")
+    write_new(h / "runs" / "README.md", "# Hypothesis Runs\n\nAgent-facing hypothesis run records live here.\n")
+    print(h)
+
+
+def cmd_close(args: argparse.Namespace) -> None:
+    h = hypothesis_dir(args.project_id, args.hypothesis_id)
+    report = h / "report.md"
+    if not report.exists():
+        raise SystemExit(f"Hypothesis report not found: {report}")
+    text = report.read_text(encoding="utf-8")
+    if "Status: closed" not in text:
+        text = text.replace("Status: active", "Status: closed")
+        text += f"\n\n## Closed\n\nClosed on {today()}. Review promotion decision before moving lessons to project memory.\n"
+        report.write_text(text, encoding="utf-8")
+    print(report)
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Manage project hypothesis workspaces.")
+    sub = parser.add_subparsers(dest="cmd", required=True)
+    p = sub.add_parser("init", help="create a hypothesis workspace")
+    p.add_argument("project_id")
+    p.add_argument("hypothesis_id")
+    p.set_defaults(func=cmd_init)
+    p = sub.add_parser("close", help="mark a hypothesis report as closed")
+    p.add_argument("project_id")
+    p.add_argument("hypothesis_id")
+    p.set_defaults(func=cmd_close)
+    args = parser.parse_args()
+    args.func(args)
+
+
+if __name__ == "__main__":
+    main()
