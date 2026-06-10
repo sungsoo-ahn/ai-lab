@@ -1,0 +1,61 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+  "description": "BTC AutoResearch cycle 1 adaptive candidates relative to always-long floor.",
+  "width": "container",
+  "height": 360,
+  "data": {
+    "values": [
+      {"strategy": "ema_48_192_funding_5bp", "delta_net_vs_floor": -0.5984, "drawdown_improvement": 0.2354, "funding_aware": 0.6106, "cost5x": -0.2286},
+      {"strategy": "ema_48_192_long_cash", "delta_net_vs_floor": -0.6572, "drawdown_improvement": 0.2354, "funding_aware": 0.5430, "cost5x": -0.1568},
+      {"strategy": "ema_24_96_long_cash", "delta_net_vs_floor": -0.8373, "drawdown_improvement": 0.2095, "funding_aware": 0.4050, "cost5x": -0.6307},
+      {"strategy": "ema_48_192_highvol_q60", "delta_net_vs_floor": -1.2875, "drawdown_improvement": 0.4257, "funding_aware": 0.1526, "cost5x": -0.4157},
+      {"strategy": "ema_48_192_lowvol_q60", "delta_net_vs_floor": -1.3453, "drawdown_improvement": 0.2270, "funding_aware": 0.0177, "cost5x": -0.6346},
+      {"strategy": "ema_48_192_lowvol_q40", "delta_net_vs_floor": -1.4794, "drawdown_improvement": 0.2303, "funding_aware": -0.0657, "cost5x": -0.7315},
+      {"strategy": "ema_48_192_funding_0", "delta_net_vs_floor": -1.5241, "drawdown_improvement": 0.5104, "funding_aware": -0.0252, "cost5x": -0.6331},
+      {"strategy": "ema_12_48_long_cash", "delta_net_vs_floor": -1.7668, "drawdown_improvement": 0.1719, "funding_aware": -0.3783, "cost5x": -0.9695},
+      {"strategy": "ema_24_96_long_short", "delta_net_vs_floor": -1.8245, "drawdown_improvement": 0.1119, "funding_aware": -0.3701, "cost5x": -0.9671},
+      {"strategy": "donchian_72_long_cash", "delta_net_vs_floor": -2.0562, "drawdown_improvement": 0.0921, "funding_aware": -0.5592, "cost5x": -0.9858},
+      {"strategy": "rsi_14_35_65_long_cash", "delta_net_vs_floor": -2.2808, "drawdown_improvement": -0.1116, "funding_aware": -0.7846, "cost5x": -0.9995},
+      {"strategy": "donchian_24_long_cash", "delta_net_vs_floor": -2.3177, "drawdown_improvement": -0.1595, "funding_aware": -0.8193, "cost5x": -0.9998}
+    ]
+  },
+  "transform": [
+    {
+      "fold": ["delta_net_vs_floor", "drawdown_improvement"],
+      "as": ["metric", "value"]
+    },
+    {
+      "calculate": "datum.metric == 'delta_net_vs_floor' ? 'Net delta vs always-long' : 'Drawdown improvement'",
+      "as": "metric_label"
+    }
+  ],
+  "mark": {"type": "bar", "cornerRadiusEnd": 2},
+  "encoding": {
+    "y": {"field": "strategy", "type": "nominal", "sort": "-x", "title": null},
+    "x": {"field": "value", "type": "quantitative", "title": "Relative value"},
+    "color": {
+      "field": "metric_label",
+      "type": "nominal",
+      "scale": {"domain": ["Net delta vs always-long", "Drawdown improvement"], "range": ["#b15f4a", "#4678a5"]},
+      "legend": {"title": null, "orient": "bottom"}
+    },
+    "row": {
+      "field": "metric_label",
+      "type": "nominal",
+      "title": null,
+      "header": {"labelAngle": 0, "labelAlign": "left"}
+    },
+    "tooltip": [
+      {"field": "strategy", "type": "nominal", "title": "Strategy"},
+      {"field": "metric_label", "type": "nominal", "title": "Metric"},
+      {"field": "value", "type": "quantitative", "format": ".4f", "title": "Value"},
+      {"field": "funding_aware", "type": "quantitative", "format": ".4f", "title": "Funding-aware"},
+      {"field": "cost5x", "type": "quantitative", "format": ".4f", "title": "Cost 5x"}
+    ]
+  },
+  "resolve": {"scale": {"x": "shared"}},
+  "config": {
+    "axis": {"labelLimit": 220},
+    "view": {"stroke": null}
+  }
+}

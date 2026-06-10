@@ -53,6 +53,24 @@ Top adaptive references:
 - `candidate_ema_48_192_long_cash`: net `0.8433`, max drawdown `-0.4316`, turnover `195.0`, random percentile `0.93`, funding-aware net `0.5430`, cost5x `-0.1568`.
 - `candidate_ema_24_96_long_cash`: net `0.6632`, max drawdown `-0.4575`, turnover `375.0`, random percentile `0.96`, funding-aware net `0.4050`, cost5x `-0.6307`.
 
+## Plots
+
+The leaderboard makes the main result visually obvious: always-long dominates raw development net, so it should be treated as the floor for Cycle 2.
+
+<div class="ai-lab-vega-plot" data-vega-spec="../assets/btc-autoresearch-cycle1-leaderboard.vl.json"></div>
+
+The risk-return view shows the tradeoff hidden by the leaderboard. Adaptive variants give up raw net, but several reduce drawdown relative to full BTC exposure.
+
+<div class="ai-lab-vega-plot" data-vega-spec="../assets/btc-autoresearch-cycle1-risk-return.vl.json"></div>
+
+Cost stress separates passive exposure from active rules. The best adaptive candidates lose much of their appeal under 5x costs.
+
+<div class="ai-lab-vega-plot" data-vega-spec="../assets/btc-autoresearch-cycle1-cost-stress.vl.json"></div>
+
+The adaptive-only relative plot frames Cycle 2 directly: no adaptive candidate beat always-long net, but some improved drawdown enough to justify overlay experiments.
+
+<div class="ai-lab-vega-plot" data-vega-spec="../assets/btc-autoresearch-cycle1-adaptive-relative.vl.json"></div>
+
 ## Interpretation
 
 The run found a metric improvement over the preflight EMA baseline, but not a novel trading edge. Always-long mostly recovers the benchmark's own buy-and-hold reference after one opening cost. It is robust to cost multipliers and next-open execution because it barely trades, but it has severe drawdown, a weak 2022, and funding drag.
