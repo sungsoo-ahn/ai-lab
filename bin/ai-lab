@@ -1,0 +1,380 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+
+import argparse
+import datetime as dt
+import os
+import shutil
+import sys
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[1]
+TASKS = ROOT / "tasks" / "active"
+ARCHIVE = ROOT / "archive"
+
+
+def today() -> str:
+    return dt.date.today().isoformat()
+
+
+def timestamp() -> str:
+    return dt.datetime.now(dt.timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+
+
+def safe_id(value: str, label: str) -> str:
+    if "/" in value or value in {"", ".", ".."}:
+        raise SystemExit(f"Invalid {label}.")
+    return value
+
+
+def write_new(path: Path, text: str) -> None:
+    if path.exists():
+        return
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(text, encoding="utf-8")
+
+
+def task_dir(task_id: str) -> Path:
+    return TASKS / safe_id(task_id, "task_id")
+
+
+def scientist_dir(task_id: str, scientist_id: str) -> Path:
+    return task_dir(task_id) / "scientists" / safe_id(scientist_id, "scientist_id")
+
+
+def work_unit_dir(task_id: str, scientist_id: str, work_unit_id: str) -> Path:
+    return scientist_dir(task_id, scientist_id) / "work_units" / safe_id(work_unit_id, "work_unit_id")
+
+
+def infer_scientist(task_id: str) -> str:
+    scientists = task_dir(task_id) / "scientists"
+    if not scientists.exists():
+        raise SystemExit(f"Task not found: {task_id}")
+    ids = sorted(path.name for path in scientists.iterdir() if path.is_dir())
+    if len(ids) != 1:
+        raise SystemExit(f"Specify scientist_id for task {task_id}; found {', '.join(ids) or 'none'}.")
+    return ids[0]
+
+
+def cmd_task_init(args: argparse.Namespace) -> None:
+    task_id = safe_id(args.task_id, "task_id")
+    p = task_dir(task_id)
+    p.mkdir(parents=True, exist_ok=True)
+    (p / "scientists").mkdir(exist_ok=True)
+    write_new(
+        p / "README.md",
+        f"""# Task: {task_id}
+
+This task contains AI scientists that may pursue different concrete target metrics or orchestration schemes.
+
+Read `task.yaml`, then the relevant scientist guide and report.
+""",
+    )
+    write_new(
+        p / "task.yaml",
+        f"""task_id: {task_id}
+title: {task_id}
+status: active
+created_at: {today()}
+updated_at: {today()}
+category: uncategorized
+vague_goal: Define the broad task or challenge.
+known_assets: []
+candidate_metrics: []
+constraints: []
+active_scientists: []
+reports: {{}}
+guides: {{}}
+""",
+    )
+    print(p)
+
+
+def cmd_task_status(args: argparse.Namespace) -> None:
+    p = task_dir(args.task_id)
+    if not p.exists():
+        raise SystemExit(f"Task not found: {args.task_id}")
+    task = p / "task.yaml"
+    print(task.read_text(encoding="utf-8") if task.exists() else f"No task.yaml for {args.task_id}")
+
+
+def cmd_task_archive(args: argparse.Namespace) -> None:
+    p = task_dir(args.task_id)
+    if not p.exists():
+        raise SystemExit(f"Task not found: {args.task_id}")
+    dest = ARCHIVE / "tasks" / args.task_id / timestamp()
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    shutil.move(str(p), str(dest))
+    print(f"Archived: {dest}")
+
+
+def cmd_task_restart(args: argparse.Namespace) -> None:
+    p = task_dir(args.task_id)
+    if not p.exists():
+        raise SystemExit(f"Task not found: {args.task_id}")
+    dest = ARCHIVE / "tasks" / args.task_id / timestamp()
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    shutil.move(str(p), str(dest))
+    cmd_task_init(args)
+    print(f"Archived prior task: {dest}")
+
+
+def cmd_scientist_init(args: argparse.Namespace) -> None:
+    t = task_dir(args.task_id)
+    if not t.exists():
+        raise SystemExit(f"Task not found: {args.task_id}")
+    p = scientist_dir(args.task_id, args.scientist_id)
+    p.mkdir(parents=True, exist_ok=True)
+    for d in ["memory", "runs", "state", "work_units", "proposals"]:
+        (p / d).mkdir(exist_ok=True)
+    write_new(
+        p / "README.md",
+        f"""# Scientist: {args.scientist_id}
+
+This scientist is a concrete scheme and target metric for task `{args.task_id}`.
+
+Read `guide.md`, `scientist.yaml`, and `report.md`.
+""",
+    )
+    write_new(
+        p / "guide.md",
+        f"""# Scientist Guide: {args.scientist_id}
+
+Date: {today()}
+Status: active
+
+## Purpose
+
+Describe the scientist scheme, target metric, and safe continuation path.
+""",
+    )
+    write_new(
+        p / "scientist.yaml",
+        f"""scientist_id: {args.scientist_id}
+task_id: {args.task_id}
+scheme_id: define_scheme
+title: {args.scientist_id}
+status: active
+version: 1
+parent_scientist_id: null
+created_at: {today()}
+updated_at: {today()}
+specific_goal: Define the specific goal.
+target_metric:
+  name: define_metric
+  direction: maximize
+  evaluation_context: Define evaluation context.
+optimization_constraints: []
+accepted_proposals: []
+active_work_units: []
+proposal_gate:
+  policy: accepted_proposals_create_next_scientist_version
+  proposals_dir: proposals
+reports:
+  current: report.md
+guides:
+  user: guide.md
+""",
+    )
+    write_new(p / "report.md", f"# Scientist Report: {args.scientist_id}\n\nDate: {today()}\nStatus: active\n\nNo result yet.\n")
+    write_new(p / "memory" / "README.md", "# Scientist Memory\n\nReusable scientist-specific memory lives here.\n")
+    write_new(p / "runs" / "README.md", "# Scientist Runs\n\nRun records live here.\n")
+    write_new(p / "state" / "README.md", "# Scientist State\n\nGenerated state lives here.\n")
+    write_new(p / "proposals" / "README.md", "# Scientist Proposals\n\nProposal-gated self-evolution records live here.\n")
+    print(p)
+
+
+def cmd_scientist_status(args: argparse.Namespace) -> None:
+    p = scientist_dir(args.task_id, args.scientist_id)
+    if not p.exists():
+        raise SystemExit(f"Scientist not found: {args.task_id}/{args.scientist_id}")
+    report = p / "report.md"
+    print(report.read_text(encoding="utf-8") if report.exists() else f"No report.md for {args.scientist_id}")
+
+
+def cmd_scientist_archive(args: argparse.Namespace) -> None:
+    p = scientist_dir(args.task_id, args.scientist_id)
+    if not p.exists():
+        raise SystemExit(f"Scientist not found: {args.task_id}/{args.scientist_id}")
+    dest = ARCHIVE / "scientists" / args.task_id / args.scientist_id / timestamp()
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    shutil.move(str(p), str(dest))
+    print(f"Archived: {dest}")
+
+
+def cmd_scientist_version(args: argparse.Namespace) -> None:
+    src = scientist_dir(args.task_id, args.scientist_id)
+    if not src.exists():
+        raise SystemExit(f"Scientist not found: {args.task_id}/{args.scientist_id}")
+    dest = scientist_dir(args.task_id, args.new_scientist_id)
+    if dest.exists():
+        raise SystemExit(f"Scientist already exists: {args.new_scientist_id}")
+    shutil.copytree(src, dest, symlinks=True)
+    manifest = dest / "scientist.yaml"
+    text = manifest.read_text(encoding="utf-8")
+    text = text.replace(f"scientist_id: {args.scientist_id}", f"scientist_id: {args.new_scientist_id}", 1)
+    text = text.replace("parent_scientist_id: null", f"parent_scientist_id: {args.scientist_id}", 1)
+    text = text.replace(f"updated_at: {today()}", f"updated_at: {today()}", 1)
+    manifest.write_text(text, encoding="utf-8")
+    print(dest)
+
+
+def cmd_work_unit_init(args: argparse.Namespace) -> None:
+    s = scientist_dir(args.task_id, args.scientist_id)
+    if not s.exists():
+        raise SystemExit(f"Scientist not found: {args.task_id}/{args.scientist_id}")
+    p = work_unit_dir(args.task_id, args.scientist_id, args.work_unit_id)
+    p.mkdir(parents=True, exist_ok=True)
+    for d in ["memory", "runs"]:
+        (p / d).mkdir(exist_ok=True)
+    write_new(
+        p / "README.md",
+        f"""# Work Unit: {args.work_unit_id}
+
+This is the minimal context for one hypothesis, method, ablation, observation, proxy dataset, or synthesis pass.
+""",
+    )
+    write_new(
+        p / "work-unit.yaml",
+        f"""work_unit_id: {args.work_unit_id}
+task_id: {args.task_id}
+scientist_id: {args.scientist_id}
+type: observation
+status: active
+created_at: {today()}
+updated_at: {today()}
+parallel_safe: true
+claimed_by: null
+run_id: null
+touch_scope: scientist_owned_files
+conflicts_with: []
+proposal_refs: []
+statement: Define the work-unit statement.
+method: Define the method or subtask.
+expected_signal: Define the expected signal.
+assets_used: []
+evaluation_plan: Define the evaluation plan.
+outcome: null
+decision: pending
+reports:
+  current: report.md
+guides:
+  user: guide.md
+""",
+    )
+    write_new(
+        p / "guide.md",
+        f"""# Work Unit Guide: {args.work_unit_id}
+
+Date: {today()}
+Status: active
+
+## Purpose
+
+Explain the work unit and how to continue it safely.
+""",
+    )
+    write_new(p / "report.md", f"# Work Unit Report: {args.work_unit_id}\n\nDate: {today()}\nStatus: active\n\nNo result yet.\n")
+    write_new(p / "memory" / "README.md", "# Work Unit Memory\n\nReusable work-unit memory lives here.\n")
+    write_new(p / "runs" / "README.md", "# Work Unit Runs\n\nRun records live here.\n")
+    print(p)
+
+
+def cmd_work_unit_status(args: argparse.Namespace) -> None:
+    p = work_unit_dir(args.task_id, args.scientist_id, args.work_unit_id)
+    if not p.exists():
+        raise SystemExit(f"Work unit not found: {args.task_id}/{args.scientist_id}/{args.work_unit_id}")
+    report = p / "report.md"
+    print(report.read_text(encoding="utf-8") if report.exists() else f"No report.md for {args.work_unit_id}")
+
+
+def cmd_work_unit_close(args: argparse.Namespace) -> None:
+    p = work_unit_dir(args.task_id, args.scientist_id, args.work_unit_id)
+    report = p / "report.md"
+    if not report.exists():
+        raise SystemExit(f"Work-unit report not found: {report}")
+    text = report.read_text(encoding="utf-8")
+    if "Status: closed" not in text:
+        text = text.replace("Status: active", "Status: closed")
+        text += f"\n\n## Closed\n\nClosed on {today()}. Review proposals before promoting changes into the next scientist version.\n"
+        report.write_text(text, encoding="utf-8")
+    print(report)
+
+
+def cmd_memory(args: argparse.Namespace) -> None:
+    target = ROOT / "bin" / "agent-memory"
+    os.execv(str(target), [str(target), *args.memory_args])
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description="Manage the AI Lab workspace.")
+    sub = parser.add_subparsers(dest="area", required=True)
+
+    task = sub.add_parser("task", help="manage high-level tasks")
+    task_sub = task.add_subparsers(dest="cmd", required=True)
+    p = task_sub.add_parser("init")
+    p.add_argument("task_id")
+    p.set_defaults(func=cmd_task_init)
+    p = task_sub.add_parser("status")
+    p.add_argument("task_id")
+    p.set_defaults(func=cmd_task_status)
+    p = task_sub.add_parser("archive")
+    p.add_argument("task_id")
+    p.set_defaults(func=cmd_task_archive)
+    p = task_sub.add_parser("restart")
+    p.add_argument("task_id")
+    p.set_defaults(func=cmd_task_restart)
+
+    scientist = sub.add_parser("scientist", help="manage task-specific AI scientists")
+    scientist_sub = scientist.add_subparsers(dest="cmd", required=True)
+    p = scientist_sub.add_parser("init")
+    p.add_argument("task_id")
+    p.add_argument("scientist_id")
+    p.set_defaults(func=cmd_scientist_init)
+    p = scientist_sub.add_parser("status")
+    p.add_argument("task_id")
+    p.add_argument("scientist_id")
+    p.set_defaults(func=cmd_scientist_status)
+    p = scientist_sub.add_parser("archive")
+    p.add_argument("task_id")
+    p.add_argument("scientist_id")
+    p.set_defaults(func=cmd_scientist_archive)
+    p = scientist_sub.add_parser("version")
+    p.add_argument("task_id")
+    p.add_argument("scientist_id")
+    p.add_argument("new_scientist_id")
+    p.set_defaults(func=cmd_scientist_version)
+
+    wu = sub.add_parser("work-unit", help="manage scientist work units")
+    wu_sub = wu.add_subparsers(dest="cmd", required=True)
+    p = wu_sub.add_parser("init")
+    p.add_argument("task_id")
+    p.add_argument("scientist_id")
+    p.add_argument("work_unit_id")
+    p.set_defaults(func=cmd_work_unit_init)
+    p = wu_sub.add_parser("status")
+    p.add_argument("task_id")
+    p.add_argument("scientist_id")
+    p.add_argument("work_unit_id")
+    p.set_defaults(func=cmd_work_unit_status)
+    p = wu_sub.add_parser("close")
+    p.add_argument("task_id")
+    p.add_argument("scientist_id")
+    p.add_argument("work_unit_id")
+    p.set_defaults(func=cmd_work_unit_close)
+
+    p = sub.add_parser("memory", help="search and maintain AI Lab memory")
+    p.add_argument("memory_args", nargs=argparse.REMAINDER)
+    p.set_defaults(func=cmd_memory)
+    return parser
+
+
+def main() -> None:
+    parser = build_parser()
+    args = parser.parse_args()
+    args.func(args)
+
+
+if __name__ == "__main__":
+    main()

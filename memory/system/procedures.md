@@ -2,40 +2,44 @@
 id: system-procedures
 type: system_memory
 created_at: 2026-06-09
-updated_at: 2026-06-09
+updated_at: 2026-06-10
 confidence: high
 sensitivity: public
 status: active
 links:
-  - /Users/sungs/agent-system/policies/update-policy.md
-  - /Users/sungs/agent-system/docs/tutorial.md
+  - /Users/sungs/ai-lab/policies/update-policy.md
+  - /Users/sungs/ai-lab/docs/tutorial.md
 ---
 
-# System Procedures
+# AI Lab Procedures
 
-## Research Projects
+## Tasks
 
-Use `bin/agent-project init <project_id>` to create a project. Use `bin/agent-project restart <project_id>` to archive the current active state and create a clean restarted workspace.
+Use `bin/ai-lab task init <task_id>` to create a broad task workspace. A task describes an under-specified challenge or dataset family and may contain multiple scientists with different metrics or schemes.
 
-Every project must include a user-facing `guide.md`. The guide should explain, in plain language, how to read the project, where the current report/source map/assets live, what is safe to change, and how to restart or continue the work. It should also explain domain-specific terminology, project assumptions, and how the project's main methods work for a user who is unfamiliar with the area.
+## Scientists
 
-## Hypotheses
+Use `bin/ai-lab scientist init <task_id> <scientist_id>` to create a concrete scientist version. A scientist owns the specific goal, target metric, optimization constraints, reports, assets, runs, work units, and proposal gate.
 
-Use `bin/agent-hypothesis init <project_id> <hypothesis_id>` to create a hypothesis workspace. Hypotheses should reference project assets by `asset_id`.
+Use `bin/ai-lab scientist version <task_id> <old_scientist_id> <new_scientist_id>` when accepted proposals should become the next iteration. Do not silently mutate a current scientist target metric in place.
 
-Every hypothesis must include a user-facing `guide.md`. The guide should explain the work unit from scratch, point to its report, evidence, runs, and memory, and state the safe next action for a returning user or agent. It should also explain the hypothesis-specific method, technical terms, metrics, and decision criteria used in the work unit.
+## Work Units
+
+Use `bin/ai-lab work-unit init <task_id> <scientist_id> <work_unit_id>` to create a minimal agent context. Work units may optimize the target metric, make observations, run ablations, build proxy datasets, test proxy experiments, synthesize results, or improve infrastructure.
+
+Work units should reference scientist assets by `asset_id`, record parallel-safety metadata, and write proposals under the scientist `proposals/` directory when they recommend changing the scientist scheme or target metric.
 
 ## Memory
 
-Use `bin/agent-memory index` to rebuild the generated SQLite search index. Use `bin/agent-memory search <query>` to search Markdown, YAML, and logs.
+Use `bin/ai-lab memory index` to rebuild the generated SQLite search index. Use `bin/ai-lab memory search <query>` to search Markdown, YAML, and logs.
 
 ## Self-Evolution
 
-Low-risk local memory, report, template, and index updates may be applied inside `/Users/sungs/agent-system`. Package, runtime, shell, connector, account config, and out-of-zone changes require explicit approval and must follow update policy.
+Low-risk local memory, report, template, and index updates may be applied inside `/Users/sungs/ai-lab`. Package, runtime, shell, connector, account config, and out-of-zone changes require explicit approval and must follow update policy.
 
 ## Overnight Research Runs
 
-If the user explicitly authorizes an overnight run with silent package installs, agents may install missing Python project dependencies using project-local `uv` workflows. They must not install Homebrew, Node, Docker, system packages, connector integrations, or account configuration silently.
+If the user explicitly authorizes an overnight run with silent package installs, agents may install missing Python scientist dependencies using scientist-local or inherited repository-local `uv` workflows. They must not install Homebrew, Node, Docker, system packages, connector integrations, or account configuration silently.
 
 For detached account-level `codex exec` runs, pass account-level flags before `exec` and use `--skip-git-repo-check` when launching from `/Users/sungs`. Known-good pattern:
 

@@ -30,16 +30,26 @@ def classify(path: Path) -> tuple[str, str | None, str | None, str]:
     parts = path.relative_to(ROOT).parts
     project_id = None
     hypothesis_id = None
-    scope = "system"
+    scope = "lab"
     kind = path.suffix.lstrip(".") or "text"
-    if len(parts) >= 3 and parts[0] == "research" and parts[1] == "active":
+    if len(parts) >= 3 and parts[0] == "tasks" and parts[1] == "active":
         project_id = parts[2]
-        scope = "project"
+        scope = "task"
+        if "scientists" in parts:
+            scope = "scientist"
+        if "work_units" in parts:
+            i = parts.index("work_units")
+            if len(parts) > i + 1:
+                hypothesis_id = parts[i + 1]
+                scope = "work_unit"
+    elif len(parts) >= 3 and parts[0] == "research" and parts[1] == "active":
+        project_id = parts[2]
+        scope = "scientist"
         if "hypotheses" in parts:
             i = parts.index("hypotheses")
             if len(parts) > i + 1:
                 hypothesis_id = parts[i + 1]
-                scope = "hypothesis"
+                scope = "work_unit"
     elif parts[0] == "logs":
         scope = "log"
     elif parts[0] == "archive":
@@ -129,7 +139,7 @@ def search(args: argparse.Namespace) -> None:
     for path, scope, project_id, hypothesis_id, title in hits[: args.limit]:
         owner = project_id or "-"
         hyp = hypothesis_id or "-"
-        print(f"{path} | scope={scope} project={owner} hypothesis={hyp} | {title}")
+        print(f"{path} | scope={scope} task={owner} work_unit={hyp} | {title}")
     if not hits:
         print("No matches.")
 
@@ -187,7 +197,7 @@ def reflect(args: argparse.Namespace) -> None:
 def apply_reflection(args: argparse.Namespace) -> None:
     path = (ROOT / args.reflection).resolve()
     if ROOT not in path.parents or path.suffix != ".md":
-        raise SystemExit("Reflection must be a Markdown file under agent-system.")
+        raise SystemExit("Reflection must be a Markdown file under ai-lab.")
     print(f"Recorded as apply candidate: {rel(path)}")
     print("V1 does not infer edits from reflection text. Apply concrete low-risk file edits separately, then rebuild the index.")
 

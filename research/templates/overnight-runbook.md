@@ -1,34 +1,29 @@
-# Overnight Runbook: <project_id>
+# Overnight Runbook: <task_id>/<scientist_id>
 
 Date: <YYYY-MM-DD>
-Status: draft
+Status: ready
+Run ID: <run_id>
 
 ## Goal
 
-<Explain the overnight goal from scratch.>
+<Run a full scientist loop after readiness gates pass.>
 
 ## Autonomy
 
-- Agents may run a full research loop.
-- Agents may silently install missing Python project dependencies using project-local `uv` workflows.
-- Agents may not silently install OS-level tools, Node, Docker, connector integrations, shell configuration, or account configuration.
+- Agents may run bounded work units.
+- Agents may silently install missing Python dependencies only through scientist-local or inherited repository-local `uv` workflows when explicitly authorized.
+- Agents may not silently install Homebrew, Node, Docker, system packages, connector integrations, shell configuration, or account configuration.
 
 ## Gates
 
-1. Verify environment and tests.
-2. Verify required assets exist or build them.
-3. Reproduce the baseline.
-4. Only then launch parallel hypothesis/work units.
-
-## Work Units
-
-| Work Unit | Purpose | Write Scope | Stop Condition |
-| --- | --- | --- | --- |
-| <id> | <purpose> | <paths> | <condition> |
+1. Verify environment, tests, data, and baseline.
+2. Record package installs and failures.
+3. Launch parallel-ready work units only after baseline state is known.
+4. Preserve failed trials and negative findings.
 
 ## Required Final Outputs
 
-- Project report updated.
-- Each work unit report updated.
-- Run summary written under `runs/`.
-- Installed packages and commands recorded.
+- Update the scientist `report.md`.
+- Update every work-unit `report.md`.
+- Write a run summary under scientist `runs/`.
+- Record proposals under scientist `proposals/` if the next version should change scheme, metric, or constraints.

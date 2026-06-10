@@ -12,7 +12,7 @@ assets:
     sensitivity: <public|internal|private|sensitive>
     license_or_usage_constraints: <License or constraints>
     valid_for:
-      - <project|hypothesis|experiment>
+      - <task|scientist|work_unit|experiment>
     known_limits:
       - <limit>
     ml_dataset:

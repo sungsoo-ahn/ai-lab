@@ -1,72 +1,56 @@
-# Agent System Workspace
+# AI Lab Workspace
 
-This directory is the local-first workspace for the Codex-native research agent on this account.
+This directory is the local-first workspace for developing AI scientists on this account.
+
+An AI scientist is a task-specific orchestration layer for agents. It tries to solve a hard, uncertain task by running work units, preserving evidence, and evolving its scheme and target metric over versions.
 
 ## Layout
 
-- `inbox/`: unprocessed inputs from the user.
-- `research/active/`: active research projects, reports, assets, hypotheses, and run records.
-- `research/templates/`: reusable output templates.
-- `memory/`: durable system/project/hypothesis memory, reflections, source indexes, and history.
-- `policies/`: operating rules for research, privacy, connectors, and approvals.
-- `archive/`: completed research packages.
-- `logs/`: local activity notes for significant setup and maintenance.
-- `docs/tutorial.md`: beginner walkthrough for using the system.
-- `reports/system-status.md`: user-facing current system status.
-- `bin/agent-memory`: memory indexing, search, audit, and reflection helper.
-- `bin/agent-project`: project init/status/restart/archive helper.
-- `bin/agent-hypothesis`: hypothesis init/close helper.
+- `catalog/`: broad task descriptions and reusable scientist scheme descriptions.
+- `tasks/active/`: active task, scientist, and work-unit workspaces.
+- `research/templates/`: reusable Markdown/YAML templates.
+- `memory/`: durable system memory, reflections, source indexes, and history.
+- `policies/`: operating rules for research, privacy, connectors, packages, and approvals.
+- `archive/`: completed or superseded tasks, scientists, and packages.
+- `logs/`: local activity notes.
+- `docs/tutorial.md`: beginner walkthrough.
+- `reports/system-status.md`: current system status.
+- `bin/ai-lab`: canonical AI Lab helper.
 
-## Memory Hierarchy
+## Layer Model
 
-The system uses three memory levels:
+1. Lab: shared catalogs, policies, memory, logs, and scheme knowledge.
+2. Task: a broad, under-specified challenge or dataset family.
+3. Scientist: a concrete task-specific scheme, version, target metric, and constraints.
+4. Work unit: a minimal agent context for one hypothesis, method, ablation, observation, proxy, synthesis, or infrastructure pass.
 
-1. System memory for reusable agent-system behavior.
-2. Project memory for one research topic.
-3. Hypothesis memory for one method, experiment family, or subtask.
+## Self-Evolution
 
-Agents should start from `memory/system/core.md`, then read the active project and hypothesis context. Each project and hypothesis must include a user-facing `guide.md` that explains how to read, restart, and safely work with that specific scope. Guides should also explain project-specific methods, domain terminology, assumptions, and technical vocabulary for an unfamiliar user. User-facing reports should explain current state from scratch so the maintainer does not need to inspect internal files.
-
-## Assets
-
-Projects track non-description materials in `assets.yaml`. Assets can be datasets, repositories, PDFs, configs, models, checkpoints, images, spreadsheets, result bundles, or other artifacts. Hypotheses should reference assets by `asset_id` rather than raw paths.
-
-## Operating Defaults
-
-- Keep canonical memory local.
-- Keep Markdown/YAML canonical and treat SQLite indexes as generated.
-- Use connectors for targeted reads when useful.
-- Require approval for connector writes or external messages.
-- Do not store secrets or raw sensitive values.
-- Use `Brewfile` for OS-level package state.
-- Use `uv` as the base Python package, project, and tool manager.
-- Follow `policies/update-policy.md` before mutating packages, runtimes, connectors, or account configuration.
+Work units can propose changes to a scientist scheme, target metric, constraints, or next iteration. Accepted proposals are applied by creating a new scientist version; current scientist metrics are not silently mutated in place.
 
 ## Common Commands
 
 ```sh
-bin/agent-project init <project_id>
-bin/agent-project status <project_id>
-bin/agent-project restart <project_id>
-bin/agent-hypothesis init <project_id> <hypothesis_id>
-bin/agent-hypothesis close <project_id> <hypothesis_id>
-bin/agent-overnight prepare <project_id>
-bin/agent-overnight prompt <project_id>
-bin/agent-memory index
-bin/agent-memory search <query>
-bin/agent-memory audit
+bin/ai-lab task status btc
+bin/ai-lab scientist status btc btc_autoresearch_v1
+bin/ai-lab work-unit status btc btc_autoresearch_v1 regime_filter_probe
+bin/ai-lab memory index
+bin/ai-lab memory search btc
+bin/ai-lab memory audit
 ```
 
-## Package Baseline
+Compatibility wrappers remain for one migration cycle:
 
-The lean package baseline is recorded in `Brewfile`. Homebrew owns OS-level CLI tools; `uv` owns Python environments and Python CLIs.
+```sh
+bin/agent-project status btc
+bin/agent-hypothesis close btc regime_filter_probe
+bin/agent-memory search btc
+```
 
 ## Starting Codex
 
-Use `codex-agent` to start a new session with the account-agent prompt and `/Users/sungs` as the working root.
-
-You can pass an initial task:
+Use `codex-agent` to start a new session with the account AI Lab prompt and `/Users/sungs` as the working root.
 
 ```sh
-codex-agent 'Use $research-agent to research <topic>.'
+codex-agent 'Use AI Lab to continue btc.'
 ```

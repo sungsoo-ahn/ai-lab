@@ -1,0 +1,13 @@
+task_id: <task_id>
+title: <Task Title>
+status: active
+created_at: <YYYY-MM-DD>
+updated_at: <YYYY-MM-DD>
+category: <category>
+vague_goal: <Broad, intentionally under-specified task description>
+known_assets: []
+candidate_metrics: []
+constraints: []
+active_scientists: []
+reports: {}
+guides: {}

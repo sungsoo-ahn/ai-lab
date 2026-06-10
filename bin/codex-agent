@@ -1,7 +1,7 @@
 #!/bin/sh
 set -eu
 
-prompt="Use the account agent setup. Read ~/AGENTS.md and continue from ~/agent-system."
+prompt="Use the account agent setup. Read ~/AGENTS.md and continue from ~/ai-lab."
 
 if [ "$#" -gt 0 ]; then
   exec codex --cd "$HOME" --ask-for-approval never "$prompt $*"

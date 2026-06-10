@@ -1,0 +1,27 @@
+scientist_id: <scientist_id>
+task_id: <task_id>
+scheme_id: <scheme_id>
+title: <Scientist Title>
+status: active
+version: 1
+parent_scientist_id: null
+created_at: <YYYY-MM-DD>
+updated_at: <YYYY-MM-DD>
+specific_goal: <Specific goal for this scientist version>
+target_metric:
+  name: <metric_name>
+  direction: <maximize|minimize>
+  evaluation_context: <Evaluation command, dataset, split, and constraints>
+optimization_constraints: []
+accepted_proposals: []
+active_work_units: []
+proposal_gate:
+  policy: accepted_proposals_create_next_scientist_version
+  proposals_dir: proposals
+assets: assets.yaml
+source_maps:
+  - source-map.md
+reports:
+  current: report.md
+guides:
+  user: guide.md

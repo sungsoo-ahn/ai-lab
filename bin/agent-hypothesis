@@ -1,179 +1,33 @@
-#!/usr/bin/env python3
-from __future__ import annotations
+#!/bin/sh
+set -eu
 
-import argparse
-import datetime as dt
-from pathlib import Path
+root="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
 
+usage() {
+  echo "Deprecated: use ai-lab work-unit instead." >&2
+  echo "Usage: agent-hypothesis <init|close> <project_id> <hypothesis_id>" >&2
+}
 
-ROOT = Path(__file__).resolve().parents[1]
-ACTIVE = ROOT / "research" / "active"
+[ "$#" -ge 3 ] || { usage; exit 2; }
+cmd="$1"
+project_id="$2"
+work_unit_id="$3"
+scientists_dir="$root/tasks/active/$project_id/scientists"
 
+[ -d "$scientists_dir" ] || { echo "Task not found: $project_id" >&2; exit 1; }
+scientist_count="$(find "$scientists_dir" -mindepth 1 -maxdepth 1 -type d | wc -l | tr -d ' ')"
+[ "$scientist_count" = "1" ] || { echo "Specify scientist with ai-lab work-unit; found $scientist_count scientists." >&2; exit 1; }
+scientist_id="$(basename "$(find "$scientists_dir" -mindepth 1 -maxdepth 1 -type d | sed -n '1p')")"
 
-def today() -> str:
-    return dt.date.today().isoformat()
-
-
-def safe_id(value: str, label: str) -> str:
-    if "/" in value or value in {"", ".", ".."}:
-        raise SystemExit(f"Invalid {label}.")
-    return value
-
-
-def write_new(path: Path, text: str) -> None:
-    if path.exists():
-        return
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(text, encoding="utf-8")
-
-
-def hypothesis_dir(project_id: str, hypothesis_id: str) -> Path:
-    project_id = safe_id(project_id, "project_id")
-    hypothesis_id = safe_id(hypothesis_id, "hypothesis_id")
-    project = ACTIVE / project_id
-    if not project.exists():
-        raise SystemExit(f"Project not found: {project_id}")
-    return project / "hypotheses" / hypothesis_id
-
-
-def cmd_init(args: argparse.Namespace) -> None:
-    h = hypothesis_dir(args.project_id, args.hypothesis_id)
-    h.mkdir(parents=True, exist_ok=True)
-    for d in ["memory", "runs"]:
-        (h / d).mkdir(exist_ok=True)
-    write_new(
-        h / "README.md",
-        f"""# Hypothesis: {args.hypothesis_id}
-
-This file explains the hypothesis from scratch for a user returning to the project.
-
-Read `guide.md` first, `report.md` for the current result, and `hypothesis.yaml` for structured metadata.
-""",
-    )
-    write_new(
-        h / "guide.md",
-        f"""# Hypothesis Guide: {args.hypothesis_id}
-
-Date: {today()}
-Status: active
-
-## Purpose
-
-This guide explains how to read and continue the `{args.hypothesis_id}` work unit in the `{args.project_id}` project.
-
-## Method Overview
-
-Describe how this hypothesis method, experiment, audit, or implementation pass works for an unfamiliar user.
-
-## Key Terms
-
-- `<term>`: Define hypothesis-specific terminology and why it matters.
-
-## Decision Criteria
-
-- Define the metrics, thresholds, qualitative rules, or review criteria used to judge this work unit.
-
-## Reading Order
-
-1. `guide.md`
-2. `report.md`
-3. `hypothesis.yaml`
-4. `runs/`
-5. `memory/`
-
-## How To Continue
-
-Define the method, assets used, and evaluation plan before relying on this work unit for research decisions.
-
-## Evidence And Assets
-
-Reference project assets by `asset_id`. Keep detailed source pointers in the project source map or the hypothesis report.
-
-## Do Not Store
-
-Do not store secrets, raw credentials, private connector content, or unnecessary personal data in this hypothesis.
-""",
-    )
-    write_new(
-        h / "hypothesis.yaml",
-        f"""hypothesis_id: {args.hypothesis_id}
-project_id: {args.project_id}
-status: active
-created_at: {today()}
-updated_at: {today()}
-statement: Define the hypothesis statement.
-method: Define the method or subtask.
-expected_signal: Define the expected signal.
-assets_used: []
-evaluation_plan: Define the evaluation plan.
-outcome: null
-promotion_decision: pending
-reports:
-  current: report.md
-guides:
-  user: guide.md
-""",
-    )
-    write_new(
-        h / "report.md",
-        f"""# Hypothesis Report: {args.hypothesis_id}
-
-Date: {today()}
-Status: active
-
-## Summary
-
-This hypothesis has been initialized. Define the method, assets, and evaluation plan before relying on it.
-
-## Result
-
-No result yet.
-
-## Evidence
-
-- None yet.
-
-## Decision
-
-continue
-
-## Next Step
-
-Define the first experiment or analysis.
-""",
-    )
-    write_new(h / "memory" / "README.md", "# Hypothesis Memory\n\nAgent-facing hypothesis memory lives here.\n")
-    write_new(h / "runs" / "README.md", "# Hypothesis Runs\n\nAgent-facing hypothesis run records live here.\n")
-    print(h)
-
-
-def cmd_close(args: argparse.Namespace) -> None:
-    h = hypothesis_dir(args.project_id, args.hypothesis_id)
-    report = h / "report.md"
-    if not report.exists():
-        raise SystemExit(f"Hypothesis report not found: {report}")
-    text = report.read_text(encoding="utf-8")
-    if "Status: closed" not in text:
-        text = text.replace("Status: active", "Status: closed")
-        text += f"\n\n## Closed\n\nClosed on {today()}. Review promotion decision before moving lessons to project memory.\n"
-        report.write_text(text, encoding="utf-8")
-    print(report)
-
-
-def main() -> None:
-    parser = argparse.ArgumentParser(description="Manage project hypothesis workspaces.")
-    sub = parser.add_subparsers(dest="cmd", required=True)
-    p = sub.add_parser("init", help="create a hypothesis workspace")
-    p.add_argument("project_id")
-    p.add_argument("hypothesis_id")
-    p.set_defaults(func=cmd_init)
-    p = sub.add_parser("close", help="mark a hypothesis report as closed")
-    p.add_argument("project_id")
-    p.add_argument("hypothesis_id")
-    p.set_defaults(func=cmd_close)
-    args = parser.parse_args()
-    args.func(args)
-
-
-if __name__ == "__main__":
-    main()
+case "$cmd" in
+  init)
+    exec "$root/bin/ai-lab" work-unit init "$project_id" "$scientist_id" "$work_unit_id"
+    ;;
+  close)
+    exec "$root/bin/ai-lab" work-unit close "$project_id" "$scientist_id" "$work_unit_id"
+    ;;
+  *)
+    usage
+    exit 2
+    ;;
+esac

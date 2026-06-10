@@ -1,0 +1,10 @@
+tasks:
+  - task_id: btc
+    title: BTC
+    category: financial_backtesting
+    vague_goal: Solve BTC using the dataset and AutoResearch pipeline extracted from the local btc_autoresearch repository.
+    status: active
+    active_scientists:
+      - btc_autoresearch_v1
+    notes:
+      - Task descriptions are intentionally broad; specific target metrics live on scientist versions.

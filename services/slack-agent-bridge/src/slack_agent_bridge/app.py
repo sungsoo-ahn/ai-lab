@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Any
 
 HOME = Path.home()
-ACCOUNT_PROMPT = "Use the account agent setup. Read ~/AGENTS.md and continue from ~/agent-system."
+ACCOUNT_PROMPT = "Use the account agent setup. Read ~/AGENTS.md and continue from ~/ai-lab."
 DEFAULT_CODEX_TIMEOUT_SECONDS = 900
 MAX_SLACK_MESSAGE_CHARS = 3500
 

@@ -21,5 +21,4 @@ Separate facts from inference. Note weak evidence, conflicts between sources, mi
 
 ## Local Files
 
-Use `research/active/` for current work and `archive/` for completed packages. Add durable, reusable facts to `memory/` only when they are likely to matter again and do not contain secrets.
-
+Use `tasks/active/` for current task, scientist, and work-unit state, and `archive/` for completed or superseded packages. Add durable, reusable facts to `memory/` only when they are likely to matter again and do not contain secrets.

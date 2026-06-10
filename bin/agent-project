@@ -1,261 +1,40 @@
-#!/usr/bin/env python3
-from __future__ import annotations
-
-import argparse
-import datetime as dt
-import shutil
-from pathlib import Path
-
-
-ROOT = Path(__file__).resolve().parents[1]
-ACTIVE = ROOT / "research" / "active"
-ARCHIVE = ROOT / "archive" / "projects"
-
-
-def today() -> str:
-    return dt.date.today().isoformat()
-
-
-def timestamp() -> str:
-    return dt.datetime.now(dt.timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-
-
-def write_new(path: Path, text: str) -> None:
-    if path.exists():
-        return
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(text, encoding="utf-8")
-
-
-def project_dir(project_id: str) -> Path:
-    if "/" in project_id or project_id in {"", ".", ".."}:
-        raise SystemExit("Invalid project_id.")
-    return ACTIVE / project_id
-
-
-def init_project(project_id: str, *, archived_from: str | None = None) -> Path:
-    p = project_dir(project_id)
-    p.mkdir(parents=True, exist_ok=True)
-    for d in ["memory", "runs", "state", "hypotheses"]:
-        (p / d).mkdir(exist_ok=True)
-    archive_line = f"\nArchived prior state: `{archived_from}`.\n" if archived_from else ""
-    write_new(
-        p / "README.md",
-        f"""# {project_id}
-
-This is a research project workspace. It is written for a user who is new to the project or returning after forgetting the details.
-
-Read in this order:
-
-1. `guide.md`
-2. `project.md`
-3. `report.md`
-4. `assets.yaml`
-5. hypothesis guides under `hypotheses/`
-{archive_line}
-""",
-    )
-    write_new(
-        p / "guide.md",
-        f"""# Project Guide: {project_id}
-
-Date: {today()}
-Status: active
-
-## Purpose
-
-This guide explains how to read and continue the `{project_id}` project.
-
-## Method Overview
-
-Describe how the project's main method or workflow works for an unfamiliar user.
-
-## Key Terms
-
-- `<term>`: Define project-specific terminology and why it matters.
-
-## Assumptions
-
-- Define any domain, data, workflow, or evaluation assumptions that affect how to read this project.
-
-## Reading Order
-
-1. `guide.md`
-2. `report.md`
-3. `source-map.md`
-4. `assets.yaml`
-5. relevant `hypotheses/<hypothesis_id>/guide.md`
-
-## How To Continue
-
-Define the project goal, register any reusable assets, then open focused hypotheses or work units as needed.
-
-## Safe Edits
-
-- Update `report.md` when the current result or recommendation changes.
-- Update `source-map.md` when evidence changes.
-- Update `assets.yaml` when datasets, repositories, result bundles, or documents are added.
-- Add or update hypothesis guides when focused work units are opened.
-
-## Do Not Store
-
-Do not store secrets, raw credentials, private connector content, or unnecessary personal data in this project.
-""",
-    )
-    write_new(
-        p / "project.md",
-        f"""# Project: {project_id}
-
-Date: {today()}
-Status: active
-
-## Overview
-
-Describe this project from scratch.
-
-## Goal
-
-Define the project goal.
-
-## Success Criteria
-
-- Define the success criteria.
-
-## Scope
-
-- Define what is in scope.
-
-## Non-Goals
-
-- Define what is out of scope.
-
-## Current State
-
-No project-specific results have been recorded yet.
-""",
-    )
-    write_new(
-        p / "project.yaml",
-        f"""project_id: {project_id}
-title: {project_id}
-status: active
-created_at: {today()}
-updated_at: {today()}
-objective: Define the project objective.
-success_criteria:
-  - Define the success criteria.
-scope:
-  in:
-    - Define what is in scope.
-  out:
-    - Define what is out of scope.
-restart_policy: archive_then_clean_restart
-memory_scope: project
-asset_registry: assets.yaml
-active_hypotheses: []
-source_maps:
-  - source-map.md
-reports:
-  current: report.md
-guides:
-  user: guide.md
-archives:{f"\n  - {archived_from}" if archived_from else " []"}
-""",
-    )
-    write_new(
-        p / "assets.yaml",
-        """assets: []
-""",
-    )
-    write_new(
-        p / "report.md",
-        f"""# Project Report: {project_id}
-
-Date: {today()}
-Status: active
-
-## Plain-English Summary
-
-This project has been initialized. Add the project goal, assets, and hypotheses before relying on it for research.
-
-## Current Result
-
-No result yet.
-
-## Hypotheses
-
-| Hypothesis | Status | Result | Next Step |
-| --- | --- | --- | --- |
-
-## Assets
-
-| Asset | Type | Role | Limits |
-| --- | --- | --- | --- |
-
-## Open Questions
-
-- Define the first research question.
-""",
-    )
-    write_new(p / "memory" / "README.md", "# Project Memory\n\nAgent-facing project memory lives here.\n")
-    write_new(p / "runs" / "README.md", "# Runs\n\nAgent-facing run records and artifacts live here.\n")
-    write_new(p / "state" / "README.md", "# State\n\nGenerated project state and checkpoints live here.\n")
-    return p
-
-
-def cmd_init(args: argparse.Namespace) -> None:
-    p = init_project(args.project_id)
-    print(p)
-
-
-def cmd_status(args: argparse.Namespace) -> None:
-    p = project_dir(args.project_id)
-    if not p.exists():
-        raise SystemExit(f"Project not found: {args.project_id}")
-    report = p / "report.md"
-    print(report.read_text(encoding="utf-8") if report.exists() else f"No report.md for {args.project_id}")
-
-
-def cmd_restart(args: argparse.Namespace) -> None:
-    p = project_dir(args.project_id)
-    if not p.exists():
-        raise SystemExit(f"Project not found: {args.project_id}")
-    dest = ARCHIVE / args.project_id / timestamp()
-    dest.parent.mkdir(parents=True, exist_ok=True)
-    shutil.move(str(p), str(dest))
-    new_p = init_project(args.project_id, archived_from=str(dest))
-    print(f"Archived: {dest}")
-    print(f"Restarted: {new_p}")
-
-
-def cmd_archive(args: argparse.Namespace) -> None:
-    p = project_dir(args.project_id)
-    if not p.exists():
-        raise SystemExit(f"Project not found: {args.project_id}")
-    dest = ARCHIVE / args.project_id / timestamp()
-    dest.parent.mkdir(parents=True, exist_ok=True)
-    shutil.move(str(p), str(dest))
-    print(f"Archived: {dest}")
-
-
-def main() -> None:
-    parser = argparse.ArgumentParser(description="Manage research project workspaces.")
-    sub = parser.add_subparsers(dest="cmd", required=True)
-    p = sub.add_parser("init", help="create a project workspace")
-    p.add_argument("project_id")
-    p.set_defaults(func=cmd_init)
-    p = sub.add_parser("status", help="print the current project report")
-    p.add_argument("project_id")
-    p.set_defaults(func=cmd_status)
-    p = sub.add_parser("restart", help="archive active state and create a clean restarted project")
-    p.add_argument("project_id")
-    p.set_defaults(func=cmd_restart)
-    p = sub.add_parser("archive", help="archive a completed project")
-    p.add_argument("project_id")
-    p.set_defaults(func=cmd_archive)
-    args = parser.parse_args()
-    args.func(args)
-
-
-if __name__ == "__main__":
-    main()
+#!/bin/sh
+set -eu
+
+root="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
+
+usage() {
+  echo "Deprecated: use ai-lab task/scientist instead." >&2
+  echo "Usage: agent-project <init|status|restart|archive> <project_id>" >&2
+}
+
+[ "$#" -ge 2 ] || { usage; exit 2; }
+cmd="$1"
+project_id="$2"
+
+case "$cmd" in
+  init)
+    exec "$root/bin/ai-lab" task init "$project_id"
+    ;;
+  status)
+    scientists_dir="$root/tasks/active/$project_id/scientists"
+    if [ -d "$scientists_dir" ]; then
+      count="$(find "$scientists_dir" -mindepth 1 -maxdepth 1 -type d | wc -l | tr -d ' ')"
+      if [ "$count" = "1" ]; then
+        scientist_id="$(basename "$(find "$scientists_dir" -mindepth 1 -maxdepth 1 -type d | sed -n '1p')")"
+        exec "$root/bin/ai-lab" scientist status "$project_id" "$scientist_id"
+      fi
+    fi
+    exec "$root/bin/ai-lab" task status "$project_id"
+    ;;
+  restart)
+    exec "$root/bin/ai-lab" task restart "$project_id"
+    ;;
+  archive)
+    exec "$root/bin/ai-lab" task archive "$project_id"
+    ;;
+  *)
+    usage
+    exit 2
+    ;;
+esac

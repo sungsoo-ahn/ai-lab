@@ -10,4 +10,4 @@ A reflection should explain:
 - risk level;
 - rollback path.
 
-Only low-risk local updates inside `/Users/sungs/agent-system` may be applied automatically.
+Only low-risk local updates inside `/Users/sungs/ai-lab` may be applied automatically.

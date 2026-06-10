@@ -15,9 +15,8 @@ The agent must ask before any connector write, including:
 - creating, editing, or deleting Calendar events;
 - sending Slack messages, creating drafts, creating canvases, or changing channels.
 
-Local writes under `/Users/sungs/agent-system` do not require additional approval unless the user requests a read-only session.
+Local writes under `/Users/sungs/ai-lab` do not require additional approval unless the user requests a read-only session.
 
 ## Summaries
 
 Summarize connector content only as needed. Avoid copying full private messages, emails, calendar details, or document passages into durable local memory.
-

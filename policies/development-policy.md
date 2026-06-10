@@ -19,7 +19,7 @@ New Python work must use:
 
 Do not install packages into Apple system Python. Avoid direct `pip`, manual `venv`, Poetry, Pipenv, and Conda unless maintaining an inherited project that already uses them.
 
-For explicitly authorized overnight research runs, missing Python dependencies may be installed silently through project-local `uv` workflows. Record the command and result in the project or hypothesis report.
+For explicitly authorized overnight research runs, missing Python dependencies may be installed silently through scientist-local or inherited repository-local `uv` workflows. Record the command and result in the scientist or work-unit report.
 
 ## JavaScript And TypeScript
 

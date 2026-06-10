@@ -6,18 +6,18 @@ Use this checklist for workstation package changes.
 
 - Confirm OS and architecture with `sw_vers` and `uname -m`.
 - Check existing tools with `command -v brew uv git gh rg fd jq yq shellcheck shfmt pre-commit sqlite3`.
-- If Homebrew exists, run `brew --version` and `brew bundle check --file agent-system/Brewfile`.
+- If Homebrew exists, run `brew --version` and `brew bundle check --file ai-lab/Brewfile`.
 
 ## Approved Installation
 
 - Install Homebrew if missing.
 - Add Homebrew shellenv to `~/.zprofile` if the installer does not do so.
-- Install the lean baseline with `brew bundle --file agent-system/Brewfile`.
+- Install the lean baseline with `brew bundle --file ai-lab/Brewfile`.
 
 ## Verification
 
 - Run `brew --version`.
-- Run `brew bundle check --file agent-system/Brewfile`.
+- Run `brew bundle check --file ai-lab/Brewfile`.
 - Run `brew doctor` and inspect warnings.
 - Run `uv --version`.
 - Run `git --version`, `gh --version`, `rg --version`, `fd --version`, `jq --version`, `yq --version`, `shellcheck --version`, `shfmt --version`, and `pre-commit --version`.

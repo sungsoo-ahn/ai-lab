@@ -1,0 +1,35 @@
+scientist_id: btc_autoresearch_v1
+task_id: btc
+scheme_id: autoresearch
+title: BTC AutoResearch v1
+status: active
+version: 1
+parent_scientist_id: null
+created_at: 2026-06-09
+updated_at: 2026-06-10
+specific_goal: Improve the BTCUSDT short-horizon AutoResearch pipeline to find a better backtested candidate while preserving causal, comparable, cost-correct evaluation.
+target_metric:
+  name: backtested_net_return
+  direction: maximize
+  evaluation_context: Official BTC AutoResearch backtester under 1x transaction-cost assumptions, with audit metrics reported before any sealed holdout use.
+optimization_constraints:
+  - Do not change backtester accounting, transaction costs, timestamp alignment, walk-forward splits, or sealed holdout protection to inflate performance.
+  - Preserve failed and rejected trials in ledgers.
+  - Report fold stability, cost sensitivity, random-baseline comparison, drawdown, and profit concentration.
+accepted_proposals: []
+active_work_units:
+  - baseline_reproduction
+  - pipeline_audit
+  - horizon_h4_audit
+  - regime_filter_probe
+  - report_synthesis
+proposal_gate:
+  policy: accepted_proposals_create_next_scientist_version
+  proposals_dir: proposals
+assets: assets.yaml
+source_maps:
+  - source-map.md
+reports:
+  current: report.md
+guides:
+  user: guide.md

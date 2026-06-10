@@ -15,7 +15,7 @@ from typing import Any
 REPO_ROOT = Path(__file__).resolve().parents[3]
 DASHBOARD_ROOT = REPO_ROOT / "dashboard"
 DIST_ROOT = DASHBOARD_ROOT / "dist"
-ACTIVE_ROOT = REPO_ROOT / "research" / "active"
+ACTIVE_ROOT = REPO_ROOT / "tasks" / "active"
 
 SECTION_RE = re.compile(r"^(#{1,6})\s+(.+?)\s*$")
 TOKEN_RE = re.compile(
@@ -57,10 +57,10 @@ def repo_rel(path: Path) -> str:
 def redact(text: str) -> str:
     text = text.replace(str(REPO_ROOT), "<repo>")
     text = text.replace(str(REPO_ROOT.parent), "<home>")
-    text = text.replace("/Users/sungs/agent-system", "<repo>")
+    text = text.replace("/Users/sungs/ai-lab", "<repo>")
     text = text.replace("/Users/sungs", "<home>")
-    text = re.sub(r"/home/runner/work/agent-system/agent-system", "<repo>", text)
-    text = re.sub(r"/home/runner/work/agent-system", "<home>", text)
+    text = re.sub(r"/home/runner/work/ai-lab/ai-lab", "<repo>", text)
+    text = re.sub(r"/home/runner/work/ai-lab", "<home>", text)
     return TOKEN_RE.sub("[REDACTED]", text)
 
 
@@ -362,7 +362,7 @@ def recommendation_for(report: Report) -> str:
 
 def project_takeaway(project: dict[str, Any]) -> str:
     project_id = str(project["id"])
-    if project_id == "btc":
+    if project_id == "btc_autoresearch_v1":
         return (
             "BTC research is still pre-holdout. The strongest candidate is interesting, "
             "but its returns are too concentrated; the next work should test robustness, not promotion."
@@ -372,7 +372,7 @@ def project_takeaway(project: dict[str, Any]) -> str:
 
 def project_next_step(project: dict[str, Any]) -> str:
     project_id = str(project["id"])
-    if project_id == "btc":
+    if project_id == "btc_autoresearch_v1":
         return "Run a narrow t094 robustness pass before any sealed holdout decision."
     return excerpt(recommendation_for(project["report"]) or "Review the source report for the next action.", 220)
 
@@ -380,6 +380,7 @@ def project_next_step(project: dict[str, Any]) -> str:
 def display_name(value: str) -> str:
     overrides = {
         "btc": "BTC Research",
+        "btc_autoresearch_v1": "BTC AutoResearch v1",
         "baseline_reproduction": "Baseline reproduction",
         "horizon_h4_audit": "Horizon-matched H4 audit",
         "pipeline_audit": "Pipeline audit",
@@ -393,12 +394,14 @@ def display_name(value: str) -> str:
 
 def source_label(report: Report) -> str:
     if report.path.name == "proposal.md":
-        return "Project proposal"
-    if report.kind == "hypothesis":
+        return "Scientist proposal"
+    if report.kind in {"hypothesis", "work_unit"}:
         return "Work-unit report"
     if report.kind == "system":
         return "System status"
-    return "Project report"
+    if report.kind == "scientist":
+        return "Scientist report"
+    return "Report"
 
 
 def report_metadata(markdown: str) -> tuple[str, str]:
@@ -464,48 +467,56 @@ def load_projects() -> list[dict[str, Any]]:
     projects: list[dict[str, Any]] = []
     if not ACTIVE_ROOT.exists():
         return projects
-    for project_dir in sorted(path for path in ACTIVE_ROOT.iterdir() if path.is_dir()):
-        report_path = first_existing(project_dir / "report.md")
-        project_yaml_path = project_dir / "project.yaml"
-        if report_path is None and not project_yaml_path.exists():
+    for task_dir in sorted(path for path in ACTIVE_ROOT.iterdir() if path.is_dir()):
+        task_yaml = parse_simple_yaml(task_dir / "task.yaml")
+        task_id = str(task_yaml.get("task_id") or task_dir.name)
+        scientists_dir = task_dir / "scientists"
+        if not scientists_dir.exists():
             continue
-        project_yaml = parse_simple_yaml(project_yaml_path)
-        project_id = str(project_yaml.get("project_id") or project_dir.name)
-        report = load_report(report_path or project_dir / "report.md", "project", project_yaml, project_id=project_id)
-        guide_path = project_dir / "guide.md"
-        guide = load_report(guide_path, "guide", project_yaml, project_id=project_id) if guide_path.exists() else None
-        hypotheses = []
-        hypotheses_dir = project_dir / "hypotheses"
-        if hypotheses_dir.exists():
-            for hyp_dir in sorted(path for path in hypotheses_dir.iterdir() if path.is_dir()):
-                hyp_yaml = parse_simple_yaml(hyp_dir / "hypothesis.yaml")
-                hyp_id = str(hyp_yaml.get("hypothesis_id") or hyp_dir.name)
-                hyp_report = load_report(
-                    hyp_dir / "report.md",
-                    "hypothesis",
-                    hyp_yaml,
-                    project_id=project_id,
-                    hypothesis_id=hyp_id,
-                )
-                hyp_guide_path = hyp_dir / "guide.md"
-                hyp_guide = (
-                    load_report(hyp_guide_path, "guide", hyp_yaml, project_id=project_id, hypothesis_id=hyp_id)
-                    if hyp_guide_path.exists()
-                    else None
-                )
-                hypotheses.append({"id": hyp_id, "metadata": hyp_yaml, "report": hyp_report, "guide": hyp_guide})
-        assets = parse_simple_yaml(project_dir / "assets.yaml").get("assets", [])
-        projects.append(
-            {
-                "id": project_id,
-                "dir": project_dir,
-                "metadata": project_yaml,
-                "report": report,
-                "guide": guide,
-                "hypotheses": hypotheses,
-                "assets": assets if isinstance(assets, list) else [],
-            }
-        )
+        for project_dir in sorted(path for path in scientists_dir.iterdir() if path.is_dir()):
+            report_path = first_existing(project_dir / "report.md")
+            project_yaml_path = project_dir / "scientist.yaml"
+            if report_path is None and not project_yaml_path.exists():
+                continue
+            project_yaml = parse_simple_yaml(project_yaml_path)
+            project_id = str(project_yaml.get("scientist_id") or project_dir.name)
+            report = load_report(report_path or project_dir / "report.md", "scientist", project_yaml, project_id=project_id)
+            guide_path = project_dir / "guide.md"
+            guide = load_report(guide_path, "guide", project_yaml, project_id=project_id) if guide_path.exists() else None
+            hypotheses = []
+            hypotheses_dir = project_dir / "work_units"
+            if hypotheses_dir.exists():
+                for hyp_dir in sorted(path for path in hypotheses_dir.iterdir() if path.is_dir()):
+                    hyp_yaml = parse_simple_yaml(hyp_dir / "work-unit.yaml")
+                    hyp_id = str(hyp_yaml.get("work_unit_id") or hyp_dir.name)
+                    hyp_report = load_report(
+                        hyp_dir / "report.md",
+                        "work_unit",
+                        hyp_yaml,
+                        project_id=project_id,
+                        hypothesis_id=hyp_id,
+                    )
+                    hyp_guide_path = hyp_dir / "guide.md"
+                    hyp_guide = (
+                        load_report(hyp_guide_path, "guide", hyp_yaml, project_id=project_id, hypothesis_id=hyp_id)
+                        if hyp_guide_path.exists()
+                        else None
+                    )
+                    hypotheses.append({"id": hyp_id, "metadata": hyp_yaml, "report": hyp_report, "guide": hyp_guide})
+            assets = parse_simple_yaml(project_dir / "assets.yaml").get("assets", [])
+            projects.append(
+                {
+                    "id": project_id,
+                    "task_id": task_id,
+                    "task_metadata": task_yaml,
+                    "dir": project_dir,
+                    "metadata": project_yaml,
+                    "report": report,
+                    "guide": guide,
+                    "hypotheses": hypotheses,
+                    "assets": assets if isinstance(assets, list) else [],
+                }
+            )
     return projects
 
 
@@ -520,12 +531,12 @@ def page(title: str, body: str, current: str = "") -> str:
     nav = f"""
     <header class="site-header">
       <a class="brand" href="{current}index.html">
-        <span class="brand-mark">AS</span>
-        <span><strong>Agent System</strong><small>Local-first research workspace</small></span>
+        <span class="brand-mark">AI</span>
+        <span><strong>AI Lab</strong><small>Developing AI scientists</small></span>
       </a>
       <nav>
         <a href="{current}index.html">Overview</a>
-        <a href="{current}index.html#projects">Projects</a>
+        <a href="{current}index.html#projects">Scientists</a>
         <a href="{current}tutorial/index.html">Guide</a>
         <a href="{current}index.html#activity">Activity</a>
       </nav>
@@ -534,8 +545,8 @@ def page(title: str, body: str, current: str = "") -> str:
     footer = f"""
     <footer class="site-footer">
       <div>
-        <strong>Agent System</strong>
-        <p>Generated from Markdown and YAML reports. Public pages are summaries; full reports remain available for audit.</p>
+        <strong>AI Lab</strong>
+        <p>Generated from Markdown and YAML manifests. Public pages are summaries; full reports remain available for audit.</p>
       </div>
       <nav class="footer-links" aria-label="Footer">
         <a href="{current}index.html">Overview</a>
@@ -544,7 +555,7 @@ def page(title: str, body: str, current: str = "") -> str:
       </nav>
     </footer>
     """
-    document_title = "Agent System" if title == "Agent System" else f"{title} - Agent System"
+    document_title = "AI Lab" if title == "AI Lab" else f"{title} - AI Lab"
     return f"""<!doctype html>
 <html lang="en">
 <head>
@@ -598,11 +609,11 @@ def build_home(projects: list[dict[str, Any]]) -> str:
     project_intro_cards = []
     for project in projects:
         report: Report = project["report"]
-        href = f"projects/{project['id']}/index.html"
+        href = f"tasks/{project['task_id']}/scientists/{project['id']}/index.html"
         title = str(project["metadata"].get("title") or display_name(project["id"]))
         body = f"""
         <p>{inline_md(project_takeaway(project))}</p>
-        <div class="meta-row">{badge(report.status)}<span>{len(project['hypotheses'])} work units</span></div>
+        <div class="meta-row">{badge(report.status)}<span>task {html.escape(project['task_id'])}</span><span>{len(project['hypotheses'])} work units</span></div>
         """
         project_cards.append(card(title, body, href))
         project_intro_cards.append(
@@ -613,7 +624,7 @@ def build_home(projects: list[dict[str, Any]]) -> str:
                 <h3><a href="{html.escape(href)}">{html.escape(title)}</a></h3>
               </div>
               <p>{inline_md(excerpt(summary_for(report), 300))}</p>
-              <a href="{html.escape(href)}">Read the project report</a>
+              <a href="{html.escape(href)}">Read the scientist report</a>
             </article>
             """
         )
@@ -625,28 +636,28 @@ def build_home(projects: list[dict[str, Any]]) -> str:
     body = f"""
     <section class="hero">
       <div>
-        <p class="eyebrow">Project overview</p>
-        <h1>Agent System</h1>
-        <p class="lede">A local-first research workspace for turning open-ended work into tracked projects, source maps, reports, and reusable memory.</p>
+        <p class="eyebrow">Lab overview</p>
+        <h1>AI Lab</h1>
+        <p class="lede">A local-first workspace for developing AI scientists: versioned agent orchestration schemes that pursue hard tasks through work units, evidence, and proposal-gated self-evolution.</p>
       </div>
       <div class="hero-panel">
         <span class="label">Why it exists</span>
-        <strong>Research that can be restarted.</strong>
-        <p>The system keeps reports, indexes, and public summaries aligned so context survives between sessions.</p>
+        <strong>AI scientists that can evolve.</strong>
+        <p>The lab keeps task catalogs, scientist versions, work-unit reports, and proposals aligned so context survives between sessions.</p>
       </div>
     </section>
     <section class="intro-band">
       <article>
         <span>What it is</span>
-        <p>A Codex-native account workspace for research operations: active projects live under <code>research/active</code>, reusable context lives under <code>memory</code>, and evidence is summarized through source maps and reports.</p>
+        <p>A Codex-native account workspace for research operations: active work lives under <code>tasks/active</code>, reusable context lives under <code>memory</code>, and evidence is summarized through source maps and reports.</p>
       </article>
       <article>
         <span>How it works</span>
-        <p>Each project has a current report, asset registry, and optional work-unit reports. The public site is generated from those files, so the page introduces the work without replacing the repository as the source of truth.</p>
+        <p>Each scientist has a concrete target metric, current report, asset registry, and optional work-unit reports. The public site is generated from those files, so the page introduces the work without replacing the repository as the source of truth.</p>
       </article>
       <article>
         <span>Current shape</span>
-        <p>The workspace has {count_phrase(len(projects), "active project")} and {count_phrase(total_hypotheses, "tracked work unit")}. The site keeps the public read concise while leaving full reports one click away.</p>
+        <p>The workspace has {count_phrase(len(set(project['task_id'] for project in projects)), "active task")}, {count_phrase(len(projects), "active scientist")}, and {count_phrase(total_hypotheses, "tracked work unit")}.</p>
       </article>
     </section>
     <section class="section">
@@ -654,18 +665,18 @@ def build_home(projects: list[dict[str, Any]]) -> str:
       <div class="capability-grid">
         <article>
           <span>01</span>
-          <h3>Projects</h3>
-          <p>Each active topic has a current report, source map, and asset registry. Start here when you want the present state.</p>
+          <h3>Tasks</h3>
+          <p>Each active task is a broad, under-specified challenge or dataset family.</p>
         </article>
         <article>
           <span>02</span>
-          <h3>Work units</h3>
-          <p>Focused work units record what was tried, what changed, and whether the result is ready for follow-up.</p>
+          <h3>Scientists</h3>
+          <p>Each scientist has a concrete scheme, version, target metric, constraints, and proposal history.</p>
         </article>
         <article>
           <span>03</span>
-          <h3>Evidence</h3>
-          <p>Reports point back to source maps, assets, and run records so claims can be checked without reading every log.</p>
+          <h3>Work units</h3>
+          <p>Focused work units record hypotheses, observations, ablations, proxies, synthesis passes, and proposals.</p>
         </article>
         <article>
           <span>04</span>
@@ -675,18 +686,19 @@ def build_home(projects: list[dict[str, Any]]) -> str:
       </div>
     </section>
     <section class="section">
-      <div class="section-head"><p class="eyebrow">Active work</p><h2>Projects in progress</h2></div>
-      <div class="project-intro-grid">{''.join(project_intro_cards) or '<p>No active projects found.</p>'}</div>
+      <div class="section-head"><p class="eyebrow">Active work</p><h2>Scientists in progress</h2></div>
+      <div class="project-intro-grid">{''.join(project_intro_cards) or '<p>No active scientists found.</p>'}</div>
     </section>
     <section class="metric-strip">
-      <div><span>Projects</span><strong>{len(projects)}</strong></div>
+      <div><span>Tasks</span><strong>{len(set(project['task_id'] for project in projects))}</strong></div>
+      <div><span>Scientists</span><strong>{len(projects)}</strong></div>
       <div><span>Work units</span><strong>{total_hypotheses}</strong></div>
       <div><span>Latest update</span><strong>{html.escape(latest_date)}</strong></div>
       <div><span>Visibility</span><strong>Public summary</strong></div>
     </section>
     <section id="projects" class="section">
-      <div class="section-head"><p class="eyebrow">Project index</p><h2>Reports and work units</h2></div>
-      <div class="grid">{''.join(project_cards) or '<p>No active projects found.</p>'}</div>
+      <div class="section-head"><p class="eyebrow">Scientist index</p><h2>Reports and work units</h2></div>
+      <div class="grid">{''.join(project_cards) or '<p>No active scientists found.</p>'}</div>
     </section>
     <section id="activity" class="section split">
       <div>
@@ -697,7 +709,7 @@ def build_home(projects: list[dict[str, Any]]) -> str:
     </section>
     {source_report(status.markdown, "Read system source report")}
     """
-    return page("Agent System", body)
+    return page("AI Lab", body)
 
 
 def build_project(project: dict[str, Any]) -> str:
@@ -722,7 +734,7 @@ def build_project(project: dict[str, Any]) -> str:
     hypothesis_cards = []
     for hyp in hypotheses:
         hyp_report: Report = hyp["report"]
-        href = f"hypotheses/{hyp['id']}/index.html"
+        href = f"work_units/{hyp['id']}/index.html"
         recommendation = recommendation_for(hyp_report)
         recommendation_html = (
             f"<p><span class=\"label-inline\">Next</span> {inline_md(excerpt(recommendation, 260))}</p>"
@@ -766,7 +778,7 @@ def build_project(project: dict[str, Any]) -> str:
           <article class="empty-state">
             <span>Work units</span>
             <h2>No tracked work units yet</h2>
-            <p>This project is still at the project-report stage. When focused experiments or implementation passes are opened, they will appear here as separate work units.</p>
+            <p>This scientist is still at the report stage. When focused experiments or implementation passes are opened, they will appear here as separate work units.</p>
           </article>
         </section>
         """
@@ -784,20 +796,21 @@ def build_project(project: dict[str, Any]) -> str:
           <article class="empty-state">
             <span>Materials</span>
             <h2>No registered assets yet</h2>
-            <p>Datasets, repositories, result bundles, and other reusable materials will be listed here once the project registers them in its asset file.</p>
+            <p>Datasets, repositories, result bundles, and other reusable materials will be listed here once the scientist registers them in its asset file.</p>
           </article>
         </section>
         """
     )
     body = f"""
     <section class="page-title">
-      <p class="eyebrow">Project</p>
+      <p class="eyebrow">Scientist</p>
       <h1>{html.escape(str(project['metadata'].get('title') or display_name(project['id'])))}</h1>
       <div class="meta-row">{badge(report.status)}<span>{html.escape(report.date)}</span><span>{html.escape(source_label(report))}</span></div>
       <p class="lede">{inline_md(excerpt(summary_for(report), 320))}</p>
     </section>
     {project_brief}
     <section class="metric-strip">
+      <div><span>Task</span><strong>{html.escape(str(project.get('task_id', '')))}</strong></div>
       <div><span>Work units</span><strong>{len(hypotheses)}</strong></div>
       <div><span>Assets</span><strong>{len(asset_rows)}</strong></div>
       <div><span>Evidence</span><strong>{html.escape(source_label(report))}</strong></div>
@@ -805,10 +818,10 @@ def build_project(project: dict[str, Any]) -> str:
     </section>
     {work_units_section}
     {assets_section}
-    {optional_report(project.get("guide"), "Read project guide")}
-    {source_report(report.markdown, "Read full project report")}
+    {optional_report(project.get("guide"), "Read scientist guide")}
+    {source_report(report.markdown, "Read full scientist report")}
     """
-    return page(str(project["metadata"].get("title") or display_name(project["id"])), body, current="../../")
+    return page(str(project["metadata"].get("title") or display_name(project["id"])), body, current="../../../../")
 
 
 def build_hypothesis(project: dict[str, Any], hyp: dict[str, Any]) -> str:
@@ -837,7 +850,7 @@ def build_hypothesis(project: dict[str, Any], hyp: dict[str, Any]) -> str:
       <p class="lede">{inline_md(excerpt(summary_for(report), 420))}</p>
     </section>
     <section class="metric-strip">
-      <div><span>Project</span><strong><a href="../../index.html">{html.escape(project_title)}</a></strong></div>
+      <div><span>Scientist</span><strong><a href="../../index.html">{html.escape(project_title)}</a></strong></div>
       <div><span>Status</span><strong>{html.escape(status_label(report.status))}</strong></div>
       <div><span>Evidence</span><strong>{html.escape(source_label(report))}</strong></div>
       <div><span>Type</span><strong>Work unit</strong></div>
@@ -846,7 +859,7 @@ def build_hypothesis(project: dict[str, Any], hyp: dict[str, Any]) -> str:
     {optional_report(hyp.get("guide"), "Read work-unit guide")}
     {source_report(report.markdown, "Read full work-unit report")}
     """
-    return page(f"{display_name(project_id)} / {display_name(hyp['id'])}", body, current="../../../../")
+    return page(f"{display_name(project_id)} / {display_name(hyp['id'])}", body, current="../../../../../../")
 
 
 def build_tutorial() -> str:
@@ -930,10 +943,10 @@ def build() -> None:
     write_file(DIST_ROOT / "index.html", build_home(projects))
     write_file(DIST_ROOT / "tutorial" / "index.html", build_tutorial())
     for project in projects:
-        project_dir = DIST_ROOT / "projects" / project["id"]
+        project_dir = DIST_ROOT / "tasks" / project["task_id"] / "scientists" / project["id"]
         write_file(project_dir / "index.html", build_project(project))
         for hyp in project["hypotheses"]:
-            write_file(project_dir / "hypotheses" / hyp["id"] / "index.html", build_hypothesis(project, hyp))
+            write_file(project_dir / "work_units" / hyp["id"] / "index.html", build_hypothesis(project, hyp))
     write_file(DIST_ROOT / "robots.txt", "User-agent: *\nDisallow:\n")
 
 
@@ -946,7 +959,7 @@ def serve(port: int) -> None:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Build the agent-system dashboard.")
+    parser = argparse.ArgumentParser(description="Build the ai-lab dashboard.")
     parser.add_argument("--serve", action="store_true", help="Build and serve the dashboard locally.")
     parser.add_argument("--port", type=int, default=8008, help="Local preview port.")
     args = parser.parse_args()

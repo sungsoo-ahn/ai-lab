@@ -1,107 +1,62 @@
-# Agent Research Log Guide
+# AI Lab Guide
 
-This guide explains how the public dashboard maps back to the local research workspace. It is meant for a future reader who wants to know what is active, what evidence exists, and how to restart without digging through the repository first.
+This guide explains how the public dashboard maps back to the local AI Lab workspace.
 
 ## What You Are Looking At
 
-The workspace keeps research under `/Users/sungs/agent-system`. The public site is a generated view of that workspace, not a separate source of truth.
+The workspace lives under `/Users/sungs/ai-lab`. The public site is a generated view of the workspace, not a separate source of truth.
 
-The split is simple:
+Markdown and YAML are canonical. SQLite indexes, cached environments, and generated Pages output are build products.
 
-- reports and guides explain the current state in plain language;
-- memory and logs preserve reusable context for future agent sessions;
-- generated indexes and site files can be rebuilt.
+## Four Layers
 
-Markdown and YAML are the canonical files. SQLite indexes, cached environments, and the generated Pages output are build products.
-
-## How Memory Is Organized
-
-The workspace uses three levels of memory:
-
-1. System memory for account-level behavior and policies.
-2. Project memory for one research topic.
-3. Hypothesis memory for one method, experiment, or work unit.
-
-When restarting work, read in this order:
-
-1. `memory/system/core.md`
-2. the active project report and source map
-3. the relevant hypothesis report, if one is selected
-4. deeper memory only when the current report points there
+1. Lab: shared catalogs, memory, policies, logs, and scientist scheme knowledge.
+2. Task: a broad, under-specified challenge or dataset family.
+3. Scientist: a concrete scheme, version, target metric, constraints, reports, assets, runs, and proposals.
+4. Work unit: the minimal context for one hypothesis, method, observation, ablation, proxy, synthesis, or infrastructure pass.
 
 ## Files Worth Opening First
 
 - `README.md`: workspace overview and command entry points.
-- `reports/system-status.md`: current account-level status.
-- `research/active/<project_id>/guide.md`: project-specific user guide.
-- `research/active/<project_id>/report.md`: current project result and next step.
-- `research/active/<project_id>/source-map.md`: sources and evidence pointers.
-- `research/active/<project_id>/hypotheses/<hypothesis_id>/guide.md`: hypothesis-specific user guide.
-- `research/active/<project_id>/hypotheses/<hypothesis_id>/report.md`: work-unit result, evidence, and recommendation.
-
-## Files Agents Use Behind The Scenes
-
-- `memory/system/`: shared system memory.
-- `memory/reflections/`: retrospective lessons and proposed self-updates.
-- `logs/`: append-only activity and execution notes.
-- `research/active/<project_id>/memory/`: project memory.
-- `research/active/<project_id>/runs/`: project run records and artifacts.
-- `research/active/<project_id>/state/`: generated project state.
-- `research/active/<project_id>/hypotheses/<hypothesis_id>/memory/`: hypothesis memory.
-- `research/active/<project_id>/hypotheses/<hypothesis_id>/runs/`: hypothesis run records.
+- `reports/system-status.md`: current AI Lab status.
+- `catalog/tasks.yaml`: broad task catalog.
+- `catalog/scientist-schemes.yaml`: reusable scientist scheme catalog.
+- `tasks/active/<task_id>/task.yaml`: task manifest.
+- `tasks/active/<task_id>/scientists/<scientist_id>/guide.md`: scientist-specific user guide.
+- `tasks/active/<task_id>/scientists/<scientist_id>/report.md`: current scientist result and next step.
+- `tasks/active/<task_id>/scientists/<scientist_id>/work_units/<work_unit_id>/report.md`: work-unit result, evidence, and recommendation.
 
 ## Assets And Evidence
 
-An asset is a material used by the research: a repository, dataset, PDF, config, model checkpoint, result bundle, image, spreadsheet, or binary artifact.
+An asset is a material used by a scientist: a repository, dataset, PDF, config, model checkpoint, result bundle, image, spreadsheet, or binary artifact.
 
-Each project tracks assets in `assets.yaml`. Hypotheses should reference assets by `asset_id` instead of copying raw paths into every report. For ML work, dataset assets should record the schema, split policy, target definition, leakage constraints, preprocessing, and time range.
+Scientists track assets in `assets.yaml`. Work units should reference assets by `asset_id` instead of copying raw paths into every report.
 
-## Guides Versus Reports
+## Proposals
 
-Use `guide.md` for orientation and explanation. A guide should explain how the project or hypothesis works, define unfamiliar domain terms, describe the method and assumptions, explain key metrics or decision rules, and tell a returning user how to safely continue.
-
-Use `report.md` for current findings. A report should summarize what happened, what result was found, what evidence supports it, what decision was made, and what the next action is.
+Work units may propose changes to the scientist scheme, target metric, constraints, or next iteration. Proposals belong under the scientist `proposals/` directory. Accepted proposals are applied by creating a new scientist version; current scientist metrics are not silently changed in place.
 
 ## Common Commands
 
-Run these from `/Users/sungs/agent-system`:
+Run these from `/Users/sungs/ai-lab`:
 
 ```sh
-bin/agent-project init my_project
-bin/agent-project status my_project
-bin/agent-hypothesis init my_project first_method
-bin/agent-hypothesis close my_project first_method
-bin/agent-memory index
-bin/agent-memory search "query terms"
-bin/agent-memory audit
-bin/agent-project restart my_project
-bin/agent-project archive my_project
+bin/ai-lab task status btc
+bin/ai-lab scientist status btc btc_autoresearch_v1
+bin/ai-lab work-unit status btc btc_autoresearch_v1 regime_filter_probe
+bin/ai-lab memory index
+bin/ai-lab memory search "query terms"
+bin/ai-lab memory audit
 ```
 
-## Restarting Work
+Compatibility wrappers remain during migration:
 
-Restarting means archive first, then create a clean active project:
-
-1. The current project folder is moved to `archive/projects/<project_id>/<timestamp>/`.
-2. A new clean `research/active/<project_id>/` folder is created from templates.
-3. The new project links back to the archive as historical context.
-4. Agents use the latest system memory, policies, templates, and tools.
-
-## What To Edit By Hand
-
-These files are intended for clarification and should stay readable:
-
-- project `README.md`
-- project `guide.md`
-- `project.md`
-- `project.yaml`
-- `assets.yaml`
-- hypothesis `README.md`
-- hypothesis `guide.md`
-- `hypothesis.yaml`
-
-Avoid manual edits to generated SQLite indexes. Rebuild them with `bin/agent-memory index`.
+```sh
+bin/agent-project status btc
+bin/agent-hypothesis close btc regime_filter_probe
+bin/agent-memory search btc
+```
 
 ## Privacy Rule
 
-Do not store secrets, API keys, passwords, tokens, private keys, recovery codes, or raw private connector content in memory, logs, reports, or asset metadata.
+Do not store secrets, API keys, passwords, tokens, private keys, recovery codes, or raw private connector content in memory, logs, reports, proposals, or asset metadata.

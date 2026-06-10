@@ -1,0 +1,24 @@
+work_unit_id: <work_unit_id>
+task_id: <task_id>
+scientist_id: <scientist_id>
+type: <metric_optimization|observation|ablation|dataset_proxy|proxy_experiment|synthesis|infrastructure>
+status: active
+created_at: <YYYY-MM-DD>
+updated_at: <YYYY-MM-DD>
+parallel_safe: true
+claimed_by: null
+run_id: null
+touch_scope: <allowed files, dirs, or read-only>
+conflicts_with: []
+proposal_refs: []
+statement: <Hypothesis, method, observation, or subtask>
+method: <Method or subtask>
+expected_signal: <Expected signal>
+assets_used: []
+evaluation_plan: <Evaluation plan>
+outcome: null
+decision: pending
+reports:
+  current: report.md
+guides:
+  user: guide.md

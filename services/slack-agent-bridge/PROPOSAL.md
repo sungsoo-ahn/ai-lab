@@ -8,7 +8,7 @@ Allow the user to talk to the local account agent from Slack using a private Sla
 
 ## Recommended Approach
 
-Build a small Python service under `agent-system` that uses Slack Socket Mode and Bolt for Python. Socket Mode avoids exposing a public HTTP endpoint; the local process connects outbound to Slack over WebSocket and receives app events.
+Build a small Python service under `ai-lab` that uses Slack Socket Mode and Bolt for Python. Socket Mode avoids exposing a public HTTP endpoint; the local process connects outbound to Slack over WebSocket and receives app events.
 
 The bridge should:
 
