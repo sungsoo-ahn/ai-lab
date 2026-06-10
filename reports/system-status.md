@@ -12,14 +12,18 @@ Date: 2026-06-10
 - Generated search index: `memory/index.sqlite`
 - Memory hierarchy: lab -> task -> scientist -> work unit
 - Self-evolution policy: work-unit proposals are gated into new scientist versions
+- Public docs: system guides, scientist briefs, and work-unit briefs
+- Rigid runner: active scientists define `run-spec.yaml`
 
 ## Active Tasks
 
 - `btc`: broad BTC task.
+- `btc_benchmark`: frozen BTC 1h benchmark task.
 
 ## Active Scientists
 
 - `btc/btc_autoresearch_v1`: BTCUSDT short-horizon AI scientist built around the inherited `btc_autoresearch` pipeline. Current next step is a narrow robustness pass around the `t094` family before any sealed holdout decision.
+- `btc_benchmark/btc_benchmark_v2`: frozen-referee benchmark scientist. Current local candidate is `BestEmaRegimeV2`; external submission remains approval-gated.
 
 ## Local Services
 
@@ -32,6 +36,7 @@ Date: 2026-06-10
 - `docs/system/index.md`
 - `docs/system/prompt-provenance.md`
 - `docs/scientists/btc-autoresearch-v1/index.md`
+- `docs/scientists/btc-benchmark-v2/index.md`
 - `reports/system-status.md`
 - `sources/sources.yaml`
 - `catalog/tasks.yaml`
@@ -40,7 +45,7 @@ Date: 2026-06-10
 ## Operational Notes
 
 - Package/runtime changes follow `policies/update-policy.md` and `policies/scientist-runtime-policy.md`.
-- Long-running scientists may use `research/templates/overnight-goal.md` and allowlisted runtime profiles.
+- Long-running scientists may use `research/templates/overnight-goal.md`, validated `run-spec.yaml` files, and allowlisted runtime profiles.
 - Current allowlisted runtime profile: `xgboost-macos`, which installs Homebrew `libomp` for XGBoost.
 - Current runtime status: `xgboost-macos` check passes; Brewfile dependencies are satisfied and XGBoost imports as `3.2.0`.
 - Connector writes still require explicit approval.

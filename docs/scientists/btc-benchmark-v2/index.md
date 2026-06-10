@@ -7,7 +7,7 @@
 <p><strong>Updated:</strong> 2026-06-10 KST</p>
 </div>
 
-## One-Screen Summary
+## Current State
 
 BTC Benchmark v2 is a scientist for the frozen BTC 1h benchmark. It treats `btc_benchmark` as the referee and only changes participant strategy code in `btc_agentic_system`.
 
@@ -56,17 +56,17 @@ The chart below compares the bundled baselines, buy-and-hold reference, initial 
 | Baseline Runner | Establish bundled strategy comparisons. | `EmaTrend` lost money; `XgbMomentum` ran after runtime setup but stayed below buy-and-hold. |
 | Strategy Search | Explore dependency-light causal rules. | Found the initial gated EMA-regime candidate at `+260.5%`. |
 | Robustness Sweeper | Test parameter neighborhoods and gate top variants. | Screened 1,296 EMA variants and gated the top 8. |
-| Report Synthesis | Preserve commands, caveats, and submission boundary. | Updated scientist report, source map, and public manual. |
+| Report Synthesis | Preserve commands, caveats, and submission boundary. | Updated scientist report, source map, and public brief. |
 
 ## Work Units
 
-| Work Unit | Status | Result | Manual |
+| Work Unit | Status | Result | Brief |
 | --- | --- | --- | --- |
-| `referee_reproduction` | complete | Local referee tests passed `131 passed, 1 skipped`; data package repair documented. | [Manual](work-units/referee-reproduction.md) |
-| `bundled_baselines` | complete | `EmaTrend` lost `-81.7%`; `XgbMomentum` scored `+53.3%` after runtime setup. | [Manual](work-units/bundled-baselines.md) |
-| `strategy_search` | complete | Found `BestEmaRegimeV1` at `+260.5%`; superseded by robustness. | [Manual](work-units/strategy-search.md) |
-| `ema_regime_robustness` | complete | Promoted `BestEmaRegimeV2` at `+324.3%`; exhaustive gates passed. | [Manual](work-units/ema-regime-robustness.md) |
-| `report_synthesis` | active | Maintains local evidence and submission readiness. | [Manual](work-units/report-synthesis.md) |
+| `referee_reproduction` | complete | Local referee tests passed `131 passed, 1 skipped`; data package repair documented. | [Brief](work-units/referee-reproduction.md) |
+| `bundled_baselines` | complete | `EmaTrend` lost `-81.7%`; `XgbMomentum` scored `+53.3%` after runtime setup. | [Brief](work-units/bundled-baselines.md) |
+| `strategy_search` | complete | Found `BestEmaRegimeV1` at `+260.5%`; superseded by robustness. | [Brief](work-units/strategy-search.md) |
+| `ema_regime_robustness` | complete | Promoted `BestEmaRegimeV2` at `+324.3%`; exhaustive gates passed. | [Brief](work-units/ema-regime-robustness.md) |
+| `report_synthesis` | active | Maintains local evidence and submission readiness. | [Brief](work-units/report-synthesis.md) |
 
 ## Runtime Lessons
 

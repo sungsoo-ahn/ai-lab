@@ -1,4 +1,9 @@
-# Work Unit Guide: <work_unit_id>
+---
+audience: both
+publish: local
+---
+
+# Work Unit Continuation Guide: <work_unit_id>
 
 Date: <YYYY-MM-DD>
 Status: active

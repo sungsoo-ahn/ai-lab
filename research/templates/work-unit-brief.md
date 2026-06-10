@@ -1,4 +1,9 @@
-# Work Unit Report: <work_unit_id>
+---
+audience: both
+publish: public
+---
+
+# Work Unit Brief: <work_unit_id>
 
 Date: <YYYY-MM-DD>
 Status: active
@@ -7,19 +12,9 @@ Status: active
 
 <What this work unit is trying to learn or improve.>
 
-## Commands Run
+## Method
 
-```sh
-<commands>
-```
-
-## Package Installs
-
-<List package install commands, or "none".>
-
-## Files Changed
-
-- <path or "none">
+<Commands, scripts, datasets, agents, or review process used.>
 
 ## Outputs
 
@@ -33,7 +28,7 @@ Status: active
 
 - Sealed holdout used: <yes/no>
 - Failed trials preserved: <yes/no/not applicable>
-- Backtester/accounting rules changed: <yes/no>
+- Evaluation/accounting rules changed: <yes/no>
 - Live trading/API keys used: no
 
 ## Recommendation

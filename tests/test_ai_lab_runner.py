@@ -131,3 +131,19 @@ def test_source_gate_rejects_disallowed_untracked_path(tmp_path: Path, monkeypat
             },
             strict=True,
         )
+
+
+def test_public_terminology_audit_rejects_manual_language(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    cli = load_cli()
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    (docs / "index.md").write_text("# Scientist Manual\n", encoding="utf-8")
+    (tmp_path / "README.md").write_text("# README\n", encoding="utf-8")
+    (tmp_path / "mkdocs.yml").write_text("site_name: AI Lab\n", encoding="utf-8")
+    templates = tmp_path / "research" / "templates"
+    templates.mkdir(parents=True)
+    monkeypatch.setattr(cli, "ROOT", tmp_path)
+    monkeypatch.setattr(cli, "DOCS", docs)
+    issues: list[str] = []
+    cli.check_public_terminology(issues)
+    assert any("Scientist Manual" in issue for issue in issues)

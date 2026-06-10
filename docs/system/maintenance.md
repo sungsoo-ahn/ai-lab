@@ -1,6 +1,6 @@
 # System Maintenance
 
-This page describes routine maintenance of the AI Lab manual and site.
+This page describes routine maintenance of the AI Lab public docs and site.
 
 ## Local Preview
 
@@ -31,8 +31,8 @@ The audit checks that:
 - static JSON assets parse;
 - prompt manifests point at existing local prompt files;
 - Markdown links under `docs/` resolve locally;
-- active scientists have public scientist manuals;
-- every work unit has `work-unit.yaml`, `guide.md`, `report.md`, and a linked public work-unit manual;
+- active scientists have public scientist briefs;
+- every work unit has `work-unit.yaml`, `guide.md`, `report.md`, and a linked public work-unit brief;
 - `active_work_units` and `completed_work_units` match the statuses in each work-unit manifest;
 - work-unit report status lines match their manifests.
 
@@ -61,18 +61,18 @@ The workflow:
 
 ## Privacy And Connector Rules
 
-- Never store credentials, API keys, tokens, passwords, private keys, recovery codes, or session cookies in manuals, reports, memory, or logs.
+- Never store credentials, API keys, tokens, passwords, private keys, recovery codes, or session cookies in public docs, reports, memory, or logs.
 - Connector reads should be targeted and minimal.
 - Connector writes always require explicit user approval.
-- Local writes under `ai-lab` are allowed for manuals, scientist state, work-unit state, notes, and source maps unless the user asks for read-only work.
+- Local writes under `ai-lab` are allowed for public docs, scientist state, work-unit state, notes, and source maps unless the user asks for read-only work.
 
 ## Maintenance Checklist
 
 - Run `mkdocs build --strict` before committing site changes.
-- Run `bin/ai-lab docs audit` before committing system, scientist, work-unit, or public manual changes.
+- Run `bin/ai-lab docs audit` before committing system, scientist, work-unit, or public brief changes.
 - Run `bin/ai-lab runtime check <profile>` before a long run when a known runtime such as XGBoost is expected.
 - Record important LLM prompts with `bin/ai-lab prompt record` and reference the prompt manifest from the relevant run, scientist, or work-unit page.
-- Confirm new manuals are linked from the relevant System or Scientist index. Work-unit manuals should be linked from their owning scientist manual instead of listed in the global navigation.
+- Confirm new guides and briefs are linked from the relevant System or Scientist index. Work-unit briefs should be linked from their owning scientist brief instead of listed in the global navigation.
 - Confirm pages explain behavior and decisions directly instead of only pointing to implementation files.
 - Confirm implementation paths are accurate when used as provenance.
 - Confirm static JSON/YAML assets validate if edited.

@@ -26,3 +26,5 @@ reports:
 guides:
   user: guide.md
 run_spec: run-spec.yaml
+public_brief: docs/scientists/<scientist_slug>/index.md
+agent_instructions: guide.md

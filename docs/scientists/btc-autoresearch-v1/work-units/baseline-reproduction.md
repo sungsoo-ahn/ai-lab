@@ -75,10 +75,10 @@ Use the local reproduced `t054` metrics for comparable follow-up work. Disclose 
 
 ## How To Continue
 
-Future work units should compare against the local `t054` baseline, not the older static `+60.0%` reference. If the baseline is rerun, preserve the data range, git ref, package workaround, and test result in this manual.
+Future work units should compare against the local `t054` baseline, not the older static `+60.0%` reference. If the baseline is rerun, preserve the data range, git ref, package workaround, and test result in this guide.
 
 ## Implementation References
 
 - Manifest: `tasks/active/btc/scientists/btc_autoresearch_v1/work_units/baseline_reproduction/work-unit.yaml`
 - Source checkout: `sources/checkouts/btc_autoresearch`
-- Baseline trial detail in scientist manual: [BTC AutoResearch v1](../index.md)
+- Baseline trial detail in scientist brief: [BTC AutoResearch v1](../index.md)

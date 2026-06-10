@@ -1,15 +1,15 @@
-# AI Lab Manual
+# AI Lab
 
-This manual explains the AI Lab system before any specific example. The goal is simple: a user, developer, or maintainer should understand how scientists, work units, prompts, artifacts, and decisions fit together without first reading the repository.
+This guide explains the AI Lab system before any specific example. The goal is simple: a user, developer, or maintainer should understand how scientists, work units, prompts, artifacts, and decisions fit together without first reading the repository.
 
 ## At A Glance
 
 | Layer | Question it answers | Primary artifact |
 | --- | --- | --- |
-| Lab | What rules and shared memory govern all work? | System manual, policies, memory, source registry |
+| Lab | What rules and shared memory govern all work? | System guide, policies, memory, source registry |
 | Task | What broad problem family is being studied? | Task manifest and task notes |
-| Scientist | Which versioned agent scheme is active for the task? | Scientist manifest, report, manual, assets |
-| Work unit | What bounded investigation, audit, ablation, or synthesis was run? | Work-unit manifest, report, manual, run artifacts |
+| Scientist | Which versioned agent scheme is active for the task? | Scientist manifest, scientist brief, report, assets |
+| Work unit | What bounded investigation, audit, ablation, or synthesis was run? | Work-unit manifest, work-unit brief, report, run artifacts |
 | Run | What actually happened during one LLM/tool execution? | Run summary, prompt manifest, logs, outputs |
 
 ## How The System Works
@@ -20,10 +20,10 @@ Not every work unit maximizes a score. Some work units audit the pipeline, build
 
 ## What To Inspect First
 
-1. Read the [System Manual](system/index.md) for the operating model.
+1. Read the [System Guide](system/index.md) for the operating model.
 2. Read [System Architecture](system/architecture.md) for the artifact flow.
 3. Read [Prompt Provenance](system/prompt-provenance.md) to understand how exact LLM prompts are recorded.
-4. Open a scientist manual from [Scientist Manuals](scientists/index.md).
+4. Open a scientist brief from [Scientists](scientists/index.md).
 5. Use the scientist's work-unit table to inspect individual investigations.
 
 ## Current Example

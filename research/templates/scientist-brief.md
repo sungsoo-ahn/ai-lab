@@ -1,11 +1,16 @@
-# Scientist Report: <scientist_id>
+---
+audience: both
+publish: public
+---
+
+# Scientist Brief: <scientist_id>
 
 Date: <YYYY-MM-DD>
 Status: active
 
 ## Summary
 
-<Current scientist state, target metric, and result.>
+<Current scientist state, target metric or decision criteria, and best result.>
 
 ## Current Result
 

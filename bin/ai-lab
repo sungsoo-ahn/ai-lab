@@ -28,6 +28,21 @@ DOCS = ROOT / "docs"
 BREWFILE = ROOT / "Brewfile"
 RUN_SPEC_SCHEMA = "ai_lab_scientist_run_v1"
 SECRET_ENV_RE = re.compile(r"(token|secret|password|passwd|api[_-]?key|private[_-]?key)", re.IGNORECASE)
+PUBLIC_TERMINOLOGY_CHECKS = {
+    "AI Lab Manual": "Use AI Lab.",
+    "System Manual": "Use System Guide.",
+    "Scientist Manuals": "Use Scientists or Scientist Briefs.",
+    "Scientist Manual": "Use Scientist Brief.",
+    "Work-Unit Manual": "Use Work Unit Brief.",
+    "Work Unit Manual": "Use Work Unit Brief.",
+    "Plain-English Summary": "Use Summary.",
+    "One-Screen Summary": "Use Current State.",
+    "Role in this manual": "Use Purpose.",
+    "[Manual]": "Use [Brief].",
+    "| Manual |": "Use | Brief |.",
+    "work unit/work-unit": "Use work-unit.",
+    "minimal context for one hypothesis": "Use method, audit, ablation, observation, proxy, or synthesis.",
+}
 ALLOWED_PLACEHOLDERS = {
     "run_id",
     "cycle",
@@ -1265,6 +1280,31 @@ def check_static_assets(issues: list[str]) -> None:
             issues.append(f"invalid JSON: {path.relative_to(ROOT)}: {exc}")
 
 
+def check_public_terminology(issues: list[str]) -> None:
+    paths = sorted(DOCS.rglob("*.md")) + [
+        ROOT / "README.md",
+        ROOT / "mkdocs.yml",
+    ]
+    paths.extend(sorted((ROOT / "research" / "templates").glob("*.md")))
+    paths.extend(sorted((ROOT / "research" / "templates").glob("*.yaml")))
+    for path in paths:
+        if not path.exists():
+            continue
+        if path == DOCS / "reference" / "audience-and-terminology.md":
+            continue
+        text = path.read_text(encoding="utf-8")
+        for phrase, replacement in PUBLIC_TERMINOLOGY_CHECKS.items():
+            if phrase in text:
+                issues.append(
+                    f"discouraged public terminology in {path.relative_to(ROOT)}: "
+                    f"{phrase!r}. {replacement}"
+                )
+        if path.is_relative_to(DOCS):
+            match = re.search(r"^audience:\s*agent\s*$", text, re.MULTILINE)
+            if match:
+                issues.append(f"agent-only page must not be under public docs: {path.relative_to(ROOT)}")
+
+
 def check_prompt_manifests(issues: list[str]) -> None:
     if not TASKS.exists():
         return
@@ -1314,7 +1354,7 @@ def check_scientist_docs(issues: list[str]) -> None:
             if scientist_id in active_scientists:
                 manual = DOCS / "scientists" / doc_slug(scientist_id) / "index.md"
                 if not manual.exists():
-                    issues.append(f"missing public scientist manual: {manual.relative_to(ROOT)}")
+                    issues.append(f"missing public scientist brief: {manual.relative_to(ROOT)}")
             declared_active = set(read_yaml_list(manifest, "active_work_units"))
             declared_completed = set(read_yaml_list(manifest, "completed_work_units"))
             actual_active: set[str] = set()
@@ -1359,12 +1399,12 @@ def check_scientist_docs(issues: list[str]) -> None:
                     / f"{doc_slug(work_unit_id)}.md"
                 )
                 if not public_work_manual.exists():
-                    issues.append(f"missing public work-unit manual: {public_work_manual.relative_to(ROOT)}")
+                    issues.append(f"missing public work-unit brief: {public_work_manual.relative_to(ROOT)}")
                 elif public_manual.exists():
                     relative_link = f"work-units/{doc_slug(work_unit_id)}.md"
                     if relative_link not in manual_text:
                         issues.append(
-                            "scientist manual does not link work-unit manual: "
+                            "scientist brief does not link work-unit brief: "
                             f"{public_manual.relative_to(ROOT)} -> {relative_link}"
                         )
             if declared_active != actual_active:
@@ -1382,6 +1422,7 @@ def check_scientist_docs(issues: list[str]) -> None:
 def cmd_docs_audit(args: argparse.Namespace) -> None:
     issues: list[str] = []
     check_static_assets(issues)
+    check_public_terminology(issues)
     check_docs_links(issues)
     check_prompt_manifests(issues)
     check_scientist_docs(issues)

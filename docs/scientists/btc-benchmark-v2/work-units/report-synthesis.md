@@ -9,7 +9,7 @@
 
 ## Purpose
 
-Keep the scientist report, source map, public manual, and submission boundary current as benchmark work progresses.
+Keep the scientist report, source map, public brief, and submission boundary current as benchmark work progresses.
 
 ## Current State
 
@@ -29,4 +29,4 @@ Creating an upstream pull request, submitting to a benchmark host, or writing to
 ## Implementation References
 
 - Work-unit report: `tasks/active/btc_benchmark/scientists/btc_benchmark_v2/work_units/report_synthesis/report.md`
-- Scientist manual: `docs/scientists/btc-benchmark-v2/index.md`
+- Scientist brief: `docs/scientists/btc-benchmark-v2/index.md`

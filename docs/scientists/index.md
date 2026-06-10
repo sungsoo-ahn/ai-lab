@@ -1,6 +1,6 @@
-# Scientist Manuals
+# Scientists
 
-Scientist manuals explain concrete AI scientist versions. A scientist is not just a model or script; it is a versioned research scheme with goals, constraints, prompt/run artifacts, work units, reports, and decision gates.
+Scientist briefs summarize concrete AI scientist versions. A scientist is not just a model or script; it is a versioned research scheme with goals, constraints, prompt/run artifacts, work units, reports, and decision gates.
 
 ## What To Look For
 
@@ -14,11 +14,11 @@ Scientist manuals explain concrete AI scientist versions. A scientist is not jus
 
 ## Active Scientists
 
-| Scientist | Task | Role in this manual | Current Decision |
+| Scientist | Task | Purpose | Current Decision |
 | --- | --- | --- | --- |
 | [BTC AutoResearch v1](btc-autoresearch-v1/index.md) | `btc` | Current worked example | Continue with a narrow `t094` robustness work unit before any sealed holdout consideration. |
 | [BTC Benchmark v2](btc-benchmark-v2/index.md) | `btc_benchmark` | Frozen-referee benchmark scientist | Local reproducible candidate found; external submission requires user approval. |
 
 ## Adding Another Scientist
 
-When a new scientist is added, keep its public manual focused on the scheme and decision record. Put detailed work-unit pages under the scientist, but link them from the scientist manual instead of expanding global navigation.
+When a new scientist is added, keep its public brief focused on the scheme and decision record. Put detailed work-unit pages under the scientist, but link them from the scientist brief instead of expanding global navigation.

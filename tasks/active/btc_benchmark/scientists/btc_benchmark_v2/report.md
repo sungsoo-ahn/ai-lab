@@ -3,7 +3,7 @@
 Date: 2026-06-10
 Status: active
 
-## Plain-English Summary
+## Summary
 
 This scientist is assigned to solve the frozen BTC 1h benchmark. The benchmark is split across two repositories: `btc_benchmark` is the frozen referee, while `btc_agentic_system` is the mutable participant strategy package.
 

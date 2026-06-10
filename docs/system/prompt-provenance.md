@@ -6,7 +6,7 @@ Prompts are part of the scientific record. A future maintainer should be able to
 
 Exact run prompts are local run artifacts by default. Public documentation may describe the prompt's purpose and local path, but should not copy raw run prompts into GitHub Pages unless explicitly approved after a privacy review.
 
-This keeps the public manual readable while preserving enough local evidence to audit agent behavior.
+This keeps the public brief readable while preserving enough local evidence to audit agent behavior.
 
 ## Storage Convention
 
@@ -48,7 +48,7 @@ bin/ai-lab prompt record <task_id> <scientist_id> <run_id> <prompt_id> \
 
 ## What Public Docs Should Say
 
-Public scientist and work-unit manuals should summarize:
+Public scientist and work-unit briefs should summarize:
 
 - which prompt artifact controls the run;
 - where the local prompt manifest lives;

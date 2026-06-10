@@ -52,9 +52,9 @@ Do not promote H>1 candidates until horizon-matched holding is part of the prima
 
 ## How To Continue
 
-Integrate horizon-matched H>1 ranking before treating H=4 candidates as comparable to H=1 candidates. Keep `t063` and `t096` as cautionary examples in future scientist manuals.
+Integrate horizon-matched H>1 ranking before treating H=4 candidates as comparable to H=1 candidates. Keep `t063` and `t096` as cautionary examples in future scientist briefs.
 
 ## Implementation References
 
 - Manifest: `tasks/active/btc/scientists/btc_autoresearch_v1/work_units/horizon_h4_audit/work-unit.yaml`
-- Related scientist manual: [BTC AutoResearch v1](../index.md)
+- Related scientist brief: [BTC AutoResearch v1](../index.md)

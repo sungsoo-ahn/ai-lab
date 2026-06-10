@@ -33,7 +33,7 @@ find results_t094_audit -maxdepth 4 -type f | sort
 - Updated scientist report: `tasks/active/btc/scientists/btc_autoresearch_v1/report.md`
 - Updated overnight summary: `tasks/active/btc/scientists/btc_autoresearch_v1/runs/overnight-2026-06-09/overnight-summary.md`
 - Updated reports for all five completed work units.
-- Current public manual pages under `docs/`.
+- Current public brief pages under `docs/`.
 
 ## Decision
 
@@ -48,7 +48,7 @@ Continue with a narrow `t094` robustness work unit before any holdout considerat
 
 ## How To Continue
 
-When future runs complete, update the scientist manual first, then update affected work-unit manuals. Keep negative findings and package/runtime exceptions visible.
+When future runs complete, update the scientist brief first, then update affected work-unit briefs. Keep negative findings and package/runtime exceptions visible.
 
 ## Implementation References
 

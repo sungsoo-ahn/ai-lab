@@ -1,4 +1,4 @@
-# System Manual
+# System Guide
 
 The AI Lab is a local-first workspace for developing AI scientists. It is organized so the reasoning, prompts, artifacts, and decisions behind agentic work remain inspectable after the run is over.
 
@@ -13,10 +13,10 @@ The AI Lab is a local-first workspace for developing AI scientists. It is organi
 
 ## Maintainer Contract
 
-- The manual should explain the system well enough that a reader does not need to inspect source files to understand behavior or decisions.
+- The public docs should explain the system well enough that a reader does not need to inspect source files to understand behavior or decisions.
 - Exact prompts are first-class run artifacts. They are stored locally under run directories and summarized, not copied wholesale, in public docs.
 - Repository paths may appear as provenance references, but the explanation should stand on its own.
-- Secrets, credentials, API keys, tokens, private connector content, and unnecessary personal data must not appear in manuals, prompt artifacts, reports, or logs.
+- Secrets, credentials, API keys, tokens, private connector content, and unnecessary personal data must not appear in public docs, prompt artifacts, reports, or logs.
 - Scientists and work units are hand-maintained documents. Templates and audit checks keep shape consistent, but each page may specialize for the actual work.
 - Work-unit proposals must not silently mutate a current scientist target metric. Accepted proposals create a new scientist version.
 
@@ -32,10 +32,10 @@ The AI Lab is a local-first workspace for developing AI scientists. It is organi
 | Runtime policy | Prefer Python and `uv`; do not introduce Node or Docker by default |
 | Runtime automation | Long runs may use allowlisted runtime profiles such as `xgboost-macos` for XGBoost `libomp` |
 
-## Main Manuals
+## Main Pages
 
 - [Architecture](architecture.md)
 - [Prompt Provenance](prompt-provenance.md)
 - [Maintenance](maintenance.md)
 - [Documentation Standards](documentation-standards.md)
-- [Scientist Manuals](../scientists/index.md)
+- [Scientists](../scientists/index.md)

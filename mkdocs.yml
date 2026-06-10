@@ -1,5 +1,5 @@
-site_name: AI Lab Manual
-site_description: Static operating manual for AI Lab system, scientist, and work-unit documentation.
+site_name: AI Lab
+site_description: Static AI Lab guides, scientist briefs, and work-unit briefs.
 site_url: https://sungsoo-ahn.github.io/ai-lab/
 repo_url: https://github.com/sungsoo-ahn/ai-lab
 
@@ -47,15 +47,17 @@ extra_css:
 
 nav:
   - Home: index.md
-  - System Manual:
+  - System Guide:
       - Overview: system/index.md
       - Architecture: system/architecture.md
       - Prompt Provenance: system/prompt-provenance.md
       - Maintenance: system/maintenance.md
       - Documentation Standards: system/documentation-standards.md
-  - Scientist Manuals:
+  - Reference:
+      - Audience And Terminology: reference/audience-and-terminology.md
+  - Scientists:
       - Overview: scientists/index.md
       - BTC AutoResearch v1:
-          - Scientist Manual: scientists/btc-autoresearch-v1/index.md
+          - Brief: scientists/btc-autoresearch-v1/index.md
       - BTC Benchmark v2:
-          - Scientist Manual: scientists/btc-benchmark-v2/index.md
+          - Brief: scientists/btc-benchmark-v2/index.md

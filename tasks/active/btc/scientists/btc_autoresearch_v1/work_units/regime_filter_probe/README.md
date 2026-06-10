@@ -1,6 +1,6 @@
 # Work Unit: regime_filter_probe
 
-This is a work unit/work-unit workspace for the `btc` scientist.
+This is a work-unit workspace for the `btc` scientist.
 
 Purpose: Try a bounded volatility/regime-filter workstream after baseline reproduction passes.
 

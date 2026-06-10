@@ -3,7 +3,7 @@
 Date: 2026-06-10 00:27 KST
 Status: active
 
-## Plain-English Summary
+## Summary
 
 The overnight BTC AutoResearch orchestration completed the readiness and baseline gate, built local BTCUSDT data, reproduced the documented baseline configuration, extended the official search ledger to 100 trials, and audited the strongest new H=1 candidate.
 

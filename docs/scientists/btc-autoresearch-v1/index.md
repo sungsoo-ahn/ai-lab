@@ -7,7 +7,7 @@
 <p><strong>Updated:</strong> 2026-06-10 00:27 KST</p>
 </div>
 
-## One-Screen Summary
+## Current State
 
 BTC AutoResearch v1 is the current worked example of an AI Lab scientist. It studies BTCUSDT short-horizon backtests using an inherited research pipeline, but it also runs non-score-maximizing work units such as pipeline audits, horizon checks, and report synthesis.
 
@@ -35,7 +35,7 @@ This scientist is not a live-trading system. It does not place orders, use priva
 | Source Checkout / Tool Runner | Runs reproducible code and commands against immutable source refs. | Uses `sources/checkouts/btc_autoresearch` at git ref `ca251130e1f97b6233ceb957cb85e209bc136073`. |
 | Experiment Evaluator | Produces ledgers, metrics, backtests, and audit records. | Extended the M5 score-search ledger to 100 trials. |
 | Scientific Critic / Auditor | Checks leakage, horizon mismatch, cost stress, concentration, fold stability, and invalid shortcuts. | Flagged H=4 horizon mismatch and `t094` concentration risk. |
-| Report Synthesis | Preserves findings and next actions in manuals. | Summarized the overnight run and conservative next step. |
+| Report Synthesis | Preserves findings and next actions in briefs. | Summarized the overnight run and conservative next step. |
 | Human Gate | Accepts, rejects, reruns, or requests a next-version proposal. | Current gate: robustness work before holdout. |
 
 ## Workflow
@@ -48,7 +48,7 @@ flowchart LR
   C -->|configs, code, data| E[Experiment Evaluator]
   E -->|ledger, metrics, artifacts| A[Scientific Critic]
   A -->|caveats and decision| R[Report Synthesis]
-  R -->|manuals and proposals| H[Human Gate]
+  R -->|briefs and proposals| H[Human Gate]
   H -->|accept / reject / rerun| S
 ```
 
@@ -120,13 +120,13 @@ The local reproduced baseline is `t054_a19bd141e75b`: net `+94.0%`, Sharpe `0.71
 
 ## Work Units
 
-| Work Unit | Status | Result | Manual |
+| Work Unit | Status | Result | Brief |
 | --- | --- | --- | --- |
-| `baseline_reproduction` | complete | Readiness gate passed; `t054` reproduced locally at `+94.0%`. | [Manual](work-units/baseline-reproduction.md) |
-| `pipeline_audit` | complete | No accounting/split/holdout blocker found; reporting hygiene caveats recorded. | [Manual](work-units/pipeline-audit.md) |
-| `horizon_h4_audit` | complete | H=4 default winners weaken sharply under horizon-matched holding. | [Manual](work-units/horizon-h4-audit.md) |
-| `regime_filter_probe` | complete | `t094` is promising but weak on fold coverage and concentration. | [Manual](work-units/regime-filter-probe.md) |
-| `report_synthesis` | complete | Reports updated and safety status recorded. | [Manual](work-units/report-synthesis.md) |
+| `baseline_reproduction` | complete | Readiness gate passed; `t054` reproduced locally at `+94.0%`. | [Brief](work-units/baseline-reproduction.md) |
+| `pipeline_audit` | complete | No accounting/split/holdout blocker found; reporting hygiene caveats recorded. | [Brief](work-units/pipeline-audit.md) |
+| `horizon_h4_audit` | complete | H=4 default winners weaken sharply under horizon-matched holding. | [Brief](work-units/horizon-h4-audit.md) |
+| `regime_filter_probe` | complete | `t094` is promising but weak on fold coverage and concentration. | [Brief](work-units/regime-filter-probe.md) |
+| `report_synthesis` | complete | Reports updated and safety status recorded. | [Brief](work-units/report-synthesis.md) |
 
 ## Failure Modes To Watch
 

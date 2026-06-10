@@ -1,6 +1,16 @@
 # Documentation Standards
 
-The AI Lab manuals are hand-maintained. These standards are defaults, not rigid schemas: a scientist or work unit may specialize its format when the work requires it.
+AI Lab public docs are hand-maintained. These standards are defaults, not rigid schemas: a scientist or work unit may specialize its format when the work requires it.
+
+## Audience Rule
+
+Classify content by audience before publishing it:
+
+- `human`: written for users, maintainers, or reviewers; belongs in public docs when non-sensitive.
+- `both`: useful to humans and agents; belongs in public docs when non-sensitive.
+- `agent`: operational prompts, logs, caches, or machine-only instructions; keep local and summarize by path when useful.
+
+Public docs should exclude only agent-only or sensitive content. Use [Audience And Terminology](../reference/audience-and-terminology.md) for the canonical labels.
 
 ## Core Principle
 
@@ -16,7 +26,7 @@ A user, developer, or maintainer should not need to inspect the repository to un
 
 Repository paths are allowed as implementation references and provenance, but the explanation must stand on its own.
 
-## System Manual Checklist
+## System Guide Checklist
 
 - Purpose and current operating model.
 - Layer model and state ownership.
@@ -26,7 +36,7 @@ Repository paths are allowed as implementation references and provenance, but th
 - Documentation rules and maintenance checklist.
 - Current active tasks and scientists.
 
-## Scientist Manual Checklist
+## Scientist Brief Checklist
 
 Include the following when applicable:
 
@@ -44,7 +54,7 @@ Include the following when applicable:
 - Open risks, next actions, and proposal gate.
 - Maintenance notes for future developers.
 
-## Work-Unit Manual Checklist
+## Work Unit Brief Checklist
 
 Include the following when applicable:
 
@@ -72,23 +82,23 @@ For JSON/YAML assets used by plots or diagrams:
 
 - Record exact prompts under the owning run directory, not under `docs/`.
 - Add or update `prompt-manifest.yaml` when a run has prompt artifacts.
-- Link prompt artifacts from scientist or work-unit manuals by local path.
+- Link prompt artifacts from scientist or work-unit briefs by local path.
 - Do not store secrets, connector-private content, credentials, or unnecessary personal data in prompt artifacts.
 - Public pages should summarize prompt purpose and path, not paste long raw prompts.
 
 ## Audit Protocol
 
-Run `bin/ai-lab docs audit` whenever system, scientist, work-unit, static asset, or public manual files change. The command is also part of the GitHub Pages workflow, so documentation drift blocks deployment.
+Run `bin/ai-lab docs audit` whenever system, scientist, work-unit, static asset, or public brief files change. The command is also part of the GitHub Pages workflow, so documentation drift blocks deployment.
 
 ## Update Protocol By Level
 
-System maintenance changes should update the relevant System Manual page, `README.md` or `reports/system-status.md` when entry points change, and `logs/activity.md` when the change is significant.
+System maintenance changes should update the relevant System Guide page, `README.md` or `reports/system-status.md` when entry points change, and `logs/activity.md` when the change is significant.
 
-Scientist changes should update the scientist manifest, scientist report or guide, public scientist manual, prompt manifests for new runs, static plot data when the evidence surface changes, and the active/completed work-unit lists.
+Scientist changes should update the scientist manifest, scientist report or guide, public scientist brief, prompt manifests for new runs, static plot data when the evidence surface changes, and the active/completed work-unit lists.
 
-Work-unit changes should update `work-unit.yaml`, `guide.md`, `report.md`, the public work-unit manual, prompt artifact references when applicable, and the owning scientist manual's work-unit table. When a work unit finishes, close or complete the manifest and keep the report status consistent.
+Work-unit changes should update `work-unit.yaml`, `guide.md`, `report.md`, the public work-unit brief, prompt artifact references when applicable, and the owning scientist brief's work-unit table. When a work unit finishes, close or complete the manifest and keep the report status consistent.
 
-Long-run or overnight changes should update the runbook, prompt artifacts, runtime requirements when used, all touched work-unit reports, the scientist report, source maps, public manuals, and `logs/activity.md`.
+Long-run or overnight changes should update the runbook, prompt artifacts, runtime requirements when used, all touched work-unit reports, the scientist report, source maps, public briefs, and `logs/activity.md`.
 
 ## Writing Style
 
@@ -96,6 +106,6 @@ Long-run or overnight changes should update the runbook, prompt artifacts, runti
 - Start with the general system concept before diving into the current example.
 - Prefer operational specificity over broad claims.
 - Distinguish score-maximizing trials from broader evidence-producing work units.
-- Link work-unit manuals from the owning scientist manual to keep global navigation small.
+- Link work-unit briefs from the owning scientist brief to keep global navigation small.
 - Explain negative findings and rejected directions as useful evidence.
 - Avoid marketing language and hidden assumptions.

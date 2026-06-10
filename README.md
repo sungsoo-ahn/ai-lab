@@ -4,7 +4,7 @@ This directory is the local-first workspace for developing AI scientists on this
 
 An AI scientist is a task-specific orchestration layer for agents. It tries to solve a hard, uncertain task by running work units, preserving evidence, and evolving its scheme and target metric over versions.
 
-The public GitHub Pages site is built with MkDocs Material from `docs/`. It is a static lab manual for explaining the AI Lab model, inspecting BTC scientist work, and reviewing curated trial plots.
+The public GitHub Pages site is built with MkDocs Material from `docs/`. It is a static set of system guides, scientist briefs, and work-unit briefs for explaining the AI Lab model, inspecting BTC scientist work, and reviewing curated trial plots.
 
 ## Layout
 
@@ -16,7 +16,7 @@ The public GitHub Pages site is built with MkDocs Material from `docs/`. It is a
 - `policies/`: operating rules for research, privacy, connectors, packages, and approvals.
 - `archive/`: completed or superseded tasks, scientists, and packages.
 - `logs/`: local activity notes.
-- `docs/`: MkDocs manual organized into system, scientist, and work-unit documentation.
+- `docs/`: MkDocs public documentation organized into system guides, scientist briefs, and work-unit briefs.
 - `reports/system-status.md`: current system status.
 - `bin/ai-lab`: canonical AI Lab helper.
 
@@ -48,14 +48,6 @@ bin/ai-lab runtime ensure xgboost-macos --repo sources/checkouts/btc_agentic_sys
 bin/ai-lab memory index
 bin/ai-lab memory search btc
 bin/ai-lab memory audit
-```
-
-Compatibility wrappers remain for one migration cycle:
-
-```sh
-bin/agent-project status btc
-bin/agent-hypothesis close btc regime_filter_probe
-bin/agent-memory search btc
 ```
 
 ## Starting Codex
@@ -94,7 +86,7 @@ mkdocs serve
 
 Deployment uses `.github/workflows/pages.yml`. Push to `main`, then enable GitHub Pages with GitHub Actions as the source if it is not already enabled.
 
-To add or update public documentation, edit the relevant system, scientist, or work-unit manual under `docs/`. Static plot data lives under `docs/assets/`. Exact LLM prompts live under scientist run directories, not under `docs/`. Use `docs/system/documentation-standards.md` as the checklist for keeping manuals self-contained.
+To add or update public documentation, edit the relevant system guide, scientist brief, or work-unit brief under `docs/`. Static plot data lives under `docs/assets/`. Exact LLM prompts live under scientist run directories, not under `docs/`. Use `docs/system/documentation-standards.md` as the checklist for keeping public docs self-contained.
 
 ## Overnight And Runtime Automation
 

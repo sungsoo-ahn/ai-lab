@@ -1,3 +1,8 @@
+---
+audience: human
+publish: public
+---
+
 # Research Brief: <topic>
 
 Date: <YYYY-MM-DD>
@@ -27,4 +32,3 @@ Status: Draft
 ## Reusable Notes
 
 - <memory candidate or "none">
-

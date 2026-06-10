@@ -163,4 +163,4 @@ Before claiming improvement over the baseline:
 
 ## Immediate Research Interpretation
 
-The next useful step is not to invent a single manual strategy. It is to inspect the existing implemented search and audit pipeline, verify its current reproducible baseline, then propose a tightly scoped improvement that stays within the allowed change surface and produces a comparable candidate report.
+The next useful step is not to hand-write a single strategy. It is to inspect the existing implemented search and audit pipeline, verify its current reproducible baseline, then propose a tightly scoped improvement that stays within the allowed change surface and produces a comparable candidate report.

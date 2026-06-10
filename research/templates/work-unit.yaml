@@ -11,7 +11,7 @@ run_id: null
 touch_scope: <allowed files, dirs, or read-only>
 conflicts_with: []
 proposal_refs: []
-statement: <Hypothesis, method, observation, or subtask>
+statement: <Method, observation, ablation, audit, synthesis pass, or subtask>
 method: <Method or subtask>
 expected_signal: <Expected signal>
 assets_used: []
@@ -23,3 +23,5 @@ reports:
   current: report.md
 guides:
   user: guide.md
+public_brief: docs/scientists/<scientist_slug>/work-units/<work_unit_slug>.md
+agent_instructions: guide.md
