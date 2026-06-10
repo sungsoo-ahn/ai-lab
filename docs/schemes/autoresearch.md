@@ -13,6 +13,10 @@ Use this scheme when the task has a measurable target, reproducible commands, an
 
 Cells using this scheme should define source gates, exact commands, artifact paths, and a synthesis prompt before unattended runs.
 
+## Active BTC Cell
+
+- [BTC Benchmark AutoResearch Overnight v1](../evaluations/btc-benchmark--autoresearch--overnight-v1.md)
+
 ## Approval Boundaries
 
 External submissions, connector writes, account configuration changes, Docker, Node, and unlisted OS package installs require explicit user approval.

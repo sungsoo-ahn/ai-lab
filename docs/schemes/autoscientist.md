@@ -13,6 +13,10 @@ Use this scheme when a task benefits from multiple parallel attempts rather than
 
 Cells using this scheme should define shared state, work-unit ownership, proposal review rules, and a synthesis cadence.
 
+## Active BTC Cell
+
+- [BTC Benchmark AutoScientist Overnight v1](../evaluations/btc-benchmark--autoscientist--overnight-v1.md)
+
 ## Approval Boundaries
 
 External submissions, connector writes, account configuration changes, Docker, Node, and unlisted OS package installs require explicit user approval.

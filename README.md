@@ -48,6 +48,7 @@ uv run python bin/ai-lab cell run-all --continuous --dry-run
 bin/ai-lab work-unit status <cell_id> <work_unit_id>
 bin/ai-lab source status btc_benchmark
 bin/ai-lab docs audit
+bin/run-btc-overnight
 bin/ai-lab memory index
 bin/ai-lab memory search btc
 bin/ai-lab memory audit
@@ -101,6 +102,14 @@ For rigid unattended operation, every active evaluation cell should define `run-
 uv run python bin/ai-lab cell run-spec validate --all
 uv run python bin/ai-lab cell run-all --dry-run --once
 ```
+
+The BTC benchmark overnight comparison has a fixed launcher that runs the AutoResearch and AutoScientist cells in parallel, each bounded by a 180-minute run spec:
+
+```sh
+bin/run-btc-overnight
+```
+
+The full runbook is `docs/evaluations/btc-benchmark-overnight-runbook.md`.
 
 Runtime profiles are checked or installed with:
 

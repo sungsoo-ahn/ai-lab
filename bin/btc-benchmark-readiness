@@ -1,0 +1,91 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+
+import argparse
+import json
+import sys
+from pathlib import Path
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Run BTC benchmark readiness checks for an AI Lab cell.")
+    parser.add_argument("--repo", default=".", help="Path to the btc_benchmark checkout.")
+    parser.add_argument("--run-dir", required=True, help="Cell run directory for readiness artifacts.")
+    parser.add_argument("--gate-max-cutoffs", type=int, default=8, help="Cutoffs per fold for the baseline gate check.")
+    parser.add_argument("--team", default="ai_lab_preflight", help="Team label for the preflight leaderboard record.")
+    return parser.parse_args()
+
+
+def main() -> int:
+    args = parse_args()
+    repo = Path(args.repo).expanduser().resolve()
+    run_dir = Path(args.run_dir).expanduser().resolve()
+    run_dir.mkdir(parents=True, exist_ok=True)
+
+    data_file = repo / "data" / "processed" / "BTCUSDT_futures_um_1h.parquet"
+    data_size = data_file.stat().st_size if data_file.exists() else 0
+    if not data_file.exists() or data_size <= 0:
+        print(json.dumps({"ok": False, "reason": "missing_data", "path": str(data_file)}))
+        return 1
+
+    if str(repo) not in sys.path:
+        sys.path.insert(0, str(repo))
+
+    from btc_benchmark import BENCHMARK_VERSION, load_benchmark_data, run_benchmark
+    from btc_benchmark.decisions.baseline_rules import ema_crossover
+
+    class EmaBaseline:
+        name = "ema_baseline_12_48_long_short"
+        horizon = 1
+
+        def fit(self, data, train_start, train_end):
+            return None
+
+        def positions(self, data, start, end):
+            candles = data.candles.iloc[:end].reset_index(drop=True)
+            return ema_crossover(candles, fast=12, slow=48, mode="long_short")[start:end]
+
+    data = load_benchmark_data(repo, include_sub_bars=False)
+    leaderboard = run_dir / "preflight_leaderboard.jsonl"
+    report = run_benchmark(
+        EmaBaseline(),
+        data,
+        gate_max_cutoffs=args.gate_max_cutoffs,
+        leaderboard_path=leaderboard,
+        team=args.team,
+    )
+    payload = {
+        "ok": not bool(report["disqualified"]),
+        "benchmark_version": BENCHMARK_VERSION,
+        "repo": str(repo),
+        "data_file": str(data_file),
+        "data_size": data_size,
+        "n_candles": len(data.candles),
+        "aux_sources": sorted(data.aux),
+        "baseline_report": report,
+    }
+    (run_dir / "preflight_baseline_report.json").write_text(
+        json.dumps(payload, indent=2, sort_keys=True, default=str) + "\n",
+        encoding="utf-8",
+    )
+    print(
+        json.dumps(
+            {
+                "ok": payload["ok"],
+                "benchmark_version": BENCHMARK_VERSION,
+                "n_candles": payload["n_candles"],
+                "aux_sources": payload["aux_sources"],
+                "strategy": report["strategy"],
+                "disqualified": report["disqualified"],
+                "net": report["net"],
+                "sharpe": report["sharpe"],
+                "n_folds": report["n_folds"],
+            },
+            sort_keys=True,
+        )
+    )
+    return 0 if payload["ok"] else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

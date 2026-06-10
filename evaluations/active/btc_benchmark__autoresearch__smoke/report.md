@@ -1,7 +1,7 @@
 # Evaluation Cell Report: btc_benchmark__autoresearch__smoke
 
 Date: 2026-06-10
-Status: active
+Status: complete
 
 ## Smoke Run: smoke-20260610
 

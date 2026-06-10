@@ -998,6 +998,7 @@ def run_command(
     context: dict[str, str],
     run_dir: Path,
     dry_run: bool,
+    deadline_epoch: float | None = None,
 ) -> int:
     rendered_obj = render_placeholders(command, context)
     if not isinstance(rendered_obj, dict):
@@ -1008,6 +1009,23 @@ def run_command(
     if dry_run:
         return 0
     timeout = int(rendered_obj.get("timeout_seconds") or 3600)
+    if deadline_epoch is not None:
+        remaining = int(deadline_epoch - time.time())
+        if remaining <= 0:
+            print(f"deadline reached before command: {command_id}")
+            if not dry_run:
+                append_event(
+                    run_dir,
+                    {
+                        "event": "command_skipped",
+                        "group": group,
+                        "cycle": int(cycle),
+                        "command_id": command_id,
+                        "reason": "max_wall_minutes",
+                    },
+                )
+            return 124
+        timeout = min(timeout, max(1, remaining))
     logs = run_dir / "commands"
     logs.mkdir(parents=True, exist_ok=True)
     base = logs / f"cycle-{cycle}-{group}-{command_id}"
@@ -1143,14 +1161,23 @@ def cmd_cell_run(args: argparse.Namespace) -> None:
         write_run_summary(run_dir, args.cell_id, task_id, scheme_id, "running")
         append_event(run_dir, {"event": "run_start", "cell_id": args.cell_id, "task_id": task_id, "scheme_id": scheme_id})
 
+    start = time.time()
+    deadline_epoch = start + max_wall_minutes * 60 if max_wall_minutes else None
+
     for gate_obj in spec.get("source_gates", []) if isinstance(spec.get("source_gates"), list) else []:
         if isinstance(gate_obj, dict):
             check_source_gate(gate_obj, strict=not args.dry_run, run_dir=None if args.dry_run else run_dir)
     for command in preflight:
-        code = run_command(command, group="preflight", context=context, run_dir=run_dir, dry_run=args.dry_run)
+        code = run_command(
+            command,
+            group="preflight",
+            context=context,
+            run_dir=run_dir,
+            dry_run=args.dry_run,
+            deadline_epoch=deadline_epoch,
+        )
         if code != 0:
             raise SystemExit(code)
-    start = time.time()
     previous_fingerprint = ""
     for cycle in range(1, max_cycles + 1):
         if stop_file.exists():
@@ -1161,7 +1188,14 @@ def cmd_cell_run(args: argparse.Namespace) -> None:
             break
         context["cycle"] = str(cycle)
         for command in cycle_commands:
-            code = run_command(command, group="cycle", context=context, run_dir=run_dir, dry_run=args.dry_run)
+            code = run_command(
+                command,
+                group="cycle",
+                context=context,
+                run_dir=run_dir,
+                dry_run=args.dry_run,
+                deadline_epoch=deadline_epoch,
+            )
             if code != 0:
                 raise SystemExit(code)
         if bool(loop.get("stop_on_no_artifact_change")) and not args.dry_run:
@@ -1172,7 +1206,14 @@ def cmd_cell_run(args: argparse.Namespace) -> None:
                 break
             previous_fingerprint = current_fingerprint
         for command in synthesis:
-            code = run_command(command, group="synthesis", context=context, run_dir=run_dir, dry_run=args.dry_run)
+            code = run_command(
+                command,
+                group="synthesis",
+                context=context,
+                run_dir=run_dir,
+                dry_run=args.dry_run,
+                deadline_epoch=deadline_epoch,
+            )
             if code != 0:
                 raise SystemExit(code)
         if cycle < max_cycles and sleep_seconds and args.continuous and not args.dry_run:

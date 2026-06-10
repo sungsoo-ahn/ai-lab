@@ -2,7 +2,7 @@ cell_id: btc_benchmark__autoresearch__smoke
 task_id: btc_benchmark
 scheme_id: autoresearch
 title: btc_benchmark__autoresearch__smoke
-status: active
+status: complete
 version: 1
 parent_cell_id: null
 created_at: 2026-06-10

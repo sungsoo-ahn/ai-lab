@@ -4,7 +4,7 @@ Exact prompts are local evidence. Public docs may summarize them, but should not
 
 ## Storage
 
-Cell run prompts live under:
+Run-specific prompts live under:
 
 ```text
 evaluations/active/<cell_id>/runs/<run_id>/prompts/<prompt_id>.md
@@ -17,6 +17,14 @@ evaluations/active/<cell_id>/runs/<run_id>/prompt-manifest.yaml
 ```
 
 The manifest records prompt IDs, paths, source, sensitivity, and related work units.
+
+Fixed synthesis prompts that are part of a cell's run contract may live at:
+
+```text
+evaluations/active/<cell_id>/synthesis-prompt.md
+```
+
+The run spec snapshot and command logs in each run directory preserve which fixed prompt file was used.
 
 ## Recording Prompts
 

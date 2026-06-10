@@ -14,7 +14,7 @@ The system is organized as a matrix:
 
 ## Current State
 
-The active workspace keeps one benchmark task, reusable schemes, and evaluation cells. Old non-benchmark material, old run history, optional integrations, and legacy plot assets are removed from the tracked tree.
+The active workspace keeps one benchmark task, reusable schemes, and evaluation cells. BTC Benchmark has paired three-hour overnight cells for AutoResearch and AutoScientist, plus a completed smoke reference cell. Old non-benchmark material, old run history, optional integrations, and legacy plot assets are removed from the tracked tree.
 
 ## Start Here
 

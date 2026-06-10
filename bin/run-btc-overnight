@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+set -u
+
+cd "$(dirname "$0")/.."
+
+run_prefix="${1:-btc-overnight-$(date -u +%Y%m%dT%H%M%SZ)}"
+log_dir="logs/overnight"
+mkdir -p "$log_dir"
+
+autoresearch_run="${run_prefix}-autoresearch"
+autoscientist_run="${run_prefix}-autoscientist"
+
+echo "Launching BTC overnight comparison."
+echo "AutoResearch run: ${autoresearch_run}"
+echo "AutoScientist run: ${autoscientist_run}"
+echo "Logs: ${log_dir}/"
+
+uv run python bin/ai-lab cell run btc_benchmark__autoresearch__overnight_v1 \
+  --continuous \
+  --run-id "$autoresearch_run" \
+  > "${log_dir}/${autoresearch_run}.log" 2>&1 &
+autoresearch_pid=$!
+
+uv run python bin/ai-lab cell run btc_benchmark__autoscientist__overnight_v1 \
+  --continuous \
+  --run-id "$autoscientist_run" \
+  > "${log_dir}/${autoscientist_run}.log" 2>&1 &
+autoscientist_pid=$!
+
+autoresearch_status=0
+autoscientist_status=0
+
+wait "$autoresearch_pid" || autoresearch_status=$?
+wait "$autoscientist_pid" || autoscientist_status=$?
+
+echo "AutoResearch status: ${autoresearch_status}"
+echo "AutoScientist status: ${autoscientist_status}"
+
+if [ "$autoresearch_status" -ne 0 ] || [ "$autoscientist_status" -ne 0 ]; then
+  echo "One or more BTC overnight cells failed. Inspect ${log_dir}/ and the cell run directories."
+  exit 1
+fi
+
+echo "BTC overnight comparison completed."

@@ -17,3 +17,5 @@ constraints:
   - External submissions require explicit user approval.
 linked_evaluation_cells:
   - btc_benchmark__autoresearch__smoke
+  - btc_benchmark__autoresearch__overnight_v1
+  - btc_benchmark__autoscientist__overnight_v1

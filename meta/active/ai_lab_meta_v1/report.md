@@ -5,8 +5,8 @@ Status: active
 
 ## Current State
 
-The AI Lab has been refactored around a matrix model: task definitions, reusable AI scientist schemes, and evaluation cells. The meta scientist is initialized as an analysis and proposal layer.
+The AI Lab has been refactored around a matrix model: task definitions, reusable AI scientist schemes, and evaluation cells. The BTC Benchmark task now has paired AutoResearch and AutoScientist overnight cells with fixed run specs, shared preflight gates, and a single parallel launcher.
 
 ## Next Analysis
 
-Initialize the first evaluation cells only after choosing the task, scheme, target metric, and fixed run contract for each comparison.
+After the overnight comparison finishes, compare the two cell reports, failed directions, and proposals. Recommend whether the next improvement should target strategy assets, work-unit decomposition, runner automation, or benchmark-specific evaluation support.

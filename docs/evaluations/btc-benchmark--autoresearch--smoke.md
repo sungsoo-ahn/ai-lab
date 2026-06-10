@@ -1,11 +1,11 @@
 # BTC Benchmark AutoResearch Smoke
 
 Date: 2026-06-10
-Status: active
+Status: complete
 
 ## Summary
 
-This evaluation cell applies the AutoResearch scheme to the BTC Benchmark task only as a short smoke check. It verifies that the registered benchmark checkout can pass a bounded referee test module through the AI Lab fixed runner.
+This completed evaluation cell applied the AutoResearch scheme to the BTC Benchmark task only as a short smoke check. It verified that the registered benchmark checkout can pass a bounded referee test module through the AI Lab fixed runner.
 
 ## Current Run Spec
 

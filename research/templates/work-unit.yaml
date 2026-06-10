@@ -24,5 +24,5 @@ reports:
   current: report.md
 guides:
   user: guide.md
-public_brief: docs/evaluations/<cell_slug>/work-units/<work_unit_slug>.md
+public_brief: docs/evaluations/<cell_slug>--<work_unit_slug>.md
 agent_instructions: guide.md

@@ -1,0 +1,5 @@
+# Evaluation Cell: btc_benchmark__autoscientist__overnight_v1
+
+This cell applies the `autoscientist` scheme to the `btc_benchmark` task for a bounded three-hour overnight run.
+
+Read `guide.md`, `evaluation-cell.yaml`, `report.md`, `run-spec.yaml`, `overnight-runbook.md`, and `synthesis-prompt.md`.

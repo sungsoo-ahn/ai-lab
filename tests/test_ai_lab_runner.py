@@ -174,6 +174,32 @@ def test_source_gate_rejects_disallowed_untracked_path(tmp_path: Path, monkeypat
         )
 
 
+def test_run_command_respects_elapsed_wall_deadline(tmp_path: Path) -> None:
+    cli = load_cli()
+    run_dir = tmp_path / "run"
+    run_dir.mkdir()
+    context = {
+        "cell_id": "demo__autoresearch__v1",
+        "task_id": "demo",
+        "scheme_id": "autoresearch",
+        "run_id": "deadline-test",
+        "cycle": "1",
+        "run_dir": str(run_dir),
+        "cell_dir": str(tmp_path),
+        "root": str(ROOT),
+    }
+    code = cli.run_command(
+        {"id": "late", "argv": ["python", "-c", "print('should not run')"]},
+        group="cycle",
+        context=context,
+        run_dir=run_dir,
+        dry_run=False,
+        deadline_epoch=0,
+    )
+    assert code == 124
+    assert "command_skipped" in (run_dir / "events.jsonl").read_text(encoding="utf-8")
+
+
 def test_public_terminology_audit_rejects_manual_language(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     cli = load_cli()
     docs = tmp_path / "docs"

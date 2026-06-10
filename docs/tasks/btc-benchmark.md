@@ -18,4 +18,6 @@ The main metric is the benchmark referee's development score. Scores are valid o
 
 ## Evaluation Cells
 
+- [BTC Benchmark AutoResearch Overnight v1](../evaluations/btc-benchmark--autoresearch--overnight-v1.md)
+- [BTC Benchmark AutoScientist Overnight v1](../evaluations/btc-benchmark--autoscientist--overnight-v1.md)
 - [BTC Benchmark AutoResearch Smoke](../evaluations/btc-benchmark--autoresearch--smoke.md)
