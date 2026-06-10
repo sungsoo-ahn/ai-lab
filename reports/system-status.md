@@ -5,7 +5,7 @@ Date: 2026-06-10
 ## Current Shape
 
 - Workspace: `/Users/sungs/ai-lab`
-- Compatibility symlink: `/Users/sungs/agent-system`
+- Former compatibility symlink `/Users/sungs/agent-system` has been removed.
 - Canonical storage: Markdown and YAML
 - Generated search index: `memory/index.sqlite`
 - Memory hierarchy: lab -> task -> scientist -> work unit

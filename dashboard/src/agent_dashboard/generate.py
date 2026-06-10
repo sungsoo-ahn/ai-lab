@@ -551,7 +551,7 @@ def page(title: str, body: str, current: str = "") -> str:
       <nav class="footer-links" aria-label="Footer">
         <a href="{current}index.html">Overview</a>
         <a href="{current}tutorial/index.html">Guide</a>
-        <a href="https://github.com/sungsoo-ahn/agent-system">GitHub</a>
+        <a href="https://github.com/sungsoo-ahn/ai-lab">GitHub</a>
       </nav>
     </footer>
     """
