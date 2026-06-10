@@ -108,6 +108,21 @@ rm evaluations/active/btc_benchmark__autoscientist__overnight_v1/STOP
 
 Use a new run prefix for a retry so previous run records remain intact.
 
+## Troubleshooting
+
+If both cells pass preflight and fail immediately at `codex_synthesis` with this stderr:
+
+```text
+Error: stdin is not a terminal
+```
+
+then the synthesis wrapper is launching interactive Codex from a background run. `bin/codex-lab` should use `codex exec` when stdin/stdout are not terminals. Validate the wrapper with:
+
+```sh
+sh -n bin/codex-lab
+rg -n "codex exec" bin/codex-lab
+```
+
 ## After The Run
 
 Review both cell reports and public briefs:

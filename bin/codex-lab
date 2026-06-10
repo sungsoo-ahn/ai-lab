@@ -4,7 +4,15 @@ set -eu
 prompt="Use the account agent setup. Read ~/AGENTS.md and continue from ~/ai-lab."
 
 if [ "$#" -gt 0 ]; then
-  exec codex --cd "$HOME" --ask-for-approval never "$prompt $*"
+  prompt="$prompt $*"
 fi
 
-exec codex --cd "$HOME" --ask-for-approval never "$prompt"
+if [ -t 0 ] && [ -t 1 ]; then
+  exec codex --cd "$HOME" --ask-for-approval never "$prompt"
+fi
+
+if [ "$#" -gt 0 ]; then
+  exec codex exec -c approval_policy='never' --cd "$HOME" --skip-git-repo-check "$prompt"
+fi
+
+exec codex exec -c approval_policy='never' --cd "$HOME" --skip-git-repo-check "$prompt"

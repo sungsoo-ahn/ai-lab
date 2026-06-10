@@ -200,6 +200,12 @@ def test_run_command_respects_elapsed_wall_deadline(tmp_path: Path) -> None:
     assert "command_skipped" in (run_dir / "events.jsonl").read_text(encoding="utf-8")
 
 
+def test_codex_lab_wrapper_uses_exec_for_noninteractive_synthesis() -> None:
+    text = (ROOT / "bin" / "codex-lab").read_text(encoding="utf-8")
+    assert "codex --cd \"$HOME\" --ask-for-approval never" in text
+    assert "codex exec -c approval_policy='never'" in text
+
+
 def test_public_terminology_audit_rejects_manual_language(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     cli = load_cli()
     docs = tmp_path / "docs"
