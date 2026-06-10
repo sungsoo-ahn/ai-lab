@@ -2,13 +2,19 @@
 from __future__ import annotations
 
 import argparse
+import contextlib
 import datetime as dt
+import fnmatch
+import glob
+import hashlib
+import io
 import json
 import os
 import re
 import shutil
 import subprocess
 import sys
+import time
 import urllib.parse
 from pathlib import Path
 
@@ -20,6 +26,17 @@ SOURCES = ROOT / "sources"
 SOURCE_REGISTRY = SOURCES / "sources.yaml"
 DOCS = ROOT / "docs"
 BREWFILE = ROOT / "Brewfile"
+RUN_SPEC_SCHEMA = "ai_lab_scientist_run_v1"
+SECRET_ENV_RE = re.compile(r"(token|secret|password|passwd|api[_-]?key|private[_-]?key)", re.IGNORECASE)
+ALLOWED_PLACEHOLDERS = {
+    "run_id",
+    "cycle",
+    "task_id",
+    "scientist_id",
+    "run_dir",
+    "scientist_dir",
+    "root",
+}
 
 
 RUNTIME_PROFILES = {
@@ -39,6 +56,10 @@ def timestamp() -> str:
     return dt.datetime.now(dt.timezone.utc).strftime("%Y%m%dT%H%M%SZ")
 
 
+def now_iso() -> str:
+    return dt.datetime.now(dt.timezone.utc).isoformat()
+
+
 def safe_id(value: str, label: str) -> str:
     if "/" in value or value in {"", ".", ".."}:
         raise SystemExit(f"Invalid {label}.")
@@ -50,6 +71,17 @@ def write_new(path: Path, text: str) -> None:
         return
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(text, encoding="utf-8")
+
+
+def require_yaml():
+    try:
+        import yaml  # type: ignore
+    except ModuleNotFoundError as exc:
+        raise SystemExit(
+            "PyYAML is required for scientist run specs. Run from /Users/sungs/ai-lab with `uv run python bin/ai-lab ...` "
+            "after `uv sync`."
+        ) from exc
+    return yaml
 
 
 def run_git(path: Path, *args: str, check: bool = True) -> subprocess.CompletedProcess[str]:
@@ -510,6 +542,561 @@ def cmd_scientist_version(args: argparse.Namespace) -> None:
     print(dest)
 
 
+def scientist_run_spec_path(task_id: str, scientist_id: str) -> Path:
+    return scientist_dir(task_id, scientist_id) / "run-spec.yaml"
+
+
+def load_run_spec(path: Path) -> dict[str, object]:
+    if not path.exists():
+        raise SystemExit(f"Run spec not found: {path}")
+    yaml = require_yaml()
+    data = yaml.safe_load(path.read_text(encoding="utf-8"))
+    if not isinstance(data, dict):
+        raise SystemExit(f"Run spec must be a YAML mapping: {path}")
+    return data
+
+
+def require_mapping(value: object, label: str, issues: list[str]) -> dict[str, object]:
+    if isinstance(value, dict):
+        return value
+    issues.append(f"{label} must be a mapping")
+    return {}
+
+
+def require_list(value: object, label: str, issues: list[str]) -> list[object]:
+    if isinstance(value, list):
+        return value
+    issues.append(f"{label} must be a list")
+    return []
+
+
+def command_kind(command: dict[str, object]) -> str | None:
+    kinds = [key for key in ("argv", "script", "builtin") if key in command]
+    return kinds[0] if len(kinds) == 1 else None
+
+
+def collect_placeholders(value: object) -> set[str]:
+    found: set[str] = set()
+    if isinstance(value, str):
+        for match in re.finditer(r"\{([A-Za-z0-9_]+)\}", value):
+            found.add(match.group(1))
+    elif isinstance(value, list):
+        for item in value:
+            found.update(collect_placeholders(item))
+    elif isinstance(value, dict):
+        for item in value.values():
+            found.update(collect_placeholders(item))
+    return found
+
+
+def validate_run_spec(spec: dict[str, object], *, path: Path | None = None) -> list[str]:
+    issues: list[str] = []
+    if spec.get("schema_version") != RUN_SPEC_SCHEMA:
+        issues.append(f"schema_version must be {RUN_SPEC_SCHEMA}")
+    for key in ("task_id", "scientist_id", "profile_id"):
+        if not isinstance(spec.get(key), str) or not str(spec.get(key)).strip():
+            issues.append(f"{key} must be a non-empty string")
+    if path is not None:
+        expected_task = path.parents[2].name if len(path.parents) > 2 else None
+        expected_scientist = path.parent.name
+        if spec.get("task_id") != expected_task:
+            issues.append(f"task_id does not match path: expected {expected_task}")
+        if spec.get("scientist_id") != expected_scientist:
+            issues.append(f"scientist_id does not match path: expected {expected_scientist}")
+
+    loop = require_mapping(spec.get("loop"), "loop", issues)
+    if loop.get("mode") not in {"continuous", "manual"}:
+        issues.append("loop.mode must be continuous or manual")
+    for key in ("sleep_seconds", "max_cycles", "max_wall_minutes"):
+        if key in loop and (not isinstance(loop.get(key), int) or int(loop.get(key)) < 0):
+            issues.append(f"loop.{key} must be a non-negative integer")
+    if "stop_file" in loop and not isinstance(loop.get("stop_file"), str):
+        issues.append("loop.stop_file must be a string")
+    if "stop_on_no_artifact_change" in loop and not isinstance(loop.get("stop_on_no_artifact_change"), bool):
+        issues.append("loop.stop_on_no_artifact_change must be a boolean")
+
+    for idx, gate_obj in enumerate(require_list(spec.get("source_gates", []), "source_gates", issues)):
+        gate = require_mapping(gate_obj, f"source_gates[{idx}]", issues)
+        if not isinstance(gate.get("source_id"), str) or not str(gate.get("source_id")).strip():
+            issues.append(f"source_gates[{idx}].source_id must be a non-empty string")
+        if gate.get("head_policy") not in {"require_registered_ref", "warn_registered_ref", "ignore_registered_ref"}:
+            issues.append(f"source_gates[{idx}].head_policy is invalid")
+        if "tracked_clean" in gate and not isinstance(gate.get("tracked_clean"), bool):
+            issues.append(f"source_gates[{idx}].tracked_clean must be a boolean")
+        if "allow_untracked" in gate:
+            patterns = require_list(gate.get("allow_untracked"), f"source_gates[{idx}].allow_untracked", issues)
+            for pat_idx, pattern in enumerate(patterns):
+                if not isinstance(pattern, str) or not pattern:
+                    issues.append(f"source_gates[{idx}].allow_untracked[{pat_idx}] must be a non-empty string")
+
+    commands = require_mapping(spec.get("commands"), "commands", issues)
+    for group in ("preflight", "cycle", "synthesis"):
+        entries = require_list(commands.get(group, []), f"commands.{group}", issues)
+        for idx, command_obj in enumerate(entries):
+            label = f"commands.{group}[{idx}]"
+            command = require_mapping(command_obj, label, issues)
+            if not isinstance(command.get("id"), str) or not str(command.get("id")).strip():
+                issues.append(f"{label}.id must be a non-empty string")
+            kind = command_kind(command)
+            if kind is None:
+                issues.append(f"{label} must define exactly one of argv, script, or builtin")
+            if kind == "argv":
+                argv = command.get("argv")
+                if not isinstance(argv, list) or not argv or not all(isinstance(item, str) for item in argv):
+                    issues.append(f"{label}.argv must be a non-empty list of strings")
+            if kind == "script" and not isinstance(command.get("script"), str):
+                issues.append(f"{label}.script must be a string")
+            if kind == "builtin":
+                if command.get("builtin") not in {"source_status", "synthesize"}:
+                    issues.append(f"{label}.builtin is invalid")
+                if command.get("builtin") == "synthesize" and group != "synthesis":
+                    issues.append(f"{label}.builtin synthesize is only allowed in commands.synthesis")
+            if "cwd" in command and not isinstance(command.get("cwd"), str):
+                issues.append(f"{label}.cwd must be a string")
+            if "env" in command:
+                env = require_mapping(command.get("env"), f"{label}.env", issues)
+                for key, value in env.items():
+                    if not isinstance(key, str) or not isinstance(value, str):
+                        issues.append(f"{label}.env entries must be string:string")
+            if "timeout_seconds" in command and (
+                not isinstance(command.get("timeout_seconds"), int) or int(command.get("timeout_seconds")) <= 0
+            ):
+                issues.append(f"{label}.timeout_seconds must be a positive integer")
+            if "artifacts" in command:
+                artifacts = require_list(command.get("artifacts"), f"{label}.artifacts", issues)
+                for art_idx, pattern in enumerate(artifacts):
+                    if not isinstance(pattern, str) or not pattern:
+                        issues.append(f"{label}.artifacts[{art_idx}] must be a non-empty string")
+            unknown_placeholders = collect_placeholders(command) - ALLOWED_PLACEHOLDERS
+            for placeholder in sorted(unknown_placeholders):
+                issues.append(f"{label} uses unknown placeholder {{{placeholder}}}")
+    return issues
+
+
+def active_scientist_ids() -> list[tuple[str, str]]:
+    if not TASKS.exists():
+        return []
+    ids: list[tuple[str, str]] = []
+    for task_path in sorted(path for path in TASKS.iterdir() if path.is_dir()):
+        scientists_root = task_path / "scientists"
+        if not scientists_root.exists():
+            continue
+        for scientist_path in sorted(path for path in scientists_root.iterdir() if path.is_dir()):
+            manifest = scientist_path / "scientist.yaml"
+            if not manifest.exists() or read_yaml_scalar(manifest, "status") == "active":
+                ids.append((task_path.name, scientist_path.name))
+    return ids
+
+
+def cmd_scientist_run_spec_validate(args: argparse.Namespace) -> None:
+    if not args.all and (not args.task_id or not args.scientist_id):
+        raise SystemExit("Specify task_id and scientist_id, or use --all.")
+    targets = active_scientist_ids() if args.all else [(args.task_id, args.scientist_id)]
+    failed = False
+    for task_id, scientist_id in targets:
+        path = scientist_run_spec_path(task_id, scientist_id)
+        spec = load_run_spec(path)
+        issues = validate_run_spec(spec, path=path)
+        if issues:
+            failed = True
+            print(f"{path.relative_to(ROOT)}: invalid")
+            for issue in issues:
+                print(f"- {issue}")
+        else:
+            print(f"{path.relative_to(ROOT)}: valid")
+    if failed:
+        raise SystemExit(1)
+
+
+def redact_env(env: dict[str, str]) -> dict[str, str]:
+    redacted: dict[str, str] = {}
+    for key, value in env.items():
+        redacted[key] = "[REDACTED]" if SECRET_ENV_RE.search(key) else value
+    return redacted
+
+
+def render_placeholders(value: object, context: dict[str, str]) -> object:
+    if isinstance(value, str):
+        rendered = value
+        for key, replacement in context.items():
+            rendered = rendered.replace("{" + key + "}", replacement)
+        return rendered
+    if isinstance(value, list):
+        return [render_placeholders(item, context) for item in value]
+    if isinstance(value, dict):
+        return {str(key): render_placeholders(val, context) for key, val in value.items()}
+    return value
+
+
+def append_event(run_dir: Path, event: dict[str, object]) -> None:
+    event = {"time": now_iso(), **event}
+    with (run_dir / "events.jsonl").open("a", encoding="utf-8") as f:
+        f.write(json.dumps(event, sort_keys=True) + "\n")
+
+
+def untracked_allowed(path: str, patterns: list[str]) -> bool:
+    clean = path.rstrip("/")
+    for pattern in patterns:
+        pat = pattern.rstrip("/")
+        if pattern.endswith("/") and (clean == pat or clean.startswith(pat + "/")):
+            return True
+        if fnmatch.fnmatch(clean, pat) or fnmatch.fnmatch(clean + "/", pattern):
+            return True
+    return False
+
+
+def check_source_gate(gate: dict[str, object], *, strict: bool, run_dir: Path | None = None) -> None:
+    source_id = str(gate["source_id"])
+    source = get_source(source_id)
+    path = source_path(source)
+    if not path.exists():
+        raise SystemExit(f"Source gate failed for {source_id}: materialized path missing: {path}")
+    expected = str(source.get("git_ref") or "")
+    head = run_git(path, "rev-parse", "HEAD", check=False)
+    current = head.stdout.strip() if head.returncode == 0 else ""
+    head_policy = str(gate.get("head_policy") or "require_registered_ref")
+    head_matches = bool(expected and current.startswith(expected))
+    if head_policy == "require_registered_ref" and not head_matches:
+        raise SystemExit(f"Source gate failed for {source_id}: HEAD {current or 'unknown'} does not match {expected}")
+    if head_policy == "warn_registered_ref" and not head_matches:
+        message = f"Source gate warning for {source_id}: HEAD {current or 'unknown'} does not match {expected}"
+        print(message)
+        if run_dir is not None:
+            append_event(run_dir, {"event": "source_gate_warning", "source_id": source_id, "message": message})
+
+    if bool(gate.get("tracked_clean", False)):
+        tracked = run_git(path, "status", "--short", "--untracked-files=no", check=False).stdout.strip()
+        if tracked:
+            raise SystemExit(f"Source gate failed for {source_id}: tracked files are dirty:\n{tracked}")
+    patterns = [str(item) for item in gate.get("allow_untracked", []) if isinstance(item, str)]
+    full_status = run_git(path, "status", "--short", check=False).stdout.splitlines()
+    untracked = [line[3:] for line in full_status if line.startswith("?? ")]
+    disallowed = [item for item in untracked if not untracked_allowed(item, patterns)]
+    if disallowed:
+        label = "failed" if strict else "warning"
+        message = f"Source gate {label} for {source_id}: disallowed untracked paths: {', '.join(disallowed)}"
+        if strict:
+            raise SystemExit(message)
+        print(message)
+        if run_dir is not None:
+            append_event(run_dir, {"event": "source_gate_warning", "source_id": source_id, "message": message})
+
+
+def write_run_summary(run_dir: Path, task_id: str, scientist_id: str, status: str) -> None:
+    summary = run_dir / "run-summary.md"
+    if summary.exists():
+        return
+    summary.write_text(
+        f"""# Fixed Runner Summary: {task_id}/{scientist_id}
+
+Run ID: {run_dir.name}
+Status: {status}
+Started: {now_iso()}
+
+Events: `events.jsonl`
+Command logs: `commands/`
+Spec snapshot: `run-spec.snapshot.yaml`
+""",
+        encoding="utf-8",
+    )
+
+
+def command_artifact_fingerprint(command: dict[str, object], cwd: Path) -> list[str]:
+    fingerprints: list[str] = []
+    artifact_patterns = command.get("artifacts", []) if isinstance(command.get("artifacts"), list) else []
+    for raw_pattern in artifact_patterns:
+        if not isinstance(raw_pattern, str):
+            continue
+        pattern_path = Path(raw_pattern)
+        pattern = str(pattern_path if pattern_path.is_absolute() else cwd / pattern_path)
+        for match in sorted(glob.glob(pattern, recursive=True)):
+            p = Path(match)
+            if p.is_file():
+                stat = p.stat()
+                fingerprints.append(f"{p}:{stat.st_size}:{int(stat.st_mtime)}")
+    return fingerprints
+
+
+def artifact_fingerprint(commands: list[dict[str, object]], default_cwd: Path) -> str:
+    values: list[str] = []
+    for command in commands:
+        cwd = Path(str(command.get("cwd") or default_cwd)).expanduser()
+        values.extend(command_artifact_fingerprint(command, cwd))
+    payload = "\n".join(sorted(values))
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
+def command_display(command: dict[str, object], context: dict[str, str]) -> str:
+    rendered = render_placeholders(command, context)
+    if isinstance(rendered, dict) and "argv" in rendered:
+        return " ".join(str(item) for item in rendered["argv"])
+    if isinstance(rendered, dict) and "script" in rendered:
+        return str(rendered["script"])
+    if isinstance(rendered, dict) and "builtin" in rendered:
+        args = rendered.get("args", [])
+        arg_text = " ".join(str(item) for item in args) if isinstance(args, list) else ""
+        return f"builtin:{rendered['builtin']} {arg_text}".strip()
+    return "<invalid command>"
+
+
+def run_source_status_builtin(args: list[str]) -> tuple[int, str, str]:
+    if len(args) != 1:
+        return 2, "", "source_status requires exactly one source_id"
+    ns = argparse.Namespace(source_id=args[0])
+    out = io.StringIO()
+    err = io.StringIO()
+    code = 0
+    with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+        try:
+            cmd_source_status(ns)
+        except SystemExit as exc:
+            code = int(exc.code) if isinstance(exc.code, int) else 1
+    return code, out.getvalue(), err.getvalue()
+
+
+def synthesize_prompt(task_id: str, scientist_id: str, run_id: str, cycle: int) -> str:
+    scientist = scientist_dir(task_id, scientist_id)
+    prompt_file = scientist / "synthesis-prompt.md"
+    if not prompt_file.exists():
+        raise SystemExit(f"Synthesis prompt not found: {prompt_file}")
+    run_dir = scientist / "runs" / run_id
+    return (
+        "Use the account agent setup. Read ~/AGENTS.md. "
+        f"Read {prompt_file}. Current run directory: {run_dir}. "
+        f"Task: {task_id}. Scientist: {scientist_id}. Run ID: {run_id}. Cycle: {cycle}. "
+        "Execute the synthesis instructions exactly and then stop."
+    )
+
+
+def run_synthesize_builtin(task_id: str, scientist_id: str, run_id: str, cycle: int, timeout: int) -> subprocess.CompletedProcess[str]:
+    prompt = synthesize_prompt(task_id, scientist_id, run_id, cycle)
+    return subprocess.run(
+        [str(ROOT / "bin" / "codex-lab"), prompt],
+        cwd=str(ROOT.parent),
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        timeout=timeout,
+        check=False,
+    )
+
+
+def run_command(
+    command: dict[str, object],
+    *,
+    group: str,
+    context: dict[str, str],
+    run_dir: Path,
+    dry_run: bool,
+) -> int:
+    rendered_obj = render_placeholders(command, context)
+    if not isinstance(rendered_obj, dict):
+        raise SystemExit("Rendered command is invalid.")
+    command_id = str(rendered_obj.get("id") or "command")
+    cycle = context["cycle"]
+    print(f"[{group}] {command_id}: {command_display(command, context)}")
+    if dry_run:
+        return 0
+    timeout = int(rendered_obj.get("timeout_seconds") or 3600)
+    logs = run_dir / "commands"
+    logs.mkdir(parents=True, exist_ok=True)
+    base = logs / f"cycle-{cycle}-{group}-{command_id}"
+    started = time.time()
+    append_event(
+        run_dir,
+        {
+            "event": "command_start",
+            "group": group,
+            "cycle": int(cycle),
+            "command_id": command_id,
+            "command": command_display(command, context),
+            "cwd": rendered_obj.get("cwd"),
+            "env": redact_env(rendered_obj.get("env", {}) if isinstance(rendered_obj.get("env"), dict) else {}),
+        },
+    )
+    try:
+        if "builtin" in rendered_obj:
+            builtin = str(rendered_obj["builtin"])
+            args = [str(item) for item in rendered_obj.get("args", [])] if isinstance(rendered_obj.get("args", []), list) else []
+            if builtin == "source_status":
+                code, stdout, stderr = run_source_status_builtin(args)
+                result = subprocess.CompletedProcess(["builtin", builtin, *args], code, stdout, stderr)
+            elif builtin == "synthesize":
+                result = run_synthesize_builtin(context["task_id"], context["scientist_id"], context["run_id"], int(cycle), timeout)
+            else:
+                raise SystemExit(f"Unknown builtin: {builtin}")
+        elif "argv" in rendered_obj:
+            argv = [str(item) for item in rendered_obj["argv"]]
+            cwd = Path(str(rendered_obj.get("cwd") or ROOT)).expanduser()
+            env = os.environ.copy()
+            if isinstance(rendered_obj.get("env"), dict):
+                env.update({str(key): str(value) for key, value in rendered_obj["env"].items()})
+            result = subprocess.run(
+                argv,
+                cwd=str(cwd),
+                env=env,
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                timeout=timeout,
+                check=False,
+            )
+        elif "script" in rendered_obj:
+            script = str(rendered_obj["script"])
+            script_path = Path(script).expanduser()
+            if not script_path.is_absolute():
+                script_path = Path(context["scientist_dir"]) / script_path
+            cwd = Path(str(rendered_obj.get("cwd") or script_path.parent)).expanduser()
+            result = subprocess.run(
+                [str(script_path)],
+                cwd=str(cwd),
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                timeout=timeout,
+                check=False,
+            )
+        else:
+            raise SystemExit(f"Command has no executable body: {command_id}")
+    except subprocess.TimeoutExpired as exc:
+        (base.with_suffix(".stdout.log")).write_text(exc.stdout or "", encoding="utf-8")
+        (base.with_suffix(".stderr.log")).write_text(exc.stderr or f"timeout after {timeout}s", encoding="utf-8")
+        append_event(
+            run_dir,
+            {
+                "event": "command_finish",
+                "group": group,
+                "cycle": int(cycle),
+                "command_id": command_id,
+                "returncode": 124,
+                "duration_seconds": round(time.time() - started, 3),
+            },
+        )
+        return 124
+    (base.with_suffix(".stdout.log")).write_text(result.stdout or "", encoding="utf-8")
+    (base.with_suffix(".stderr.log")).write_text(result.stderr or "", encoding="utf-8")
+    append_event(
+        run_dir,
+        {
+            "event": "command_finish",
+            "group": group,
+            "cycle": int(cycle),
+            "command_id": command_id,
+            "returncode": result.returncode,
+            "duration_seconds": round(time.time() - started, 3),
+            "stdout": str(base.with_suffix(".stdout.log").relative_to(run_dir)),
+            "stderr": str(base.with_suffix(".stderr.log").relative_to(run_dir)),
+        },
+    )
+    return int(result.returncode)
+
+
+def cmd_scientist_run(args: argparse.Namespace) -> None:
+    spec_path = scientist_run_spec_path(args.task_id, args.scientist_id)
+    spec = load_run_spec(spec_path)
+    issues = validate_run_spec(spec, path=spec_path)
+    if issues:
+        for issue in issues:
+            print(f"- {issue}")
+        raise SystemExit(1)
+    scientist = scientist_dir(args.task_id, args.scientist_id)
+    run_id = args.run_id or f"fixed-{timestamp()}"
+    run_dir = scientist / "runs" / run_id
+    loop = spec.get("loop", {}) if isinstance(spec.get("loop"), dict) else {}
+    max_cycles = 1 if args.once else int(args.max_cycles or loop.get("max_cycles") or 1)
+    if args.continuous:
+        max_cycles = int(args.max_cycles or loop.get("max_cycles") or 1)
+    max_wall_minutes = int(loop.get("max_wall_minutes") or 0)
+    sleep_seconds = int(loop.get("sleep_seconds") or 0)
+    stop_file = scientist / str(loop.get("stop_file") or "STOP")
+    commands = spec["commands"] if isinstance(spec["commands"], dict) else {}
+    preflight = [item for item in commands.get("preflight", []) if isinstance(item, dict)]
+    cycle_commands = [item for item in commands.get("cycle", []) if isinstance(item, dict)]
+    synthesis = [item for item in commands.get("synthesis", []) if isinstance(item, dict)]
+    context = {
+        "task_id": args.task_id,
+        "scientist_id": args.scientist_id,
+        "run_id": run_id,
+        "cycle": "0",
+        "run_dir": str(run_dir),
+        "scientist_dir": str(scientist),
+        "root": str(ROOT),
+    }
+    if args.dry_run:
+        print(f"dry_run: {args.task_id}/{args.scientist_id} run_id={run_id}")
+    else:
+        run_dir.mkdir(parents=True, exist_ok=True)
+        (run_dir / "run-spec.snapshot.yaml").write_text(spec_path.read_text(encoding="utf-8"), encoding="utf-8")
+        write_run_summary(run_dir, args.task_id, args.scientist_id, "running")
+        append_event(run_dir, {"event": "run_start", "task_id": args.task_id, "scientist_id": args.scientist_id})
+
+    for gate_obj in spec.get("source_gates", []) if isinstance(spec.get("source_gates"), list) else []:
+        if isinstance(gate_obj, dict):
+            check_source_gate(gate_obj, strict=not args.dry_run, run_dir=None if args.dry_run else run_dir)
+    for command in preflight:
+        code = run_command(command, group="preflight", context=context, run_dir=run_dir, dry_run=args.dry_run)
+        if code != 0:
+            raise SystemExit(code)
+    start = time.time()
+    previous_fingerprint = ""
+    for cycle in range(1, max_cycles + 1):
+        if stop_file.exists():
+            print(f"stop_file present: {stop_file}")
+            break
+        if max_wall_minutes and (time.time() - start) > max_wall_minutes * 60:
+            print(f"max_wall_minutes reached: {max_wall_minutes}")
+            break
+        context["cycle"] = str(cycle)
+        for command in cycle_commands:
+            code = run_command(command, group="cycle", context=context, run_dir=run_dir, dry_run=args.dry_run)
+            if code != 0:
+                raise SystemExit(code)
+        if bool(loop.get("stop_on_no_artifact_change")) and not args.dry_run:
+            current_fingerprint = artifact_fingerprint(cycle_commands, scientist)
+            if current_fingerprint == previous_fingerprint:
+                append_event(run_dir, {"event": "exit_condition", "reason": "no_artifact_change", "cycle": cycle})
+                print("exit_condition: no_artifact_change")
+                break
+            previous_fingerprint = current_fingerprint
+        for command in synthesis:
+            code = run_command(command, group="synthesis", context=context, run_dir=run_dir, dry_run=args.dry_run)
+            if code != 0:
+                raise SystemExit(code)
+        if cycle < max_cycles and sleep_seconds and args.continuous and not args.dry_run:
+            time.sleep(sleep_seconds)
+    if not args.dry_run:
+        append_event(run_dir, {"event": "run_finish", "task_id": args.task_id, "scientist_id": args.scientist_id})
+    print(f"run_id: {run_id}")
+
+
+def cmd_scientist_run_all(args: argparse.Namespace) -> None:
+    for task_id, scientist_id in active_scientist_ids():
+        ns = argparse.Namespace(
+            task_id=task_id,
+            scientist_id=scientist_id,
+            run_id=None,
+            once=args.once,
+            continuous=args.continuous,
+            dry_run=args.dry_run,
+            max_cycles=args.max_cycles,
+        )
+        cmd_scientist_run(ns)
+
+
+def cmd_scientist_synthesize(args: argparse.Namespace) -> None:
+    prompt = synthesize_prompt(args.task_id, args.scientist_id, args.run_id, args.cycle)
+    if args.print_prompt:
+        print(prompt)
+        return
+    result = subprocess.run(
+        [str(ROOT / "bin" / "codex-lab"), prompt],
+        cwd=str(ROOT.parent),
+        text=True,
+        check=False,
+    )
+    raise SystemExit(result.returncode)
+
+
 def cmd_work_unit_init(args: argparse.Namespace) -> None:
     s = scientist_dir(args.task_id, args.scientist_id)
     if not s.exists():
@@ -718,7 +1305,8 @@ def check_scientist_docs(issues: list[str]) -> None:
             manifest = scientist_path / "scientist.yaml"
             guide = scientist_path / "guide.md"
             report = scientist_path / "report.md"
-            for required in [manifest, guide, report]:
+            run_spec = scientist_path / "run-spec.yaml"
+            for required in [manifest, guide, report, run_spec]:
                 if not required.exists():
                     issues.append(f"missing scientist file: {required.relative_to(ROOT)}")
             if not manifest.exists():
@@ -848,6 +1436,37 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("scientist_id")
     p.add_argument("new_scientist_id")
     p.set_defaults(func=cmd_scientist_version)
+    run_spec = scientist_sub.add_parser("run-spec", help="validate fixed scientist run specs")
+    run_spec_sub = run_spec.add_subparsers(dest="run_spec_cmd", required=True)
+    p = run_spec_sub.add_parser("validate")
+    p.add_argument("task_id", nargs="?")
+    p.add_argument("scientist_id", nargs="?")
+    p.add_argument("--all", action="store_true", help="validate all active scientist run specs")
+    p.set_defaults(func=cmd_scientist_run_spec_validate)
+    p = scientist_sub.add_parser("run", help="execute a fixed scientist run spec")
+    p.add_argument("task_id")
+    p.add_argument("scientist_id")
+    mode = p.add_mutually_exclusive_group(required=True)
+    mode.add_argument("--once", action="store_true", help="run one cycle")
+    mode.add_argument("--continuous", action="store_true", help="run until manifest exit conditions")
+    p.add_argument("--dry-run", action="store_true", help="print commands without executing them")
+    p.add_argument("--run-id")
+    p.add_argument("--max-cycles", type=int)
+    p.set_defaults(func=cmd_scientist_run)
+    p = scientist_sub.add_parser("run-all", help="execute fixed run specs for all active scientists")
+    mode = p.add_mutually_exclusive_group(required=True)
+    mode.add_argument("--once", action="store_true", help="run one cycle for each scientist")
+    mode.add_argument("--continuous", action="store_true", help="run each scientist until manifest exit conditions")
+    p.add_argument("--dry-run", action="store_true", help="print commands without executing them")
+    p.add_argument("--max-cycles", type=int)
+    p.set_defaults(func=cmd_scientist_run_all)
+    p = scientist_sub.add_parser("synthesize", help="run the fixed Codex synthesis prompt for a scientist run")
+    p.add_argument("task_id")
+    p.add_argument("scientist_id")
+    p.add_argument("--run-id", required=True)
+    p.add_argument("--cycle", type=int, required=True)
+    p.add_argument("--print-prompt", action="store_true")
+    p.set_defaults(func=cmd_scientist_synthesize)
 
     wu = sub.add_parser("work-unit", help="manage scientist work units")
     wu_sub = wu.add_subparsers(dest="cmd", required=True)

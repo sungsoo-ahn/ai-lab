@@ -19,6 +19,10 @@ When information may have changed recently, verify it against current sources be
 
 Separate facts from inference. Note weak evidence, conflicts between sources, missing dates, or unclear provenance. Avoid turning a single weak source into a strong conclusion.
 
+## Rigid Scientist Operation
+
+Unattended or recurring scientist work should run through a validated `run-spec.yaml`. The run spec must declare source gates, fixed commands, timeouts, artifacts, synthesis behavior, and exit conditions before the loop is started.
+
 ## Local Files
 
 Use `tasks/active/` for current task, scientist, and work-unit state, and `archive/` for completed or superseded packages. Add durable, reusable facts to `memory/` only when they are likely to matter again and do not contain secrets.

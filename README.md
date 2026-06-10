@@ -36,6 +36,9 @@ Work units can propose changes to a scientist scheme, target metric, constraints
 ```sh
 bin/ai-lab task status btc
 bin/ai-lab scientist status btc btc_autoresearch_v1
+uv run python bin/ai-lab scientist run-spec validate --all
+uv run python bin/ai-lab scientist run btc btc_autoresearch_v1 --once --dry-run
+uv run python bin/ai-lab scientist run-all --continuous --dry-run
 bin/ai-lab work-unit status btc btc_autoresearch_v1 regime_filter_probe
 bin/ai-lab source status btc_autoresearch
 bin/ai-lab prompt record btc btc_autoresearch_v1 overnight-2026-06-09 orchestration --from-file prompt.md
@@ -96,6 +99,13 @@ To add or update public documentation, edit the relevant system, scientist, or w
 ## Overnight And Runtime Automation
 
 For overnight-scale scientist work, start from `research/templates/overnight-goal.md` and keep run-specific details in the scientist `runs/` directory. Authorized long runs may install missing Python dependencies through local `uv` workflows and may use allowlisted runtime profiles such as `xgboost-macos`.
+
+For rigid unattended operation, every active scientist should define `run-spec.yaml`. The run spec is the machine-readable contract for source gates, fixed preflight commands, fixed cycle commands, synthesis commands, timeouts, artifacts, and exit conditions. Validate and dry-run specs before running them:
+
+```sh
+uv run python bin/ai-lab scientist run-spec validate --all
+uv run python bin/ai-lab scientist run-all --dry-run --once
+```
 
 Runtime profiles are checked or installed with:
 

@@ -34,3 +34,4 @@ reports:
   current: report.md
 guides:
   user: guide.md
+run_spec: run-spec.yaml
