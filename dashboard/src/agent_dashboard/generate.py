@@ -401,8 +401,12 @@ def display_name(value: str) -> str:
 
 def source_label(report: Report) -> str:
     if report.path.name == "proposal.md":
-        return "proposal.md"
-    return "report.md"
+        return "Project proposal"
+    if report.kind == "hypothesis":
+        return "Work-unit report"
+    if report.kind == "system":
+        return "System status"
+    return "Project report"
 
 
 def report_metadata(markdown: str) -> tuple[str, str]:
@@ -784,7 +788,7 @@ def build_project(project: dict[str, Any]) -> str:
     <section class="metric-strip">
       <div><span>Work units</span><strong>{len(hypotheses)}</strong></div>
       <div><span>Assets</span><strong>{len(asset_rows)}</strong></div>
-      <div><span>Evidence</span><strong>Reports</strong></div>
+      <div><span>Evidence</span><strong>{html.escape(source_label(report))}</strong></div>
       <div><span>State</span><strong>{html.escape(status_label(report.status))}</strong></div>
     </section>
     {work_units_section}
@@ -822,7 +826,7 @@ def build_hypothesis(project: dict[str, Any], hyp: dict[str, Any]) -> str:
     <section class="metric-strip">
       <div><span>Project</span><strong><a href="../../index.html">{html.escape(project_title)}</a></strong></div>
       <div><span>Status</span><strong>{html.escape(status_label(report.status))}</strong></div>
-      <div><span>Evidence</span><strong>report.md</strong></div>
+      <div><span>Evidence</span><strong>{html.escape(source_label(report))}</strong></div>
       <div><span>Type</span><strong>Work unit</strong></div>
     </section>
     {next_step}
