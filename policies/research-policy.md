@@ -20,4 +20,4 @@ Unattended or recurring evaluation-cell work should run through a validated `run
 
 ## Local Files
 
-Use `tasks/active/` for current task definitions, `scientists/schemes/` for reusable schemes, `evaluations/active/` for current task-by-scheme cells, `meta/active/` for meta-scientist analyses, and `archive/` for completed or superseded packages. Add durable, reusable facts to `memory/` only when they are likely to matter again and do not contain secrets.
+Use `tasks/active/` for current task definitions, `schemes/` for reusable schemes, `evaluations/active/` for current task-by-scheme cells, and `meta/active/` for meta-scientist analyses. Add durable, reusable facts to `memory/` only when they are likely to matter again and do not contain secrets.

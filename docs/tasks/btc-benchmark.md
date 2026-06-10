@@ -18,8 +18,4 @@ The main metric is the benchmark referee's development score. Scores are valid o
 
 ## Evaluation Cells
 
-No active cells are initialized after the matrix refactor.
-
-## Legacy Evidence
-
-Archived BTC benchmark work remains available through [BTC Evidence](../legacy/btc-evidence.md).
+- [BTC Benchmark AutoResearch Smoke](../evaluations/btc-benchmark--autoresearch--smoke.md)

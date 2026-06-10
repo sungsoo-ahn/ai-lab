@@ -4,12 +4,6 @@ Evaluation cells are the operational units of the AI Lab matrix. Each cell appli
 
 ## Active Cells
 
-No active evaluation cells are initialized after the matrix refactor.
-
-Create one with:
-
-```sh
-bin/ai-lab cell init <task_id>__<scheme_id>__v1 <task_id> <scheme_id>
-```
-
-Then define its metric, constraints, run spec, and public brief before running unattended work.
+| Evaluation Cell | Task | Scheme | Status |
+| --- | --- | --- | --- |
+| [BTC Benchmark AutoResearch Smoke](btc-benchmark--autoresearch--smoke.md) | BTC Benchmark | AutoResearch | active |

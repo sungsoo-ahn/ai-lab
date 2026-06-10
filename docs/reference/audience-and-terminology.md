@@ -37,7 +37,7 @@ Public documentation should exclude only content that is purely agent-facing or 
 | --- | --- |
 | `docs/` | Public human-facing or mixed-audience documentation. |
 | `tasks/active/<task_id>/task.yaml` | Task definition and constraints. |
-| `scientists/schemes/<scheme_id>/scheme.yaml` | Reusable scientist scheme definition. |
+| `schemes/<scheme_id>/scheme.yaml` | Reusable scientist scheme definition. |
 | `evaluations/active/<cell_id>/evaluation-cell.yaml` | Task-by-scheme operational state. |
 | `evaluations/active/<cell_id>/run-spec.yaml` | Agent-facing execution contract, summarized publicly when useful. |
 | `evaluations/active/<cell_id>/runs/` | Local run records, logs, prompts, and outputs. |

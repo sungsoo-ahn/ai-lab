@@ -1,5 +1,0 @@
-#!/bin/sh
-set -eu
-
-cd "$(dirname "$0")/.."
-PYTHONPATH=src exec uv run --no-sync python -m slack_agent_bridge.app "$@"

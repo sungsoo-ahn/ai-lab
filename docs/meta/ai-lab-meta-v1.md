@@ -14,7 +14,7 @@ Initial authority is analyze-and-propose only. The meta scientist may write anal
 ## Inputs
 
 - `tasks/active/`
-- `scientists/schemes/`
+- `schemes/`
 - `evaluations/active/`
 - `reports/system-status.md`
 - `logs/activity.md`

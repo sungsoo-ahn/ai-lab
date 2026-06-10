@@ -4,5 +4,4 @@ Tasks define broad challenge or dataset families. They are deliberately separate
 
 | Task | Category | Status | Notes |
 | --- | --- | --- | --- |
-| [BTC Research](btc.md) | financial backtesting | active | Broad BTC research task with legacy evidence archived. |
 | [BTC Benchmark](btc-benchmark.md) | financial backtesting | active | Frozen referee benchmark task. |

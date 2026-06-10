@@ -7,14 +7,14 @@ The system is organized as a matrix:
 | Layer | Question | Local source |
 | --- | --- | --- |
 | Task | What challenge or dataset family is being attempted? | `tasks/active/<task_id>/task.yaml` |
-| Scientist scheme | What reusable orchestration pattern is being applied? | `scientists/schemes/<scheme_id>/scheme.yaml` |
+| Scientist scheme | What reusable orchestration pattern is being applied? | `schemes/<scheme_id>/scheme.yaml` |
 | Evaluation cell | What happened when one scheme was applied to one task? | `evaluations/active/<cell_id>/evaluation-cell.yaml` |
 | Work unit | What focused method, audit, proxy, or synthesis pass produced evidence? | `evaluations/active/<cell_id>/work_units/<work_unit_id>/` |
 | Meta scientist | What should improve about the overall lab? | `meta/active/ai_lab_meta_v1/` |
 
 ## Current State
 
-The active workspace has been reset around task definitions, reusable schemes, and evaluation cells. The previous BTC task-nested runs are archived as legacy evidence and can still support future performance plots.
+The active workspace keeps one benchmark task, reusable schemes, and evaluation cells. Old non-benchmark material, old run history, optional integrations, and legacy plot assets are removed from the tracked tree.
 
 ## Start Here
 

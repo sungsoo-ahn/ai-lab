@@ -1,0 +1,39 @@
+schema_version: ai_lab_cell_run_v1
+cell_id: btc_benchmark__autoresearch__smoke
+task_id: btc_benchmark
+scheme_id: autoresearch
+profile_id: btc_benchmark_pytest_smoke
+description: One short smoke run against the registered btc_benchmark checkout.
+loop:
+  mode: manual
+  sleep_seconds: 0
+  max_cycles: 1
+  max_wall_minutes: 5
+  stop_file: STOP
+  stop_on_no_artifact_change: false
+source_gates:
+  - source_id: btc_benchmark
+    head_policy: require_registered_ref
+    tracked_clean: true
+    allow_untracked:
+      - uv.lock
+commands:
+  preflight:
+    - id: source_status
+      builtin: source_status
+      args:
+        - btc_benchmark
+      timeout_seconds: 30
+  cycle:
+    - id: metrics_tests
+      cwd: /Users/sungs/ai-lab/sources/checkouts/btc_benchmark
+      argv:
+        - uv
+        - run
+        - python
+        - -m
+        - pytest
+        - tests/test_metrics.py
+        - -q
+      timeout_seconds: 120
+  synthesis: []

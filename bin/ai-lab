@@ -21,10 +21,9 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 TASKS = ROOT / "tasks" / "active"
-SCHEMES = ROOT / "scientists" / "schemes"
+SCHEMES = ROOT / "schemes"
 EVALUATIONS = ROOT / "evaluations" / "active"
 META = ROOT / "meta" / "active"
-ARCHIVE = ROOT / "archive"
 SOURCES = ROOT / "sources"
 SOURCE_REGISTRY = SOURCES / "sources.yaml"
 DOCS = ROOT / "docs"
@@ -60,10 +59,10 @@ ALLOWED_PLACEHOLDERS = {
 
 
 RUNTIME_PROFILES = {
-    "xgboost-macos": {
-        "homebrew": ["libomp"],
-        "python_imports": ["xgboost"],
-        "description": "macOS OpenMP runtime needed by current XGBoost wheels.",
+    "btc-benchmark-python": {
+        "homebrew": [],
+        "python_imports": ["numpy", "pandas", "scipy"],
+        "description": "Python imports needed by the BTC Benchmark checkout.",
     }
 }
 
@@ -402,10 +401,7 @@ def cmd_runtime_check(args: argparse.Namespace) -> None:
                 print(result.stdout.strip() or "ok")
             else:
                 combined = "\n".join(part for part in [result.stdout.strip(), result.stderr.strip()] if part)
-                if "libomp" in combined or "OpenMP" in combined:
-                    print("failed: XGBoost cannot load because the OpenMP runtime libomp is missing.")
-                else:
-                    print("failed: Python import check failed.")
+                print("failed: Python import check failed.")
     if not ok:
         raise SystemExit(1)
 
@@ -459,7 +455,6 @@ known_assets: []
 candidate_metrics: []
 constraints: []
 linked_evaluation_cells: []
-legacy_refs: []
 """,
     )
     print(p)
@@ -471,27 +466,6 @@ def cmd_task_status(args: argparse.Namespace) -> None:
         raise SystemExit(f"Task not found: {args.task_id}")
     manifest = p / "task.yaml"
     print(manifest.read_text(encoding="utf-8") if manifest.exists() else f"No task.yaml for {args.task_id}")
-
-
-def cmd_task_archive(args: argparse.Namespace) -> None:
-    p = task_dir(args.task_id)
-    if not p.exists():
-        raise SystemExit(f"Task not found: {args.task_id}")
-    dest = ARCHIVE / "tasks" / args.task_id / timestamp()
-    dest.parent.mkdir(parents=True, exist_ok=True)
-    shutil.move(str(p), str(dest))
-    print(f"Archived: {dest}")
-
-
-def cmd_task_restart(args: argparse.Namespace) -> None:
-    p = task_dir(args.task_id)
-    if not p.exists():
-        raise SystemExit(f"Task not found: {args.task_id}")
-    dest = ARCHIVE / "tasks" / args.task_id / timestamp()
-    dest.parent.mkdir(parents=True, exist_ok=True)
-    shutil.move(str(p), str(dest))
-    cmd_task_init(args)
-    print(f"Archived prior task: {dest}")
 
 
 def cmd_scheme_init(args: argparse.Namespace) -> None:
@@ -588,8 +562,7 @@ def cmd_cell_init(args: argparse.Namespace) -> None:
         raise SystemExit(f"Scheme not found: {scheme_id}")
     p = cell_dir(cell_id)
     p.mkdir(parents=True, exist_ok=True)
-    for d in ["memory", "runs", "state", "work_units", "proposals"]:
-        (p / d).mkdir(exist_ok=True)
+    (p / "runs").mkdir(exist_ok=True)
     write_new(
         p / "README.md",
         f"""# Evaluation Cell: {cell_id}
@@ -642,16 +615,12 @@ reports:
 guides:
   user: guide.md
 run_spec: run-spec.yaml
-public_brief: docs/evaluations/{doc_slug(cell_id)}/index.md
+public_brief: docs/evaluations/{doc_slug(cell_id)}.md
 agent_instructions: guide.md
 """,
     )
     write_new(p / "report.md", f"# Evaluation Cell Report: {cell_id}\n\nDate: {today()}\nStatus: active\n\nNo result yet.\n")
     write_new(p / "run-spec.yaml", default_cell_run_spec(cell_id, task_id, scheme_id))
-    write_new(p / "memory" / "README.md", "# Cell Memory\n\nReusable cell-specific memory lives here.\n")
-    write_new(p / "runs" / "README.md", "# Cell Runs\n\nRun records live here.\n")
-    write_new(p / "state" / "README.md", "# Cell State\n\nGenerated state lives here.\n")
-    write_new(p / "proposals" / "README.md", "# Cell Proposals\n\nProposal-gated cell evolution records live here.\n")
     print(p)
 
 
@@ -661,16 +630,6 @@ def cmd_cell_status(args: argparse.Namespace) -> None:
         raise SystemExit(f"Evaluation cell not found: {args.cell_id}")
     report = p / "report.md"
     print(report.read_text(encoding="utf-8") if report.exists() else f"No report.md for {args.cell_id}")
-
-
-def cmd_cell_archive(args: argparse.Namespace) -> None:
-    p = cell_dir(args.cell_id)
-    if not p.exists():
-        raise SystemExit(f"Evaluation cell not found: {args.cell_id}")
-    dest = ARCHIVE / "evaluations" / args.cell_id / timestamp()
-    dest.parent.mkdir(parents=True, exist_ok=True)
-    shutil.move(str(p), str(dest))
-    print(f"Archived: {dest}")
 
 
 def cmd_cell_version(args: argparse.Namespace) -> None:
@@ -1261,8 +1220,6 @@ def cmd_work_unit_init(args: argparse.Namespace) -> None:
     task_id, scheme_id = cell_task_scheme(args.cell_id)
     p = work_unit_dir(args.cell_id, args.work_unit_id)
     p.mkdir(parents=True, exist_ok=True)
-    for d in ["memory", "runs"]:
-        (p / d).mkdir(exist_ok=True)
     write_new(
         p / "README.md",
         f"""# Work Unit: {args.work_unit_id}
@@ -1298,7 +1255,7 @@ reports:
   current: report.md
 guides:
   user: guide.md
-public_brief: docs/evaluations/{doc_slug(args.cell_id)}/work-units/{doc_slug(args.work_unit_id)}.md
+public_brief: docs/evaluations/{doc_slug(args.cell_id)}--{doc_slug(args.work_unit_id)}.md
 agent_instructions: guide.md
 """,
     )
@@ -1315,8 +1272,6 @@ Explain the work unit and how to continue it safely.
 """,
     )
     write_new(p / "report.md", f"# Work Unit Report: {args.work_unit_id}\n\nDate: {today()}\nStatus: active\n\nNo result yet.\n")
-    write_new(p / "memory" / "README.md", "# Work Unit Memory\n\nReusable work-unit memory lives here.\n")
-    write_new(p / "runs" / "README.md", "# Work Unit Runs\n\nRun records live here.\n")
     print(p)
 
 
@@ -1516,7 +1471,6 @@ def check_public_terminology(issues: list[str]) -> None:
     for path in paths:
         if not path.exists():
             continue
-        legacy_allowed = path == DOCS / "legacy" / "btc-evidence.md"
         if path == DOCS / "reference" / "audience-and-terminology.md":
             continue
         text = path.read_text(encoding="utf-8")
@@ -1587,7 +1541,7 @@ def check_matrix_docs(issues: list[str]) -> None:
                 if not required.exists():
                     issues.append(f"missing evaluation-cell file: {required.relative_to(ROOT)}")
             cell_id = cell_path.name
-            public_cell = DOCS / "evaluations" / doc_slug(cell_id) / "index.md"
+            public_cell = DOCS / "evaluations" / f"{doc_slug(cell_id)}.md"
             if read_yaml_scalar(manifest, "status") == "active" and not public_cell.exists():
                 issues.append(f"missing public evaluation cell brief: {public_cell.relative_to(ROOT)}")
             declared_active = set(read_yaml_list(manifest, "active_work_units"))
@@ -1621,17 +1575,11 @@ def check_matrix_docs(issues: list[str]) -> None:
                             f"{work_manifest.relative_to(ROOT)} has {status}, "
                             f"{work_report.relative_to(ROOT)} has {current_report_status}"
                         )
-                    public_work = (
-                        DOCS
-                        / "evaluations"
-                        / doc_slug(cell_id)
-                        / "work-units"
-                        / f"{doc_slug(work_unit_id)}.md"
-                    )
+                    public_work = DOCS / "evaluations" / f"{doc_slug(cell_id)}--{doc_slug(work_unit_id)}.md"
                     if not public_work.exists():
                         issues.append(f"missing public work-unit brief: {public_work.relative_to(ROOT)}")
                     elif public_cell.exists():
-                        relative_link = f"work-units/{doc_slug(work_unit_id)}.md"
+                        relative_link = f"{doc_slug(cell_id)}--{doc_slug(work_unit_id)}.md"
                         if relative_link not in public_text:
                             issues.append(
                                 "evaluation cell brief does not link work-unit brief: "
@@ -1661,13 +1609,9 @@ def check_matrix_docs(issues: list[str]) -> None:
                 issues.append(f"missing public meta-scientist page: {public_meta.relative_to(ROOT)}")
 
     for path in sorted(DOCS.rglob("*.md")):
-        if path == DOCS / "legacy" / "btc-evidence.md":
-            continue
         text = path.read_text(encoding="utf-8")
         if "tasks/active/" in text and "/scientists/" in text:
             issues.append(f"active docs point to old task-nested scientist path: {path.relative_to(ROOT)}")
-        if "archive/legacy/btc-2026-06-10" in text:
-            issues.append(f"legacy archive path should only be linked from legacy evidence page: {path.relative_to(ROOT)}")
 
 
 def cmd_docs_audit(args: argparse.Namespace) -> None:
@@ -1713,13 +1657,6 @@ def build_parser() -> argparse.ArgumentParser:
     p = task_sub.add_parser("status")
     p.add_argument("task_id")
     p.set_defaults(func=cmd_task_status)
-    p = task_sub.add_parser("archive")
-    p.add_argument("task_id")
-    p.set_defaults(func=cmd_task_archive)
-    p = task_sub.add_parser("restart")
-    p.add_argument("task_id")
-    p.set_defaults(func=cmd_task_restart)
-
     scheme = sub.add_parser("scheme", help="manage reusable AI scientist schemes")
     scheme_sub = scheme.add_subparsers(dest="cmd", required=True)
     p = scheme_sub.add_parser("init")
@@ -1741,9 +1678,6 @@ def build_parser() -> argparse.ArgumentParser:
     p = cell_sub.add_parser("status")
     p.add_argument("cell_id")
     p.set_defaults(func=cmd_cell_status)
-    p = cell_sub.add_parser("archive")
-    p.add_argument("cell_id")
-    p.set_defaults(func=cmd_cell_archive)
     p = cell_sub.add_parser("version")
     p.add_argument("cell_id")
     p.add_argument("new_cell_id")

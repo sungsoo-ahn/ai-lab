@@ -6,7 +6,7 @@ updated_at: 2026-06-10
 authority: analyze_and_propose
 inputs:
   - tasks/active
-  - scientists/schemes
+  - schemes
   - evaluations/active
   - reports/system-status.md
   - logs/activity.md

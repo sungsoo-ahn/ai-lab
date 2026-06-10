@@ -4,8 +4,7 @@
   --ai-lab-muted: #5f6f65;
 }
 
-.md-typeset .ai-lab-vega-plot,
-.md-typeset .autoresearch-vega-plot {
+.md-typeset .ai-lab-vega-plot {
   width: 100%;
   max-width: 980px;
   margin: 1.4rem 0 1.8rem;

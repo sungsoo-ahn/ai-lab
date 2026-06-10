@@ -8,8 +8,6 @@ vague_goal: Solve the frozen BTC 1h trading benchmark while preserving referee r
 known_assets:
   - source_id: btc_benchmark
     purpose: Frozen benchmark referee and evaluation contract.
-  - source_id: btc_agentic_system
-    purpose: Mutable strategy submission workspace.
 candidate_metrics:
   - name: referee_dev_score
     direction: maximize
@@ -17,7 +15,5 @@ candidate_metrics:
 constraints:
   - Do not modify referee scoring, cost model, causality checks, or holdout policy.
   - External submissions require explicit user approval.
-linked_evaluation_cells: []
-legacy_refs:
-  - archive/legacy/btc-2026-06-10/tasks/btc_benchmark
-  - docs/legacy/btc-evidence.md
+linked_evaluation_cells:
+  - btc_benchmark__autoresearch__smoke

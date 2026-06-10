@@ -13,7 +13,7 @@ This is the durable local memory index for AI Lab.
 
 Task memory may live under `tasks/active/<task_id>/memory/` when needed.
 
-Scheme memory may live under `scientists/schemes/<scheme_id>/memory/` when needed.
+Scheme memory may live under `schemes/<scheme_id>/memory/` when needed.
 
 Evaluation-cell memory lives under `evaluations/active/<cell_id>/memory/`.
 

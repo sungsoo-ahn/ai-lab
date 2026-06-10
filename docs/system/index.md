@@ -15,10 +15,9 @@ The AI Lab is organized to compare reusable AI scientist schemes across tasks.
 | Directory | Purpose |
 | --- | --- |
 | `tasks/active/` | Active task definitions. |
-| `scientists/schemes/` | Reusable AI scientist scheme definitions. |
+| `schemes/` | Reusable AI scientist scheme definitions. |
 | `evaluations/active/` | Task-by-scheme operational cells. |
 | `meta/active/` | Meta-AI scientist analyses and proposals. |
-| `archive/legacy/` | Preserved legacy work used for reference and plots. |
 
 ## Related Guides
 

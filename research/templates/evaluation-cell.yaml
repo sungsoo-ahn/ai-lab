@@ -27,5 +27,5 @@ reports:
 guides:
   user: guide.md
 run_spec: run-spec.yaml
-public_brief: docs/evaluations/<cell_slug>/index.md
+public_brief: docs/evaluations/<cell_slug>.md
 agent_instructions: guide.md

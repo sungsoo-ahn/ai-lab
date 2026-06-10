@@ -1,0 +1,5 @@
+assets:
+  - asset_id: btc_benchmark_checkout
+    source_id: btc_benchmark
+    path: /Users/sungs/ai-lab/sources/checkouts/btc_benchmark
+    role: frozen_referee_checkout

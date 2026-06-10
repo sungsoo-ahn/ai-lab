@@ -21,7 +21,7 @@ Do not install packages into Apple system Python. Avoid direct `pip`, manual `ve
 
 For explicitly authorized overnight or long-running evaluation-cell runs, missing Python dependencies may be installed silently through cell-local or inherited repository-local `uv` workflows. Record the command and result in the cell or work-unit report.
 
-For Python packages that need OS runtime libraries, use allowlisted runtime profiles from `policies/evaluation-runtime-policy.md`. Example: `xgboost-macos` installs Homebrew `libomp` from `Brewfile` and verifies `import xgboost`.
+For Python packages that need runtime checks, use allowlisted runtime profiles from `policies/evaluation-runtime-policy.md`. Example: `btc-benchmark-python` verifies the benchmark checkout's core Python imports.
 
 ## JavaScript And TypeScript
 

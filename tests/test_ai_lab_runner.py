@@ -121,7 +121,7 @@ def test_active_cell_ids_discovers_active_cells(tmp_path: Path, monkeypatch: pyt
     active.mkdir(parents=True)
     inactive.mkdir()
     (active / "evaluation-cell.yaml").write_text("status: active\n", encoding="utf-8")
-    (inactive / "evaluation-cell.yaml").write_text("status: archived\n", encoding="utf-8")
+    (inactive / "evaluation-cell.yaml").write_text("status: inactive\n", encoding="utf-8")
     monkeypatch.setattr(cli, "EVALUATIONS", root)
     assert cli.active_cell_ids() == ["demo__autoresearch__v1"]
 
@@ -198,7 +198,7 @@ def test_docs_audit_rejects_old_active_scientist_paths(tmp_path: Path, monkeypat
     monkeypatch.setattr(cli, "ROOT", tmp_path)
     monkeypatch.setattr(cli, "DOCS", docs)
     monkeypatch.setattr(cli, "TASKS", tmp_path / "tasks" / "active")
-    monkeypatch.setattr(cli, "SCHEMES", tmp_path / "scientists" / "schemes")
+    monkeypatch.setattr(cli, "SCHEMES", tmp_path / "schemes")
     monkeypatch.setattr(cli, "EVALUATIONS", tmp_path / "evaluations" / "active")
     monkeypatch.setattr(cli, "META", tmp_path / "meta" / "active")
     issues: list[str] = []

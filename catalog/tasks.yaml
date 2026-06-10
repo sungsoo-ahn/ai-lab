@@ -1,19 +1,11 @@
 tasks:
-  - task_id: btc
-    title: BTC Research
-    category: financial_backtesting
-    vague_goal: Study BTC market prediction and trading research tasks with auditable data, costs, splits, and evidence preservation.
-    status: active
-    linked_evaluation_cells: []
-    notes:
-      - Task descriptions are intentionally broad; specific target metrics live on evaluation cells.
-      - Legacy task-nested BTC runs are archived under archive/legacy/btc-2026-06-10.
   - task_id: btc_benchmark
     title: BTC Benchmark
     category: financial_backtesting
     vague_goal: Solve the frozen BTC 1h trading benchmark by improving participant strategies while preserving referee rules, causality gates, costs, splits, and sealed-holdout protection.
     status: active
-    linked_evaluation_cells: []
+    linked_evaluation_cells:
+      - btc_benchmark__autoresearch__smoke
     notes:
-      - The benchmark referee lives in btc_benchmark; mutable submissions live in btc_agentic_system.
+      - The benchmark referee lives in btc_benchmark.
       - Specific target metric and promotion criteria live on evaluation cells.

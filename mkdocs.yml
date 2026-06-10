@@ -39,7 +39,6 @@ extra_javascript:
   - https://cdn.jsdelivr.net/npm/vega@5
   - https://cdn.jsdelivr.net/npm/vega-lite@5
   - https://cdn.jsdelivr.net/npm/vega-embed@6
-  - assets/autoresearch-plots.js
 
 extra_css:
   - assets/extra.css
@@ -54,7 +53,6 @@ nav:
       - Documentation Standards: system/documentation-standards.md
   - Tasks:
       - Overview: tasks/index.md
-      - BTC Research: tasks/btc.md
       - BTC Benchmark: tasks/btc-benchmark.md
   - Scientist Schemes:
       - Overview: schemes/index.md
@@ -62,9 +60,8 @@ nav:
       - AutoScientist: schemes/autoscientist.md
   - Evaluation Matrix:
       - Overview: evaluations/index.md
+      - BTC Benchmark AutoResearch Smoke: evaluations/btc-benchmark--autoresearch--smoke.md
   - Meta Scientist:
       - AI Lab Meta v1: meta/ai-lab-meta-v1.md
-  - Legacy Evidence:
-      - BTC Evidence: legacy/btc-evidence.md
   - Reference:
       - Audience And Terminology: reference/audience-and-terminology.md

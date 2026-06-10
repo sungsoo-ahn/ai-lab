@@ -35,8 +35,8 @@ def classify(path: Path) -> tuple[str, str | None, str | None, str]:
     if len(parts) >= 3 and parts[0] == "tasks" and parts[1] == "active":
         owner_id = parts[2]
         scope = "task"
-    elif len(parts) >= 3 and parts[0] == "scientists" and parts[1] == "schemes":
-        owner_id = parts[2]
+    elif len(parts) >= 2 and parts[0] == "schemes":
+        owner_id = parts[1]
         scope = "scheme"
     elif len(parts) >= 3 and parts[0] == "evaluations" and parts[1] == "active":
         owner_id = parts[2]
@@ -51,8 +51,6 @@ def classify(path: Path) -> tuple[str, str | None, str | None, str]:
         scope = "meta_scientist"
     elif parts[0] == "logs":
         scope = "log"
-    elif parts[0] == "archive":
-        scope = "archive"
     return scope, owner_id, sub_id, kind
 
 

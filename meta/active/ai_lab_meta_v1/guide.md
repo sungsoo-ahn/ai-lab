@@ -16,7 +16,7 @@ This meta scientist may write analyses and proposals. It must not directly edit 
 1. `meta-scientist.yaml`
 2. `report.md`
 3. `tasks/active/`
-4. `scientists/schemes/`
+4. `schemes/`
 5. `evaluations/active/`
 6. `reports/system-status.md`
 7. `logs/activity.md`

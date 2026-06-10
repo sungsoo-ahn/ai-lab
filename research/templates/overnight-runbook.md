@@ -12,7 +12,7 @@ Run ID: <run_id>
 
 - Agents may run bounded work units.
 - Agents may silently install missing Python dependencies only through cell-local or inherited repository-local `uv` workflows when explicitly authorized.
-- Agents may use allowlisted runtime profiles, such as `bin/ai-lab runtime ensure xgboost-macos`, when explicitly authorized.
+- Agents may use allowlisted runtime profiles, such as `bin/ai-lab runtime ensure btc-benchmark-python --repo sources/checkouts/btc_benchmark`, when explicitly authorized.
 - Agents may not silently install Node, Docker, unlisted system packages, connector integrations, credentials, shell configuration, or account configuration.
 
 ## Gates

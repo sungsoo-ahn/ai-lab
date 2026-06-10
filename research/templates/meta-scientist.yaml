@@ -6,7 +6,7 @@ updated_at: <YYYY-MM-DD>
 authority: analyze_and_propose
 inputs:
   - tasks/active
-  - scientists/schemes
+  - schemes
   - evaluations/active
 outputs:
   analyses_dir: analyses

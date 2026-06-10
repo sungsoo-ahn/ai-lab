@@ -51,7 +51,7 @@ Use `bin/ai-lab memory index` to rebuild the generated SQLite search index. Use 
 
 ## Overnight Research Runs
 
-If the user explicitly authorizes an overnight run with automatic dependency setup, agents may install missing Python dependencies using cell-local or inherited repository-local `uv` workflows. Allowlisted runtime profiles may be ensured with `bin/ai-lab runtime ensure <profile>`; the first profile is `xgboost-macos` for Homebrew `libomp`. Agents must not install Node, Docker, connector integrations, credentials, shell configuration, account configuration, or unlisted OS packages silently.
+If the user explicitly authorizes an overnight run with automatic dependency setup, agents may install missing Python dependencies using cell-local or inherited repository-local `uv` workflows. Allowlisted runtime profiles may be ensured with `bin/ai-lab runtime ensure <profile>`; the active profile is `btc-benchmark-python` for benchmark checkout import checks. Agents must not install Node, Docker, connector integrations, credentials, shell configuration, account configuration, or unlisted OS packages silently.
 
 For detached account-level `codex exec` runs, pass account-level flags before `exec` and use `--skip-git-repo-check` when launching from `/Users/sungs`. Known-good pattern:
 
