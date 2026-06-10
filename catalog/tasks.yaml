@@ -8,3 +8,13 @@ tasks:
       - btc_autoresearch_v1
     notes:
       - Task descriptions are intentionally broad; specific target metrics live on scientist versions.
+  - task_id: btc_benchmark
+    title: BTC Benchmark
+    category: financial_backtesting
+    vague_goal: Solve the frozen BTC 1h trading benchmark by improving participant strategies while preserving referee rules, causality gates, costs, splits, and sealed-holdout protection.
+    status: active
+    active_scientists:
+      - btc_benchmark_v2
+    notes:
+      - The benchmark referee lives in btc_benchmark; mutable submissions live in btc_agentic_system.
+      - Specific target metric and promotion criteria live on scientist versions.
