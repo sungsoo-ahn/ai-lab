@@ -9,8 +9,7 @@ The repository still contains the implementation and durable artifacts. The manu
 | Manual family | Purpose |
 | --- | --- |
 | [System Manual](system/index.md) | Maintains the whole AI Lab: layer model, policies, documentation standards, deployment, and operating procedures. |
-| [Scientist Manuals](scientists/index.md) | Explain each scientist end to end: goal, target metric, constraints, agents/tools, workflow, artifacts, decisions, plots, and risks. |
-| [Work Unit Manuals](work-units/index.md) | Explain each focused work unit: purpose, method, commands, artifacts, result, safety checks, and how to continue. |
+| [Scientist Manuals](scientists/index.md) | Explain each scientist end to end: goal, target metric, constraints, agents/tools, workflow, artifacts, decisions, plots, risks, and embedded work-unit manuals. |
 
 ## Current Scientist
 
@@ -22,5 +21,5 @@ The current recommendation is conservative: continue with a narrow `t094` robust
 
 1. Start with the [System Manual](system/index.md) to understand the lab model.
 2. Read the [BTC scientist manual](scientists/btc-autoresearch-v1/index.md) to understand the current agent scheme and score-search evidence.
-3. Use [Work Unit Manuals](work-units/index.md) to audit how each result was produced.
+3. Use the scientist's embedded work-unit ledger to audit how each result was produced.
 4. Treat implementation paths as provenance references. The manual text should be sufficient for understanding; paths are included for audit and maintenance.

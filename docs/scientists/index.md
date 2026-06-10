@@ -1,6 +1,6 @@
 # Scientist Manuals
 
-Scientist manuals explain a complete AI scientist version. A reader should understand the scientist's goal, metric, constraints, workflow, evidence, decisions, and maintenance path without opening implementation files.
+Scientist manuals explain a complete AI scientist version. A reader should understand the scientist's goal, metric, constraints, workflow, evidence, decisions, embedded work units, and maintenance path without opening implementation files.
 
 ## Active Scientists
 

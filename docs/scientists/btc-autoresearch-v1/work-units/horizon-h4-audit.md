@@ -57,4 +57,4 @@ Integrate horizon-matched H>1 ranking before treating H=4 candidates as comparab
 ## Implementation References
 
 - Manifest: `tasks/active/btc/scientists/btc_autoresearch_v1/work_units/horizon_h4_audit/work-unit.yaml`
-- Related scientist manual: [BTC AutoResearch v1](../../scientists/btc-autoresearch-v1/index.md)
+- Related scientist manual: [BTC AutoResearch v1](../index.md)

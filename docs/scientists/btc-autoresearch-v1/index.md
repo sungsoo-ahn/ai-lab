@@ -111,11 +111,11 @@ Hover over points to inspect hypothesis, config snippet, trace/report snippet, m
 
 | Work Unit | Status | Result | Manual |
 | --- | --- | --- | --- |
-| `baseline_reproduction` | complete | Readiness gate passed; `t054` reproduced locally at `+94.0%`. | [Manual](../../work-units/btc/baseline-reproduction.md) |
-| `pipeline_audit` | complete | No accounting/split/holdout blocker found; reporting hygiene caveats recorded. | [Manual](../../work-units/btc/pipeline-audit.md) |
-| `horizon_h4_audit` | complete | H=4 default winners weaken sharply under horizon-matched holding. | [Manual](../../work-units/btc/horizon-h4-audit.md) |
-| `regime_filter_probe` | complete | `t094` is promising but weak on fold coverage and concentration. | [Manual](../../work-units/btc/regime-filter-probe.md) |
-| `report_synthesis` | complete | Reports updated and safety status recorded. | [Manual](../../work-units/btc/report-synthesis.md) |
+| `baseline_reproduction` | complete | Readiness gate passed; `t054` reproduced locally at `+94.0%`. | [Manual](work-units/baseline-reproduction.md) |
+| `pipeline_audit` | complete | No accounting/split/holdout blocker found; reporting hygiene caveats recorded. | [Manual](work-units/pipeline-audit.md) |
+| `horizon_h4_audit` | complete | H=4 default winners weaken sharply under horizon-matched holding. | [Manual](work-units/horizon-h4-audit.md) |
+| `regime_filter_probe` | complete | `t094` is promising but weak on fold coverage and concentration. | [Manual](work-units/regime-filter-probe.md) |
+| `report_synthesis` | complete | Reports updated and safety status recorded. | [Manual](work-units/report-synthesis.md) |
 
 ## Failure Modes To Watch
 

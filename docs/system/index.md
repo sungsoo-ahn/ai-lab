@@ -40,4 +40,4 @@ The AI Lab is a local-first workspace for developing AI scientists. An AI scient
 - [Maintenance](maintenance.md)
 - [Documentation Standards](documentation-standards.md)
 - [BTC AutoResearch v1](../scientists/btc-autoresearch-v1/index.md)
-- [BTC Work Units](../work-units/index.md)
+- [BTC work units](../scientists/btc-autoresearch-v1/index.md#work-units)

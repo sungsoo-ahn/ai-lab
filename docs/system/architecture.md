@@ -45,7 +45,7 @@ sequenceDiagram
 | Scientist manifest | Versioned scientist goal, metric, constraints, assets, and reports. | `tasks/active/<task_id>/scientists/<scientist_id>/scientist.yaml` |
 | Scientist manual | Human-readable operating manual for a scientist. | `docs/scientists/<scientist_id>/` |
 | Work-unit manifest | Work-unit scope, method, source refs, and decision state. | `tasks/active/<task_id>/scientists/<scientist_id>/work_units/<work_unit_id>/work-unit.yaml` |
-| Work-unit manual | Human-readable operating manual for a work unit. | `docs/work-units/<task_id>/` |
+| Work-unit manual | Human-readable operating manual for a work unit. | `docs/scientists/<scientist_id>/work-units/` |
 | Source registry | Durable identity and immutable refs for external codebases. | `sources/sources.yaml` |
 | Static plot data | Public, curated visualization dataset. | `docs/assets/*.json` |
 

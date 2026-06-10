@@ -81,4 +81,4 @@ Future work units should compare against the local `t054` baseline, not the olde
 
 - Manifest: `tasks/active/btc/scientists/btc_autoresearch_v1/work_units/baseline_reproduction/work-unit.yaml`
 - Source checkout: `sources/checkouts/btc_autoresearch`
-- Baseline trial detail in scientist manual: [BTC AutoResearch v1](../../scientists/btc-autoresearch-v1/index.md)
+- Baseline trial detail in scientist manual: [BTC AutoResearch v1](../index.md)
