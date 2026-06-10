@@ -1,5 +1,5 @@
 site_name: AI Lab Manual
-site_description: Static manual for AI Lab scientists, work units, and BTC trial inspection.
+site_description: Static operating manual for AI Lab system, scientist, and work-unit documentation.
 site_url: https://sungsoo-ahn.github.io/ai-lab/
 repo_url: https://github.com/sungsoo-ahn/ai-lab
 
@@ -43,26 +43,18 @@ extra_css:
 
 nav:
   - Home: index.md
-  - Tutorials:
-      - First BTC Trial Inspection: tutorials/first-btc-trial.md
-      - Adding a Benchmark: tutorials/adding-benchmark.md
-      - Reading Failures: tutorials/reading-failures.md
-  - Workflows:
-      - AI Lab Scientist Loop: workflows/ai-lab-loop.md
-  - Trials:
-      - Trial Index: trials/index.md
-      - t054 Baseline: trials/trial_t054.md
-      - t094 Needs Refinement: trials/trial_t094.md
-      - t063 H4 Caveat: trials/trial_t063.md
-  - Scientists:
-      - BTC AutoResearch v1: scientists/btc-autoresearch-v1.md
-  - Work Units:
-      - Work Unit Index: work-units/index.md
-      - Baseline Reproduction: work-units/baseline-reproduction.md
-      - Pipeline Audit: work-units/pipeline-audit.md
-      - Horizon H4 Audit: work-units/horizon-h4-audit.md
-      - Regime Filter Probe: work-units/regime-filter-probe.md
-      - Report Synthesis: work-units/report-synthesis.md
-  - System:
-      - Status: system/status.md
-  - Lab Guide: tutorial.md
+  - System Manual:
+      - Overview: system/index.md
+      - Architecture: system/architecture.md
+      - Maintenance: system/maintenance.md
+      - Documentation Standards: system/documentation-standards.md
+  - Scientist Manuals:
+      - Overview: scientists/index.md
+      - BTC AutoResearch v1: scientists/btc-autoresearch-v1/index.md
+  - Work Unit Manuals:
+      - Overview: work-units/index.md
+      - BTC Baseline Reproduction: work-units/btc/baseline-reproduction.md
+      - BTC Pipeline Audit: work-units/btc/pipeline-audit.md
+      - BTC Horizon H4 Audit: work-units/btc/horizon-h4-audit.md
+      - BTC Regime Filter Probe: work-units/btc/regime-filter-probe.md
+      - BTC Report Synthesis: work-units/btc/report-synthesis.md

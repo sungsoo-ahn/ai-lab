@@ -16,7 +16,7 @@ The public GitHub Pages site is built with MkDocs Material from `docs/`. It is a
 - `policies/`: operating rules for research, privacy, connectors, packages, and approvals.
 - `archive/`: completed or superseded tasks, scientists, and packages.
 - `logs/`: local activity notes.
-- `docs/tutorial.md`: beginner walkthrough.
+- `docs/`: MkDocs manual organized into system, scientist, and work-unit documentation.
 - `reports/system-status.md`: current system status.
 - `bin/ai-lab`: canonical AI Lab helper.
 
@@ -86,4 +86,4 @@ mkdocs serve
 
 Deployment uses `.github/workflows/pages.yml`. Push to `main`, then enable GitHub Pages with GitHub Actions as the source if it is not already enabled.
 
-To add a new score trial, edit `docs/assets/btc-trials.json`, add a Markdown detail page under `docs/trials/`, and add the page to `mkdocs.yml` if it should appear in navigation. To add a new workflow diagram, create a Markdown page with a Mermaid fence and link any static YAML or JSON assets from `docs/assets/`.
+To add or update public documentation, edit the relevant system, scientist, or work-unit manual under `docs/`. Static plot data lives under `docs/assets/`. Use `docs/system/documentation-standards.md` as the checklist for keeping manuals self-contained.

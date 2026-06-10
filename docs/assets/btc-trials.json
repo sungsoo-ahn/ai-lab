@@ -15,7 +15,7 @@
     "config_snippet": "feature_preset=technical_core; horizon=1; mode=long_cash; lam=2.0; cost_all_in_bps=10",
     "raw_text_snippet": "Accepted by the ledger, but still below buy-and-hold over the same OOS window.",
     "metric_delta": "+18.4 percentage points net return vs t054 baseline",
-    "run_page": "../../trials/trial_t054/"
+    "run_page": "#trial-interpretations"
   },
   {
     "trial_id": "t005_a0db71e4d93b",
@@ -33,7 +33,7 @@
     "config_snippet": "feature_preset=returns_only; horizon=1; mode=long_short; lam=2.0; trades=70",
     "raw_text_snippet": "High net return with acceptable ledger verdict, but drawdown remains large.",
     "metric_delta": "+71.2 percentage points net return vs t054 baseline",
-    "run_page": "../../trials/"
+    "run_page": "#trial-interpretations"
   },
   {
     "trial_id": "t054_a19bd141e75b",
@@ -51,7 +51,7 @@
     "config_snippet": "feature_preset=technical_core; horizon=1; mode=long_cash; lam=3.0; sealed_holdout_used=false",
     "raw_text_snippet": "Readiness and baseline-reproduction gate passed; use local reproduced t054 metrics for comparable follow-up work.",
     "metric_delta": "Baseline reference",
-    "run_page": "../../trials/trial_t054/"
+    "run_page": "#trial-interpretations"
   },
   {
     "trial_id": "t055_0084440ca2e6",
@@ -69,7 +69,7 @@
     "config_snippet": "feature_preset=technical_core; horizon=1; mode=long_short; lam=3.0; trades=40",
     "raw_text_snippet": "Accepted by the ledger but marked below buy-and-hold.",
     "metric_delta": "+35.2 percentage points net return vs t054 baseline",
-    "run_page": "../../trials/"
+    "run_page": "#trial-interpretations"
   },
   {
     "trial_id": "t056_51bd96eb5bda",
@@ -87,7 +87,7 @@
     "config_snippet": "feature_preset=volume_core; horizon=1; mode=long_cash; lam=3.0",
     "raw_text_snippet": "Accepted by the ledger, but weaker than t054 on net return and drawdown.",
     "metric_delta": "-8.9 percentage points net return vs t054 baseline",
-    "run_page": "../../trials/"
+    "run_page": "#trial-interpretations"
   },
   {
     "trial_id": "t063_72e951d8c632",
@@ -105,7 +105,7 @@
     "config_snippet": "feature_preset=volume_core; horizon=4; mode=long_short; lam=3.0; default 1-bar rebalanced",
     "raw_text_snippet": "Horizon-matched audit collapsed net return from +155.6% to -3.9%. Do not promote H>1 until ranking uses horizon-matched holding.",
     "metric_delta": "+61.6 percentage points default net return vs t054; failed horizon-matched audit",
-    "run_page": "../../trials/trial_t063/"
+    "run_page": "#trial-interpretations"
   },
   {
     "trial_id": "t090_760b6481280c",
@@ -123,7 +123,7 @@
     "config_snippet": "feature_preset=technical_core; horizon=1; mode=long_cash; lam=5.0; trades=28",
     "raw_text_snippet": "Similar net return to baseline with fewer trades and lower drawdown, but still below buy-and-hold.",
     "metric_delta": "+0.2 percentage points net return vs t054 baseline",
-    "run_page": "../../trials/"
+    "run_page": "#trial-interpretations"
   },
   {
     "trial_id": "t092_140cb4fc2b4e",
@@ -141,7 +141,7 @@
     "config_snippet": "feature_preset=volume_core; horizon=1; mode=long_cash; lam=5.0; trades=34",
     "raw_text_snippet": "Lower drawdown than t056 but still below the local t054 baseline.",
     "metric_delta": "-4.4 percentage points net return vs t054 baseline",
-    "run_page": "../../trials/"
+    "run_page": "#trial-interpretations"
   },
   {
     "trial_id": "t094_f321ec793728",
@@ -159,7 +159,7 @@
     "config_snippet": "feature_preset=returns_only; horizon=1; mode=long_cash; lam=5.0; trades=25; concentration_top5=0.887",
     "raw_text_snippet": "Promising on net return, cost stress, random rank, and buy-and-hold comparison, but fold-positive is only 6/14 and profit concentration is high.",
     "metric_delta": "+137.1 percentage points net return vs t054 baseline",
-    "run_page": "../../trials/trial_t094/"
+    "run_page": "#trial-interpretations"
   },
   {
     "trial_id": "t095_03b7ec1f8ead",
@@ -177,7 +177,7 @@
     "config_snippet": "feature_preset=returns_only; horizon=1; mode=long_short; lam=5.0; trades=9",
     "raw_text_snippet": "Rejected despite the largest headline return: too few trades and profit concentration make the result unreliable.",
     "metric_delta": "+708.5 percentage points net return vs t054 baseline, rejected",
-    "run_page": "../../trials/"
+    "run_page": "#trial-interpretations"
   },
   {
     "trial_id": "t096_c1a908fe1a33",
@@ -195,6 +195,6 @@
     "config_snippet": "feature_preset=technical_core; horizon=4; mode=long_cash; lam=5.0; default 1-bar rebalanced",
     "raw_text_snippet": "Horizon-matched audit reduced net return from +130.6% to +47.9%, below the reproduced t054 baseline.",
     "metric_delta": "+36.6 percentage points default net return vs t054; below baseline after horizon-matched audit",
-    "run_page": "../../trials/trial_t063/"
+    "run_page": "#trial-interpretations"
   }
 ]
