@@ -33,8 +33,10 @@ When restarting work, read in this order:
 
 - `README.md`: workspace overview and command entry points.
 - `reports/system-status.md`: current account-level status.
+- `research/active/<project_id>/guide.md`: project-specific user guide.
 - `research/active/<project_id>/report.md`: current project result and next step.
 - `research/active/<project_id>/source-map.md`: sources and evidence pointers.
+- `research/active/<project_id>/hypotheses/<hypothesis_id>/guide.md`: hypothesis-specific user guide.
 - `research/active/<project_id>/hypotheses/<hypothesis_id>/report.md`: work-unit result, evidence, and recommendation.
 
 ## Files Agents Use Behind The Scenes
@@ -84,10 +86,12 @@ Restarting means archive first, then create a clean active project:
 These files are intended for clarification and should stay readable:
 
 - project `README.md`
+- project `guide.md`
 - `project.md`
 - `project.yaml`
 - `assets.yaml`
 - hypothesis `README.md`
+- hypothesis `guide.md`
 - `hypothesis.yaml`
 
 Avoid manual edits to generated SQLite indexes. Rebuild them with `bin/agent-memory index`.

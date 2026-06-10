@@ -19,4 +19,6 @@ source_maps:
   - source-map.md
 reports:
   current: report.md
+guides:
+  user: guide.md
 archives: []

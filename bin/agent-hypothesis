@@ -47,7 +47,39 @@ def cmd_init(args: argparse.Namespace) -> None:
 
 This file explains the hypothesis from scratch for a user returning to the project.
 
-Read `hypothesis.yaml` for structured metadata and `report.md` for the current result.
+Read `guide.md` first, `report.md` for the current result, and `hypothesis.yaml` for structured metadata.
+""",
+    )
+    write_new(
+        h / "guide.md",
+        f"""# Hypothesis Guide: {args.hypothesis_id}
+
+Date: {today()}
+Status: active
+
+## Purpose
+
+This guide explains how to read and continue the `{args.hypothesis_id}` work unit in the `{args.project_id}` project.
+
+## Reading Order
+
+1. `guide.md`
+2. `report.md`
+3. `hypothesis.yaml`
+4. `runs/`
+5. `memory/`
+
+## How To Continue
+
+Define the method, assets used, and evaluation plan before relying on this work unit for research decisions.
+
+## Evidence And Assets
+
+Reference project assets by `asset_id`. Keep detailed source pointers in the project source map or the hypothesis report.
+
+## Do Not Store
+
+Do not store secrets, raw credentials, private connector content, or unnecessary personal data in this hypothesis.
 """,
     )
     write_new(
@@ -66,6 +98,8 @@ outcome: null
 promotion_decision: pending
 reports:
   current: report.md
+guides:
+  user: guide.md
 """,
     )
     write_new(

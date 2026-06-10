@@ -367,11 +367,6 @@ def project_takeaway(project: dict[str, Any]) -> str:
             "BTC research is still pre-holdout. The strongest candidate is interesting, "
             "but its returns are too concentrated; the next work should test robustness, not promotion."
         )
-    if project_id == "slack-agent-bridge":
-        return (
-            "The Slack bridge is a local control surface for the account agent. The important design constraint "
-            "is privacy: useful responses without storing message bodies or tokens."
-        )
     return excerpt(summary_for(project["report"]), 260)
 
 
@@ -379,15 +374,12 @@ def project_next_step(project: dict[str, Any]) -> str:
     project_id = str(project["id"])
     if project_id == "btc":
         return "Run a narrow t094 robustness pass before any sealed holdout decision."
-    if project_id == "slack-agent-bridge":
-        return "Keep the bridge operational but conservative: minimal logs, explicit approvals for external writes."
     return excerpt(recommendation_for(project["report"]) or "Review the source report for the next action.", 220)
 
 
 def display_name(value: str) -> str:
     overrides = {
         "btc": "BTC Research",
-        "slack-agent-bridge": "Slack Agent Bridge",
         "baseline_reproduction": "Baseline reproduction",
         "horizon_h4_audit": "Horizon-matched H4 audit",
         "pipeline_audit": "Pipeline audit",
@@ -445,7 +437,7 @@ def source_report(markdown: str, title: str = "Source report") -> str:
     date, status = report_metadata(markdown)
     chips = "".join(
         f"<span>{html.escape(value)}</span>"
-        for value in [date, status]
+        for value in [date, status_label(status) if status else ""]
         if value
     )
     meta = f'<div class="source-meta">{chips}</div>' if chips else ""
@@ -462,18 +454,26 @@ def source_report(markdown: str, title: str = "Source report") -> str:
     """
 
 
+def optional_report(report: Report | None, title: str) -> str:
+    if report is None:
+        return ""
+    return source_report(report.markdown, title)
+
+
 def load_projects() -> list[dict[str, Any]]:
     projects: list[dict[str, Any]] = []
     if not ACTIVE_ROOT.exists():
         return projects
     for project_dir in sorted(path for path in ACTIVE_ROOT.iterdir() if path.is_dir()):
-        report_path = first_existing(project_dir / "report.md", project_dir / "proposal.md")
+        report_path = first_existing(project_dir / "report.md")
         project_yaml_path = project_dir / "project.yaml"
         if report_path is None and not project_yaml_path.exists():
             continue
         project_yaml = parse_simple_yaml(project_yaml_path)
         project_id = str(project_yaml.get("project_id") or project_dir.name)
         report = load_report(report_path or project_dir / "report.md", "project", project_yaml, project_id=project_id)
+        guide_path = project_dir / "guide.md"
+        guide = load_report(guide_path, "guide", project_yaml, project_id=project_id) if guide_path.exists() else None
         hypotheses = []
         hypotheses_dir = project_dir / "hypotheses"
         if hypotheses_dir.exists():
@@ -487,7 +487,13 @@ def load_projects() -> list[dict[str, Any]]:
                     project_id=project_id,
                     hypothesis_id=hyp_id,
                 )
-                hypotheses.append({"id": hyp_id, "metadata": hyp_yaml, "report": hyp_report})
+                hyp_guide_path = hyp_dir / "guide.md"
+                hyp_guide = (
+                    load_report(hyp_guide_path, "guide", hyp_yaml, project_id=project_id, hypothesis_id=hyp_id)
+                    if hyp_guide_path.exists()
+                    else None
+                )
+                hypotheses.append({"id": hyp_id, "metadata": hyp_yaml, "report": hyp_report, "guide": hyp_guide})
         assets = parse_simple_yaml(project_dir / "assets.yaml").get("assets", [])
         projects.append(
             {
@@ -495,6 +501,7 @@ def load_projects() -> list[dict[str, Any]]:
                 "dir": project_dir,
                 "metadata": project_yaml,
                 "report": report,
+                "guide": guide,
                 "hypotheses": hypotheses,
                 "assets": assets if isinstance(assets, list) else [],
             }
@@ -570,6 +577,11 @@ def card(title: str, body: str, href: str | None = None) -> str:
     return f'<article class="card">{heading}{body}</article>'
 
 
+def count_phrase(count: int, singular: str, plural: str | None = None) -> str:
+    label = singular if count == 1 else (plural or f"{singular}s")
+    return f"{count} {label}"
+
+
 def build_home(projects: list[dict[str, Any]]) -> str:
     status = load_report(REPO_ROOT / "reports" / "system-status.md", "system", {})
     activity = read_text(REPO_ROOT / "logs" / "activity.md")
@@ -634,7 +646,7 @@ def build_home(projects: list[dict[str, Any]]) -> str:
       </article>
       <article>
         <span>Current shape</span>
-        <p>There are {len(projects)} active projects and {total_hypotheses} tracked work units. The site keeps the public read concise while leaving full reports one click away.</p>
+        <p>The workspace has {count_phrase(len(projects), "active project")} and {count_phrase(total_hypotheses, "tracked work unit")}. The site keeps the public read concise while leaving full reports one click away.</p>
       </article>
     </section>
     <section class="section">
@@ -793,6 +805,7 @@ def build_project(project: dict[str, Any]) -> str:
     </section>
     {work_units_section}
     {assets_section}
+    {optional_report(project.get("guide"), "Read project guide")}
     {source_report(report.markdown, "Read full project report")}
     """
     return page(str(project["metadata"].get("title") or display_name(project["id"])), body, current="../../")
@@ -830,6 +843,7 @@ def build_hypothesis(project: dict[str, Any], hyp: dict[str, Any]) -> str:
       <div><span>Type</span><strong>Work unit</strong></div>
     </section>
     {next_step}
+    {optional_report(hyp.get("guide"), "Read work-unit guide")}
     {source_report(report.markdown, "Read full work-unit report")}
     """
     return page(f"{display_name(project_id)} / {display_name(hyp['id'])}", body, current="../../../../")

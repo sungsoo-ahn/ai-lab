@@ -2,6 +2,8 @@
 
 Local Slack Socket Mode bridge for the account Codex agent.
 
+See `PROPOSAL.md` for the original setup proposal, risk notes, and source map.
+
 ## Slack App Setup
 
 Create a Slack app and configure:
@@ -23,9 +25,9 @@ Install the app to the workspace and invite it to any channel where mentions sho
 Export tokens in your shell. Do not save token values in this repository.
 
 ```sh
-export SLACK_APP_TOKEN='xapp-...'
-export SLACK_BOT_TOKEN='xoxb-...'
-/Users/sungs/agent-system/services/slack-agent-bridge/scripts/run-slack-agent-bridge
+export SLACK_APP_TOKEN='<app-level-token>'
+export SLACK_BOT_TOKEN='<bot-token>'
+services/slack-agent-bridge/scripts/run-slack-agent-bridge
 ```
 
 Optional timeout:

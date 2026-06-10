@@ -17,9 +17,13 @@ links:
 
 Use `bin/agent-project init <project_id>` to create a project. Use `bin/agent-project restart <project_id>` to archive the current active state and create a clean restarted workspace.
 
+Every project must include a user-facing `guide.md`. The guide should explain, in plain language, how to read the project, where the current report/source map/assets live, what is safe to change, and how to restart or continue the work.
+
 ## Hypotheses
 
 Use `bin/agent-hypothesis init <project_id> <hypothesis_id>` to create a hypothesis workspace. Hypotheses should reference project assets by `asset_id`.
+
+Every hypothesis must include a user-facing `guide.md`. The guide should explain the work unit from scratch, point to its report, evidence, runs, and memory, and state the safe next action for a returning user or agent.
 
 ## Memory
 

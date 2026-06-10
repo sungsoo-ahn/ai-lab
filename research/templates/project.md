@@ -29,6 +29,7 @@ Status: active
 
 ## Key Files
 
+- `guide.md`: user-facing project guide.
 - `project.yaml`: structured project manifest.
 - `assets.yaml`: project asset registry.
 - `report.md`: current project report.

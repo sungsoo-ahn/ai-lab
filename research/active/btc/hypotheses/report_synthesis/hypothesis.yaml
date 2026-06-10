@@ -14,3 +14,5 @@ outcome: null
 promotion_decision: pending
 reports:
   current: report.md
+guides:
+  user: guide.md

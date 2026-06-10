@@ -34,14 +34,14 @@ Create or configure a Slack app with:
 
 Tokens should be provided at runtime through environment variables, not committed to files:
 
-- `SLACK_APP_TOKEN` for the `xapp-...` app-level token;
-- `SLACK_BOT_TOKEN` for the `xoxb-...` bot token.
+- `SLACK_APP_TOKEN` for the app-level token;
+- `SLACK_BOT_TOKEN` for the bot token.
 
 ## Proposed Local Changes
 
 Create a Python project at:
 
-`/Users/sungs/agent-system/services/slack-agent-bridge/`
+`<repo>/services/slack-agent-bridge/`
 
 Files:
 
@@ -64,8 +64,8 @@ No Homebrew, Node, Docker, or global Python package changes are required.
 After approval:
 
 ```sh
-mkdir -p /Users/sungs/agent-system/services/slack-agent-bridge
-cd /Users/sungs/agent-system/services/slack-agent-bridge
+mkdir -p <repo>/services/slack-agent-bridge
+cd <repo>/services/slack-agent-bridge
 uv init --package --name slack-agent-bridge
 uv add slack-bolt slack-sdk
 uv run python -m slack_agent_bridge.app
@@ -92,7 +92,7 @@ Privacy:
 Remove the local service directory:
 
 ```sh
-rm -rf /Users/sungs/agent-system/services/slack-agent-bridge
+rm -rf <repo>/services/slack-agent-bridge
 ```
 
 In Slack, disable Socket Mode or uninstall/delete the Slack app.

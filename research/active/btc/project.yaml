@@ -36,6 +36,8 @@ source_maps:
   - source-map.md
 reports:
   current: report.md
+guides:
+  user: guide.md
 overnight_runs:
   - overnight-2026-06-09
 archives: []
