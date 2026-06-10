@@ -11,6 +11,9 @@ This evaluation cell applies AutoScientist to BTC Benchmark for a bounded three-
 
 - Source: `btc_benchmark` at registered commit `166a99f0e915ba1aaaaa6da9451dfa90c49032a6`
 - Scheme: AutoScientist
+- Skill bundle: `btc_benchmark_core_skills_v1`
+- Research taste: `btc_robust_alpha_taste_v1`
+- Seed hypotheses: trend-following baseline ladder, cost robustness filter, funding auxiliary signal
 - Wall budget: 180 minutes
 - Target metric: `referee_dev_score`
 - Preflight artifacts: `preflight_baseline_report.json` and `preflight_leaderboard.jsonl` in the run directory
@@ -37,3 +40,7 @@ Setup checks on 2026-06-10 confirmed selected referee tests pass, local data loa
 ## Expected Result
 
 The first overnight run should update the cell report, this brief, any created work-unit briefs, and the run summary with consensus, disagreements, robustness risks, and next-version proposals if needed.
+
+## Component Model
+
+See [Scientist Components](../reference/scientist-components.md) for how this cell separates scheme, skills, research taste, and hypotheses.

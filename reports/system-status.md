@@ -10,6 +10,7 @@ Date: 2026-06-10
 - Prompt provenance: exact prompts are local run artifacts under evaluation-cell `runs/<run_id>/prompts/`
 - Generated search index: `memory/index.sqlite`
 - Memory hierarchy: lab -> task -> scheme -> evaluation cell -> work unit -> meta scientist
+- Scientist composition: scheme + skill bundle + research taste + hypotheses + memory
 - Self-evolution policy: work-unit proposals are gated into new evaluation-cell versions
 - Public docs: system guides, task pages, scheme pages, evaluation matrix, and meta page
 - Rigid runner: active evaluation cells define `run-spec.yaml`
@@ -17,6 +18,12 @@ Date: 2026-06-10
 ## Active Tasks
 
 - `btc_benchmark`: frozen BTC 1h benchmark task.
+
+## Active Scientist Components
+
+- Skill bundle: `btc_benchmark_core_skills_v1`
+- Research taste: `btc_robust_alpha_taste_v1`
+- Seed hypotheses: BTC trend baseline ladder, cost robustness filter, and funding auxiliary signal.
 
 ## Active Schemes
 

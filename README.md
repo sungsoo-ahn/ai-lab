@@ -9,6 +9,9 @@ The public GitHub Pages site is built with MkDocs Material from `docs/`. It is a
 ## Layout
 
 - `catalog/`: broad task descriptions and reusable scientist scheme descriptions.
+- `catalog/skill-bundles.yaml`: reusable domain, execution, evaluation, and synthesis capabilities.
+- `catalog/research-tastes.yaml`: scientist prioritization and judgment profiles.
+- `catalog/hypotheses.yaml`: task-specific falsifiable claims under consideration.
 - `tasks/active/`: active task definitions only.
 - `schemes/`: reusable AI scientist scheme definitions.
 - `evaluations/active/`: active task-by-scheme evaluation cells.
@@ -27,9 +30,12 @@ The public GitHub Pages site is built with MkDocs Material from `docs/`. It is a
 1. Lab: shared catalogs, policies, memory, logs, and scheme knowledge.
 2. Task: a broad, under-specified challenge or dataset family.
 3. Scheme: a reusable AI scientist orchestration pattern.
-4. Evaluation cell: one task-by-scheme application with a concrete metric, run spec, constraints, and evidence.
-5. Work unit: a minimal context for one method, ablation, audit, observation, proxy, synthesis, or infrastructure pass.
-6. Meta scientist: an analysis/proposal layer for improving the overall lab system.
+4. Skill bundle: reusable capabilities a scientist may use.
+5. Research taste: prioritization and judgment policy for evidence and hypotheses.
+6. Hypothesis: a task-specific falsifiable claim under test.
+7. Evaluation cell: one task-by-scheme application with a concrete metric, scientist composition, run spec, constraints, and evidence.
+8. Work unit: a minimal context for one method, ablation, audit, observation, proxy, synthesis, or infrastructure pass.
+9. Meta scientist: an analysis/proposal layer for improving the overall lab system.
 
 ## Self-Evolution
 

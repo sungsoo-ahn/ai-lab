@@ -11,11 +11,21 @@ You are continuing the AI Lab evaluation cell `btc_benchmark__autoresearch__over
 - `~/ai-lab/evaluations/active/btc_benchmark__autoresearch__overnight_v1/overnight-runbook.md`
 - `~/ai-lab/tasks/active/btc_benchmark/task.yaml`
 - `~/ai-lab/schemes/autoresearch/scheme.yaml`
+- `~/ai-lab/catalog/skill-bundles.yaml`
+- `~/ai-lab/catalog/research-tastes.yaml`
+- `~/ai-lab/catalog/hypotheses.yaml`
 - `~/ai-lab/sources/checkouts/btc_benchmark/README.md`
 
 ## Scope
 
 Use the AutoResearch scheme: propose a bounded local experiment, run it, evaluate the referee report, record evidence, then synthesize the next decision. The target metric is the BTC benchmark development referee report produced by `run_benchmark`.
+
+The scientist composition for this cell is:
+
+- Scheme: `autoresearch`
+- Skill bundle: `btc_benchmark_core_skills_v1`
+- Research taste: `btc_robust_alpha_taste_v1`
+- Seed hypotheses: `btc_trend_following_baseline_ladder_v1`, `btc_cost_robustness_filter_v1`, `btc_funding_auxiliary_signal_v1`
 
 The `btc_benchmark` checkout is frozen referee code. Do not modify tracked files there. Keep generated scripts, reports, and notes in the current run directory supplied by the runner or in this evaluation cell.
 
@@ -26,11 +36,13 @@ Do not ask the user for permission for declared local commands in this run spec.
 ## Work
 
 1. Inspect the preflight logs and `preflight_baseline_report.json` in the current run directory.
-2. Inspect the benchmark Strategy contract, runner, baseline rules, causality gates, and tests enough to avoid invalid strategy designs.
-3. Create local experiment scripts under the current run directory. Use the benchmark source as an importable referee, not as an editable workspace.
-4. Run a small sequence of candidate strategy experiments or parameter ablations through `run_benchmark`. Preserve every report, including weak or disqualified results.
-5. Compare candidates against the preflight EMA baseline and summarize robustness risks such as turnover, costs, random percentile, gate behavior, funding-aware score, and next-open score.
-6. If no credible metric improvement is found, write the negative finding clearly and propose the next cell version or missing participant-strategy asset.
+2. Use the skill bundle for execution and robustness audits; do not confuse skills with hypotheses.
+3. Use the taste profile to rank which seed hypothesis or quick follow-up is worth testing first.
+4. Inspect the benchmark Strategy contract, runner, baseline rules, causality gates, and tests enough to avoid invalid strategy designs.
+5. Create local experiment scripts under the current run directory. Use the benchmark source as an importable referee, not as an editable workspace.
+6. Run a small sequence of candidate strategy experiments or parameter ablations through `run_benchmark`. Preserve every report, including weak or disqualified results.
+7. Compare candidates against the preflight EMA baseline and summarize robustness risks such as turnover, costs, random percentile, gate behavior, funding-aware score, and next-open score.
+8. If no credible metric improvement is found, write the negative finding clearly and propose the next cell version or missing participant-strategy asset.
 
 ## Final Outputs
 

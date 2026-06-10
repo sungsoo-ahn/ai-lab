@@ -6,6 +6,9 @@ The AI Lab matrix separates task definitions, reusable scientist schemes, and op
 flowchart TD
   Task[Task definition] --> Cell[Evaluation cell]
   Scheme[Scientist scheme] --> Cell
+  Skill[Skill bundle] --> Cell
+  Taste[Research taste] --> Cell
+  Hypothesis[Hypotheses] --> Cell
   Cell --> WorkUnit[Work units]
   Cell --> Runs[Runs and prompts]
   WorkUnit --> Evidence[Evidence and proposals]
@@ -20,6 +23,9 @@ flowchart TD
 | --- | --- | --- |
 | Task manifest | Broad task state, assets, candidate metrics, and constraints. | `tasks/active/<task_id>/task.yaml` |
 | Scheme manifest | Reusable AI scientist orchestration pattern. | `schemes/<scheme_id>/scheme.yaml` |
+| Skill-bundle catalog | Reusable domain, execution, evaluation, and synthesis capabilities. | `catalog/skill-bundles.yaml` |
+| Research-taste catalog | Prioritization and judgment profiles for choosing hypotheses and evidence. | `catalog/research-tastes.yaml` |
+| Hypothesis catalog | Task-specific falsifiable claims, required skills, suggested tests, and decisions. | `catalog/hypotheses.yaml` |
 | Evaluation cell manifest | One task-by-scheme application, target metric, constraints, and work-unit state. | `evaluations/active/<cell_id>/evaluation-cell.yaml` |
 | Cell run spec | Machine-readable fixed command loop, source gates, artifacts, synthesis, and exit conditions. | `evaluations/active/<cell_id>/run-spec.yaml` |
 | Work-unit manifest | Focused method, audit, ablation, proxy, or synthesis state. | `evaluations/active/<cell_id>/work_units/<work_unit_id>/work-unit.yaml` |
@@ -29,10 +35,12 @@ flowchart TD
 ## Execution Flow
 
 1. Choose a task and a reusable scheme.
-2. Initialize an evaluation cell with a task-specific target metric and constraints.
-3. Add or validate a fixed `run-spec.yaml`.
-4. Run scoped work units and preserve failed trials, commands, outputs, prompts, and proposals.
-5. Compare cells across the matrix.
-6. Let the meta scientist write analyses and proposals for system improvements.
+2. Choose the skill bundle and research taste profile the scientist may use.
+3. Seed or select hypotheses to test.
+4. Initialize an evaluation cell with a task-specific target metric, scientist composition, and constraints.
+5. Add or validate a fixed `run-spec.yaml`.
+6. Run scoped work units and preserve failed trials, commands, outputs, prompts, and proposals.
+7. Compare cells across the matrix.
+8. Let the meta scientist write analyses and proposals for system improvements.
 
 Long-running cells use `run-spec.yaml` as the executable contract. `bin/ai-lab cell run-spec validate --all` checks active specs, and `bin/ai-lab cell run ... --dry-run` prints the fixed command plan without executing experiments.

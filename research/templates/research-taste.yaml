@@ -1,0 +1,9 @@
+taste_id: <taste_id>
+title: <Research Taste Title>
+status: active
+task_scope: []
+purpose: <Judgment and prioritization policy. This should describe what evidence and risks deserve attention.>
+principles: []
+ranking_heuristics: []
+anti_patterns: []
+public_brief: docs/reference/scientist-components.md

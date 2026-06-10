@@ -9,6 +9,8 @@ Evaluation cells are the operational units of the AI Lab matrix. Each cell appli
 | [BTC Benchmark AutoResearch Overnight v1](btc-benchmark--autoresearch--overnight-v1.md) | BTC Benchmark | AutoResearch | 180-minute fixed run spec |
 | [BTC Benchmark AutoScientist Overnight v1](btc-benchmark--autoscientist--overnight-v1.md) | BTC Benchmark | AutoScientist | 180-minute fixed run spec |
 
+Both active cells currently share the same BTC skill bundle and robust-alpha research taste so the comparison isolates scheme behavior more than domain capability. See [Scientist Components](../reference/scientist-components.md).
+
 ## Fixed Launch
 
 Use the [BTC Benchmark Overnight Runbook](btc-benchmark-overnight-runbook.md). The short version is:

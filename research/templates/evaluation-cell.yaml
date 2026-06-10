@@ -12,6 +12,11 @@ target_metric:
   name: <metric_name>
   direction: <maximize|minimize>
   evaluation_context: <Evaluation command, dataset, split, and constraints>
+scientist_composition:
+  scheme_id: <scheme_id>
+  skill_bundle_id: <skill_bundle_id>
+  taste_id: <taste_id>
+  seed_hypotheses: []
 optimization_constraints: []
 accepted_proposals: []
 active_work_units: []

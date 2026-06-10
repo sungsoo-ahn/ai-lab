@@ -5,7 +5,7 @@ Status: active
 
 ## Current State
 
-This cell is ready for the first three-hour AutoResearch overnight run. No overnight result has been recorded yet.
+This cell is ready for the first three-hour AutoResearch overnight run. No overnight result is currently recorded.
 
 ## Fixed Run Contract
 
@@ -13,6 +13,16 @@ This cell is ready for the first three-hour AutoResearch overnight run. No overn
 - Source: registered `btc_benchmark` checkout at commit `166a99f0e915ba1aaaaa6da9451dfa90c49032a6`.
 - Preflight: source status, runtime check, selected referee tests, data load, and EMA baseline reproduction.
 - Synthesis: one AutoResearch loop using `synthesis-prompt.md`.
+
+## Scientist Composition
+
+- Scheme: `autoresearch`
+- Skill bundle: `btc_benchmark_core_skills_v1`
+- Research taste: `btc_robust_alpha_taste_v1`
+- Seed hypotheses:
+  - `btc_trend_following_baseline_ladder_v1`
+  - `btc_cost_robustness_filter_v1`
+  - `btc_funding_auxiliary_signal_v1`
 
 ## Readiness Evidence
 

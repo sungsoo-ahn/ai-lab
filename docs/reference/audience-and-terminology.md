@@ -23,6 +23,9 @@ Public documentation should exclude only content that is purely agent-facing or 
 | --- | --- |
 | System Guide | System Manual |
 | Scientist Scheme | task-specific scientist |
+| Skill Bundle | one-off helper code |
+| Research Taste | vague preference |
+| Hypothesis | method name |
 | Evaluation Cell | scientist version |
 | Evaluation Cell Brief | Scientist Manual |
 | Work Unit Brief | Work-Unit Manual |
@@ -38,6 +41,9 @@ Public documentation should exclude only content that is purely agent-facing or 
 | `docs/` | Public human-facing or mixed-audience documentation. |
 | `tasks/active/<task_id>/task.yaml` | Task definition and constraints. |
 | `schemes/<scheme_id>/scheme.yaml` | Reusable scientist scheme definition. |
+| `catalog/skill-bundles.yaml` | Reusable capability bundles available to scientists. |
+| `catalog/research-tastes.yaml` | Prioritization and judgment profiles for scientists. |
+| `catalog/hypotheses.yaml` | Task-specific falsifiable claims under consideration. |
 | `evaluations/active/<cell_id>/evaluation-cell.yaml` | Task-by-scheme operational state. |
 | `evaluations/active/<cell_id>/run-spec.yaml` | Agent-facing execution contract, summarized publicly when useful. |
 | `evaluations/active/<cell_id>/runs/` | Local run records, logs, prompts, and outputs. |

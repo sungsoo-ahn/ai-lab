@@ -1,0 +1,15 @@
+skill_bundle_id: <skill_bundle_id>
+title: <Skill Bundle Title>
+status: active
+task_scope: []
+purpose: <Reusable capability bundle. This should describe how to do work, not a claim to test.>
+skills:
+  - skill_id: <skill_id>
+    title: <Skill Title>
+    kind: <domain_skill|execution_skill|evaluation_skill|synthesis_skill|infrastructure_skill>
+    description: <Reusable capability>
+    inputs: []
+    outputs: []
+    constraints: []
+failure_modes: []
+public_brief: docs/reference/scientist-components.md

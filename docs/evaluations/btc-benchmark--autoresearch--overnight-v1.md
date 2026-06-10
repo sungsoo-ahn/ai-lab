@@ -1,39 +1,62 @@
 # BTC Benchmark AutoResearch Overnight v1
 
 Date: 2026-06-10
-Status: active
+Status: active, cycle 1 synthesized
 
 ## Summary
 
-This evaluation cell applies AutoResearch to BTC Benchmark for a bounded three-hour local run. It uses a fixed run spec with source gates, runtime checks, selected referee tests, data-load verification, EMA baseline reproduction, and one Codex synthesis loop.
+This evaluation cell applied AutoResearch to BTC Benchmark for a bounded local run. Cycle 1 reproduced the weak EMA preflight baseline, ran a small causal strategy sweep through the frozen referee, and confirmed that a trivial always-long strategy is the current dev-score floor.
 
 ## Current Run Spec
 
 - Source: `btc_benchmark` at registered commit `166a99f0e915ba1aaaaa6da9451dfa90c49032a6`
 - Scheme: AutoResearch
+- Skill bundle: `btc_benchmark_core_skills_v1`
+- Research taste: `btc_robust_alpha_taste_v1`
+- Seed hypotheses: trend-following baseline ladder, cost robustness filter, funding auxiliary signal
 - Wall budget: 180 minutes
 - Target metric: `referee_dev_score`
 - Preflight artifacts: `preflight_baseline_report.json` and `preflight_leaderboard.jsonl` in the run directory
 - Synthesis prompt: `evaluations/active/btc_benchmark__autoresearch__overnight_v1/synthesis-prompt.md`
 
-## Launch
+## Cycle 1 Run
 
-Run the paired comparison:
+- Run ID: `btc-overnight-20260610T144615Z-autoresearch`
+- Preflight loaded 56,232 candles and `funding` auxiliary data.
+- Selected referee tests passed: `21 passed`.
+- Generated artifacts are under `evaluations/active/btc_benchmark__autoresearch__overnight_v1/runs/btc-overnight-20260610T144615Z-autoresearch/`.
+- The sweep preserved 17 full candidate reports plus `experiment_summary.md`.
+- The best candidate was rerun in `confirm_best.py` with the referee default gate budget.
 
-```sh
-bin/run-btc-overnight
-```
+## Result
 
-Run this cell only:
+Preflight EMA baseline:
 
-```sh
-uv run python bin/ai-lab cell run btc_benchmark__autoresearch__overnight_v1 --continuous --run-id btc-overnight-autoresearch
-```
+- `ema_baseline_12_48_long_short`
+- Net `-0.8668`, Sharpe `-0.879`, max drawdown `-0.8769`
+- Turnover `1587.0`, trades `794`, median hold `23` bars
+- Funding-aware net `-0.8752`, next-open net `-0.8669`, random percentile `0.21`
+- Passed gates across all 14 folds
 
-## Readiness
+Best confirmed candidate:
 
-Setup checks on 2026-06-10 confirmed selected referee tests pass, local data loads, and the EMA baseline reproduces without disqualification. The runtime profile passes while Homebrew prints an ownership warning for `/opt/homebrew/Cellar`.
+- `candidate_always_long_default_gates`
+- Net `1.5005`, Sharpe `0.770`, max drawdown `-0.6670`
+- Turnover `1.0`, trades `1`, full exposure
+- Cost curve: cost0x `1.5031`, cost2x `1.4980`, cost5x `1.4904`
+- Funding-aware net `0.9151`, next-open net `1.4982`
+- Passed all 14 fold gates with default future-perturbation cutoff minimum `433`
+- Sealed holdout was not used
 
-## Expected Result
+Top adaptive references:
 
-The first overnight run should update the cell report, this brief, and the run summary with candidate scores, failed directions, robustness risks, and next-version proposals if needed.
+- `candidate_ema_48_192_long_cash`: net `0.8433`, max drawdown `-0.4316`, turnover `195.0`, random percentile `0.93`, funding-aware net `0.5430`.
+- `candidate_ema_24_96_long_cash`: net `0.6632`, max drawdown `-0.4575`, turnover `375.0`, random percentile `0.96`, funding-aware net `0.4050`.
+
+## Interpretation
+
+The run found a metric improvement over the preflight EMA baseline, but not a novel trading edge. Always-long mostly recovers the benchmark's own buy-and-hold reference after one opening cost. It is robust to cost multipliers and next-open execution because it barely trades, but it has severe drawdown and funding drag. Future work should treat always-long as the floor and optimize adaptive overlays against buy-and-hold, funding-aware net, and drawdown, not just against the weak EMA preflight baseline.
+
+## Component Model
+
+See [Scientist Components](../reference/scientist-components.md) for how this cell separates scheme, skills, research taste, and hypotheses.

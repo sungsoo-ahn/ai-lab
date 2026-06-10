@@ -1,0 +1,56 @@
+skill_bundles:
+  - skill_bundle_id: btc_benchmark_core_skills_v1
+    title: BTC Benchmark Core Skills v1
+    status: active
+    task_scope:
+      - btc_benchmark
+    purpose: Reusable BTC Benchmark capabilities that support many hypotheses without asserting which hypothesis is true.
+    skills:
+      - skill_id: btc_referee_runner
+        title: BTC Referee Runner
+        kind: execution_skill
+        description: Load BTC benchmark data, run Strategy implementations through the frozen referee, and preserve JSONL/reports.
+        inputs:
+          - strategy implementing btc_benchmark Strategy contract
+          - registered btc_benchmark checkout
+        outputs:
+          - referee report
+          - leaderboard JSONL record
+        constraints:
+          - Do not modify referee scoring, costs, splits, gates, or holdout policy.
+      - skill_id: leakage_safe_feature_engineering
+        title: Leakage-Safe Feature Engineering
+        kind: domain_skill
+        description: Build causal candle and auxiliary features using only information available up to each decision bar.
+        inputs:
+          - candles
+          - optional auxiliary event frames
+        outputs:
+          - causal feature arrays or positions
+        constraints:
+          - Use fold-local fitting where fitting is needed.
+          - Do not read future rows or sealed holdout data.
+      - skill_id: turnover_cost_audit
+        title: Turnover And Cost Audit
+        kind: evaluation_skill
+        description: Interpret turnover, cost-multiplier, funding-aware, next-open, random-percentile, and per-year robustness evidence.
+        inputs:
+          - referee report
+        outputs:
+          - robustness notes
+          - promotion or rejection rationale
+      - skill_id: benchmark_report_synthesis
+        title: Benchmark Report Synthesis
+        kind: synthesis_skill
+        description: Convert local benchmark artifacts into cell reports, public briefs, proposals, and follow-up work units.
+        inputs:
+          - run directory
+          - cell report
+          - public brief
+        outputs:
+          - updated summaries
+          - next-step proposals
+    failure_modes:
+      - Skill use can still support bad hypotheses if the taste profile prioritizes weak evidence.
+      - Causality can be violated by strategy code even when the skill is intended to be leakage-safe; referee gates must remain active.
+    public_brief: docs/reference/scientist-components.md

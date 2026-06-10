@@ -12,6 +12,14 @@ target_metric:
   name: referee_dev_score
   direction: maximize
   evaluation_context: Local BTC benchmark development-fold reports produced by btc_benchmark.run_benchmark without changing referee costs, splits, causality gates, or sealed-holdout policy.
+scientist_composition:
+  scheme_id: autoresearch
+  skill_bundle_id: btc_benchmark_core_skills_v1
+  taste_id: btc_robust_alpha_taste_v1
+  seed_hypotheses:
+    - btc_trend_following_baseline_ladder_v1
+    - btc_cost_robustness_filter_v1
+    - btc_funding_auxiliary_signal_v1
 optimization_constraints:
   - Do not modify tracked files in the btc_benchmark source checkout.
   - Keep generated experiments, reports, scripts, and artifacts inside this evaluation cell or the current run directory.

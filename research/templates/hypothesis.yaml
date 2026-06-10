@@ -1,0 +1,9 @@
+hypothesis_id: <hypothesis_id>
+task_id: <task_id>
+status: seed
+claim: <Falsifiable task-specific claim>
+rationale: <Why this claim might be true>
+required_skill_bundle: <skill_bundle_id>
+required_taste: <taste_id>
+suggested_tests: []
+decision: pending
