@@ -8,6 +8,7 @@ sensitivity: public
 status: active
 links:
   - /Users/sungs/ai-lab/policies/update-policy.md
+  - /Users/sungs/ai-lab/policies/scientist-runtime-policy.md
   - /Users/sungs/ai-lab/docs/system/maintenance.md
   - /Users/sungs/ai-lab/docs/system/documentation-standards.md
 ---
@@ -36,11 +37,11 @@ Use `bin/ai-lab memory index` to rebuild the generated SQLite search index. Use 
 
 ## Self-Evolution
 
-Low-risk local memory, report, template, and index updates may be applied inside `/Users/sungs/ai-lab`. Package, runtime, shell, connector, account config, and out-of-zone changes require explicit approval and must follow update policy.
+Low-risk local memory, report, template, and index updates may be applied inside `/Users/sungs/ai-lab`. Package, runtime, shell, connector, account config, and out-of-zone changes require explicit approval or an explicit overnight/long-run authorization and must follow update policy.
 
 ## Overnight Research Runs
 
-If the user explicitly authorizes an overnight run with silent package installs, agents may install missing Python scientist dependencies using scientist-local or inherited repository-local `uv` workflows. They must not install Homebrew, Node, Docker, system packages, connector integrations, or account configuration silently.
+If the user explicitly authorizes an overnight run with automatic dependency setup, agents may install missing Python scientist dependencies using scientist-local or inherited repository-local `uv` workflows. Allowlisted runtime profiles may be ensured with `bin/ai-lab runtime ensure <profile>`; the first profile is `xgboost-macos` for Homebrew `libomp`. Agents must not install Node, Docker, connector integrations, credentials, shell configuration, account configuration, or unlisted OS packages silently.
 
 For detached account-level `codex exec` runs, pass account-level flags before `exec` and use `--skip-git-repo-check` when launching from `/Users/sungs`. Known-good pattern:
 

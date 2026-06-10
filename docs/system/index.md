@@ -24,12 +24,13 @@ The AI Lab is a local-first workspace for developing AI scientists. It is organi
 
 | Area | Status |
 | --- | --- |
-| Active task | `btc` |
-| Active scientist | `btc_autoresearch_v1` |
+| Active tasks | `btc`, `btc_benchmark` |
+| Active scientists | `btc_autoresearch_v1`, `btc_benchmark_v2` |
 | Public site | MkDocs Material, deployed to GitHub Pages |
 | Static visualization | Vega-Lite from CDN using `docs/assets/btc-trials.json` |
 | Prompt provenance | Local run artifacts under `tasks/active/.../runs/.../prompts/` |
 | Runtime policy | Prefer Python and `uv`; do not introduce Node or Docker by default |
+| Runtime automation | Long runs may use allowlisted runtime profiles such as `xgboost-macos` for XGBoost `libomp` |
 
 ## Main Manuals
 

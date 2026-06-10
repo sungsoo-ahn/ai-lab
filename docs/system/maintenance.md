@@ -54,7 +54,9 @@ The workflow:
 - Use Homebrew for OS-level tools and keep the approved baseline in `Brewfile`.
 - Use `uv` for Python project, environment, and command execution.
 - Do not install packages into Apple system Python.
-- Do not add Node, Docker, or a backend service unless a concrete scientist or workflow requires it and an update proposal is accepted.
+- Authorized overnight or long-running scientist runs may install missing Python dependencies through local `uv` workflows.
+- Allowlisted runtime profiles may install narrow Homebrew runtime support through `bin/ai-lab runtime ensure <profile>`. The current `xgboost-macos` profile installs `libomp` for XGBoost.
+- Do not add Node, Docker, connector integrations, shell/account configuration, or a backend service unless a concrete scientist or workflow requires it and an update proposal is accepted.
 - Before package, runtime, connector, or account configuration changes, follow `policies/update-policy.md`.
 
 ## Privacy And Connector Rules
@@ -68,6 +70,7 @@ The workflow:
 
 - Run `mkdocs build --strict` before committing site changes.
 - Run `bin/ai-lab docs audit` before committing system, scientist, work-unit, or public manual changes.
+- Run `bin/ai-lab runtime check <profile>` before a long run when a known runtime such as XGBoost is expected.
 - Record important LLM prompts with `bin/ai-lab prompt record` and reference the prompt manifest from the relevant run, scientist, or work-unit page.
 - Confirm new manuals are linked from the relevant System or Scientist index. Work-unit manuals should be linked from their owning scientist manual instead of listed in the global navigation.
 - Confirm pages explain behavior and decisions directly instead of only pointing to implementation files.

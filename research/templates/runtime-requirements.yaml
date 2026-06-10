@@ -1,0 +1,13 @@
+# Copy into a scientist or run directory when a long run needs runtime setup.
+runtime_requirements:
+  - profile: xgboost-macos
+    reason: XGBoost wheels on macOS require the OpenMP runtime provided by Homebrew libomp.
+    allowed_installer: "bin/ai-lab runtime ensure xgboost-macos --repo <repo>"
+    required_brew_packages:
+      - libomp
+    common_python_overlays:
+      - scikit-learn
+    verification:
+      - "uv run python -c 'import xgboost; print(xgboost.__version__)'"
+      - "uv run --with scikit-learn python -c 'import sklearn; import xgboost; print(xgboost.__version__)'"
+    approval_scope: overnight_or_long_running_scientist_run_only

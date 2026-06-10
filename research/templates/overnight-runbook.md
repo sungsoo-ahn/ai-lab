@@ -12,14 +12,16 @@ Run ID: <run_id>
 
 - Agents may run bounded work units.
 - Agents may silently install missing Python dependencies only through scientist-local or inherited repository-local `uv` workflows when explicitly authorized.
-- Agents may not silently install Homebrew, Node, Docker, system packages, connector integrations, shell configuration, or account configuration.
+- Agents may use allowlisted runtime profiles, such as `bin/ai-lab runtime ensure xgboost-macos`, when explicitly authorized.
+- Agents may not silently install Node, Docker, unlisted system packages, connector integrations, credentials, shell configuration, or account configuration.
 
 ## Gates
 
 1. Verify environment, tests, data, and baseline.
 2. Record package installs and failures.
-3. Launch parallel-ready work units only after baseline state is known.
-4. Preserve failed trials and negative findings.
+3. Check expected runtime profiles before model-heavy work.
+4. Launch parallel-ready work units only after baseline state is known.
+5. Preserve failed trials and negative findings.
 
 ## Required Final Outputs
 

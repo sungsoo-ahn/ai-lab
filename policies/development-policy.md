@@ -19,11 +19,13 @@ New Python work must use:
 
 Do not install packages into Apple system Python. Avoid direct `pip`, manual `venv`, Poetry, Pipenv, and Conda unless maintaining an inherited project that already uses them.
 
-For explicitly authorized overnight research runs, missing Python dependencies may be installed silently through scientist-local or inherited repository-local `uv` workflows. Record the command and result in the scientist or work-unit report.
+For explicitly authorized overnight or long-running research runs, missing Python dependencies may be installed silently through scientist-local or inherited repository-local `uv` workflows. Record the command and result in the scientist or work-unit report.
+
+For Python packages that need OS runtime libraries, use allowlisted runtime profiles from `policies/scientist-runtime-policy.md`. Example: `xgboost-macos` installs Homebrew `libomp` from `Brewfile` and verifies `import xgboost`.
 
 ## JavaScript And TypeScript
 
-Do not install Node globally by default. Add Node only when a concrete project needs frontend, TypeScript, or MCP tooling. Prefer a per-project version manager when Node is introduced.
+Do not install Node globally by default. Add Node only when a concrete project needs frontend, TypeScript, or MCP tooling and the user approves it. Prefer a per-project version manager when Node is introduced.
 
 ## Containers
 

@@ -21,6 +21,7 @@ Repository paths are allowed as implementation references and provenance, but th
 - Purpose and current operating model.
 - Layer model and state ownership.
 - Policies for packages, connectors, privacy, and proposals.
+- Overnight and runtime automation rules, including allowlisted dependency setup.
 - Build, validation, and deployment commands.
 - Documentation rules and maintenance checklist.
 - Current active tasks and scientists.
@@ -86,6 +87,8 @@ System maintenance changes should update the relevant System Manual page, `READM
 Scientist changes should update the scientist manifest, scientist report or guide, public scientist manual, prompt manifests for new runs, static plot data when the evidence surface changes, and the active/completed work-unit lists.
 
 Work-unit changes should update `work-unit.yaml`, `guide.md`, `report.md`, the public work-unit manual, prompt artifact references when applicable, and the owning scientist manual's work-unit table. When a work unit finishes, close or complete the manifest and keep the report status consistent.
+
+Long-run or overnight changes should update the runbook, prompt artifacts, runtime requirements when used, all touched work-unit reports, the scientist report, source maps, public manuals, and `logs/activity.md`.
 
 ## Writing Style
 

@@ -17,6 +17,7 @@ Scientist manuals explain concrete AI scientist versions. A scientist is not jus
 | Scientist | Task | Role in this manual | Current Decision |
 | --- | --- | --- | --- |
 | [BTC AutoResearch v1](btc-autoresearch-v1/index.md) | `btc` | Current worked example | Continue with a narrow `t094` robustness work unit before any sealed holdout consideration. |
+| [BTC Benchmark v2](btc-benchmark-v2/index.md) | `btc_benchmark` | Frozen-referee benchmark scientist | Local reproducible candidate found; external submission requires user approval. |
 
 ## Adding Another Scientist
 

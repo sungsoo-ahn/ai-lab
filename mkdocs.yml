@@ -21,6 +21,7 @@ plugins:
 
 not_in_nav: |
   scientists/btc-autoresearch-v1/work-units/*.md
+  scientists/btc-benchmark-v2/work-units/*.md
 
 markdown_extensions:
   - admonition
@@ -56,3 +57,5 @@ nav:
       - Overview: scientists/index.md
       - BTC AutoResearch v1:
           - Scientist Manual: scientists/btc-autoresearch-v1/index.md
+      - BTC Benchmark v2:
+          - Scientist Manual: scientists/btc-benchmark-v2/index.md

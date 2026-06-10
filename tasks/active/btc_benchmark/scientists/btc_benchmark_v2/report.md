@@ -46,7 +46,7 @@ Required companion evidence for any promoted candidate:
 | Work Unit | Status | Result | Next Step |
 | --- | --- | --- | --- |
 | `referee_reproduction` | complete | Local referee repaired; test suite passes `131 passed, 1 skipped`; loader sees 56,232 candles and 7,367 funding events | Keep scoring/gates unchanged |
-| `bundled_baselines` | complete | `EmaTrend` gates passed but loses `-81.7%`; `XgbMomentum` blocked by missing OS `libomp.dylib` | Avoid XGBoost unless user approves Homebrew `libomp` install |
+| `bundled_baselines` | complete | `EmaTrend` loses `-81.7%`; `XgbMomentum` runs after `libomp` + `scikit-learn` and scores `+53.3%`, below buy-hold | Bundled baselines are not competitive |
 | `strategy_search` | complete | First dependency-light search found gated `BestEmaRegimeV1` at `+260.5%` net | Superseded by robustness-promoted V2 |
 | `ema_regime_robustness` | complete | 1,296 EMA variants screened; top 8 gated; `BestEmaRegimeV2` verified at `+324.3%` net | Use V2 for submission preparation and final evidence |
 | `report_synthesis` | active | Current report updated with best candidate | Keep reports and source map current |
@@ -84,4 +84,4 @@ After local data-package repair from lineage, referee verification passed:
 
 - Does the upstream benchmark repo intentionally omit data modules, or is the public checkout incomplete?
 - What is the benchmark host's submission mechanism? No external submission will be attempted without explicit user approval.
-- Should we install Homebrew `libomp` to evaluate the bundled XGBoost baseline and possible XGBoost-derived strategies?
+- Should a separate model-heavy scientist version explore XGBoost/LightGBM features now that the runtime profile is available?

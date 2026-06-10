@@ -25,8 +25,8 @@ source_refs:
     git_ref: ac02e46a944ce14284700334ea995967ebb2fd75
     purpose: Bundled baseline strategies.
 evaluation_plan: Run `python -m scripts.run_benchmark --strategy ...` through uv and preserve leaderboard outputs.
-outcome: `EmaTrend` gates passed but scored net -81.7%; `XgbMomentum` could not run because xgboost requires missing macOS OpenMP runtime `libomp.dylib`.
-decision: Bundled baselines are not competitive; continue with dependency-light strategy search unless Homebrew libomp install is approved.
+outcome: `EmaTrend` gates passed but scored net -81.7%. After Homebrew `libomp` and a transient `uv run --with scikit-learn` overlay, `XgbMomentum` gates passed and scored net +53.3%, Sharpe 0.531, max drawdown -43.3%, below buy-hold +150.3%.
+decision: Bundled baselines are not competitive; continue with the promoted dependency-light EMA regime candidate unless a separate model-heavy work unit is opened.
 reports:
   current: report.md
 guides:

@@ -39,6 +39,9 @@ Date: 2026-06-10
 
 ## Operational Notes
 
-- Package/runtime changes still follow `policies/update-policy.md`.
+- Package/runtime changes follow `policies/update-policy.md` and `policies/scientist-runtime-policy.md`.
+- Long-running scientists may use `research/templates/overnight-goal.md` and allowlisted runtime profiles.
+- Current allowlisted runtime profile: `xgboost-macos`, which installs Homebrew `libomp` for XGBoost.
+- Current runtime status: `xgboost-macos` check passes; Brewfile dependencies are satisfied and XGBoost imports as `3.2.0`.
 - Connector writes still require explicit approval.
 - Generated indexes can be rebuilt with `bin/ai-lab memory index`.

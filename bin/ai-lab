@@ -19,6 +19,16 @@ ARCHIVE = ROOT / "archive"
 SOURCES = ROOT / "sources"
 SOURCE_REGISTRY = SOURCES / "sources.yaml"
 DOCS = ROOT / "docs"
+BREWFILE = ROOT / "Brewfile"
+
+
+RUNTIME_PROFILES = {
+    "xgboost-macos": {
+        "homebrew": ["libomp"],
+        "python_imports": ["xgboost"],
+        "description": "macOS OpenMP runtime needed by current XGBoost wheels.",
+    }
+}
 
 
 def today() -> str:
@@ -227,6 +237,92 @@ def cmd_source_materialize(args: argparse.Namespace) -> None:
         subprocess.run(["git", "clone", remote, str(path)], check=True)
     run_git(path, "checkout", ref)
     print(path)
+
+
+def command_exists(name: str) -> bool:
+    return shutil.which(name) is not None
+
+
+def run_print(cmd: list[str], cwd: Path | None = None, check: bool = False) -> subprocess.CompletedProcess[str]:
+    print("+ " + " ".join(cmd))
+    return subprocess.run(cmd, cwd=str(cwd) if cwd else None, text=True, check=check)
+
+
+def run_capture(cmd: list[str], cwd: Path | None = None) -> subprocess.CompletedProcess[str]:
+    print("+ " + " ".join(cmd))
+    return subprocess.run(
+        cmd,
+        cwd=str(cwd) if cwd else None,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+
+
+def runtime_profile(name: str) -> dict[str, object]:
+    if name not in RUNTIME_PROFILES:
+        known = ", ".join(sorted(RUNTIME_PROFILES))
+        raise SystemExit(f"Unknown runtime profile: {name}. Known profiles: {known}")
+    return RUNTIME_PROFILES[name]
+
+
+def cmd_runtime_check(args: argparse.Namespace) -> None:
+    profile = runtime_profile(args.profile)
+    ok = True
+    print(f"profile: {args.profile}")
+    print(f"description: {profile['description']}")
+    if command_exists("brew"):
+        print("brew: present")
+        bundle = run_print(["brew", "bundle", "check", "--file", str(BREWFILE)], check=False)
+        ok = ok and bundle.returncode == 0
+        for package in profile.get("homebrew", []):
+            result = subprocess.run(["brew", "list", str(package)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            installed = result.returncode == 0
+            ok = ok and installed
+            print(f"homebrew:{package}: {'installed' if installed else 'missing'}")
+    else:
+        ok = False
+        print("brew: missing")
+    if args.repo:
+        repo = Path(args.repo).expanduser()
+        for module in profile.get("python_imports", []):
+            code = f"import {module}; print({module}.__version__ if hasattr({module}, '__version__') else 'ok')"
+            print(f"python_import:{module}:")
+            result = run_capture(["uv", "run", "python", "-c", code], cwd=repo)
+            ok = ok and result.returncode == 0
+            if result.returncode == 0:
+                print(result.stdout.strip() or "ok")
+            else:
+                combined = "\n".join(part for part in [result.stdout.strip(), result.stderr.strip()] if part)
+                if "libomp" in combined or "OpenMP" in combined:
+                    print("failed: XGBoost cannot load because the OpenMP runtime libomp is missing.")
+                else:
+                    print("failed: Python import check failed.")
+    if not ok:
+        raise SystemExit(1)
+
+
+def cmd_runtime_ensure(args: argparse.Namespace) -> None:
+    profile = runtime_profile(args.profile)
+    if not command_exists("brew"):
+        raise SystemExit("Homebrew is required for runtime ensure, but brew is not on PATH.")
+    if not BREWFILE.exists():
+        raise SystemExit(f"Brewfile not found: {BREWFILE}")
+    packages = ", ".join(str(item) for item in profile.get("homebrew", [])) or "none"
+    print(f"Ensuring runtime profile {args.profile}: {packages}")
+    result = run_print(["brew", "bundle", "--file", str(BREWFILE), "--no-upgrade"], check=False)
+    if result.returncode != 0:
+        raise SystemExit(
+            "Runtime install failed. Check Homebrew permissions, then rerun the same command. "
+            "If brew reports unwritable /opt/homebrew paths, repair ownership outside Codex."
+        )
+    if args.repo:
+        repo = Path(args.repo).expanduser()
+        for module in profile.get("python_imports", []):
+            code = f"import {module}; print({module}.__version__ if hasattr({module}, '__version__') else 'ok')"
+            result = run_print(["uv", "run", "python", "-c", code], cwd=repo, check=False)
+            if result.returncode != 0:
+                raise SystemExit(f"Runtime profile installed, but Python import verification failed: {module}")
 
 
 def task_dir(task_id: str) -> Path:
@@ -789,6 +885,17 @@ def build_parser() -> argparse.ArgumentParser:
     docs_sub = docs.add_subparsers(dest="cmd", required=True)
     p = docs_sub.add_parser("audit")
     p.set_defaults(func=cmd_docs_audit)
+
+    runtime = sub.add_parser("runtime", help="check or ensure allowlisted scientist runtime profiles")
+    runtime_sub = runtime.add_subparsers(dest="cmd", required=True)
+    p = runtime_sub.add_parser("check")
+    p.add_argument("profile", choices=sorted(RUNTIME_PROFILES))
+    p.add_argument("--repo", help="optional repository path for uv import checks")
+    p.set_defaults(func=cmd_runtime_check)
+    p = runtime_sub.add_parser("ensure")
+    p.add_argument("profile", choices=sorted(RUNTIME_PROFILES))
+    p.add_argument("--repo", help="optional repository path for uv import verification")
+    p.set_defaults(func=cmd_runtime_ensure)
 
     p = sub.add_parser("memory", help="search and maintain AI Lab memory")
     p.add_argument("memory_args", nargs=argparse.REMAINDER)
