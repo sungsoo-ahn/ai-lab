@@ -30,3 +30,4 @@ Use this file for significant local setup, policy, and organization changes.
 | 2026-06-10 | Curated public activity feed | Filtered dashboard-maintenance entries from the homepage feed so recent changes emphasize research and system work. |
 | 2026-06-10 | Polished public status labels | Rendered status values as display labels in badges and metric strips while preserving raw report status values. |
 | 2026-06-10 | Polished public evidence labels | Replaced raw report filenames in page metadata and evidence metrics with public-facing labels. |
+| 2026-06-10 | Polished homepage metric copy | Replaced internal publication/source-report wording with visitor-facing visibility and report labels. |

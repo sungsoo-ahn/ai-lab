@@ -528,7 +528,7 @@ def page(title: str, body: str, current: str = "") -> str:
     <footer class="site-footer">
       <div>
         <strong>Agent System</strong>
-        <p>Generated from Markdown and YAML reports. Public pages are summaries; source reports remain available for audit.</p>
+        <p>Generated from Markdown and YAML reports. Public pages are summaries; full reports remain available for audit.</p>
       </div>
       <nav class="footer-links" aria-label="Footer">
         <a href="{current}index.html">Overview</a>
@@ -618,9 +618,9 @@ def build_home(projects: list[dict[str, Any]]) -> str:
         <p class="lede">A local-first research workspace for turning open-ended work into tracked projects, source maps, reports, and reusable memory.</p>
       </div>
       <div class="hero-panel">
-        <span class="label">Project purpose</span>
+        <span class="label">Why it exists</span>
         <strong>Research that can be restarted.</strong>
-        <p>The system keeps canonical Markdown/YAML records, generated indexes, and public-safe pages so context survives between sessions.</p>
+        <p>The system keeps reports, indexes, and public summaries aligned so context survives between sessions.</p>
       </div>
     </section>
     <section class="intro-band">
@@ -634,7 +634,7 @@ def build_home(projects: list[dict[str, Any]]) -> str:
       </article>
       <article>
         <span>Current shape</span>
-        <p>There are {len(projects)} active projects and {total_hypotheses} tracked work units. The site keeps the public read concise while leaving source reports one click away.</p>
+        <p>There are {len(projects)} active projects and {total_hypotheses} tracked work units. The site keeps the public read concise while leaving full reports one click away.</p>
       </article>
     </section>
     <section class="section">
@@ -669,8 +669,8 @@ def build_home(projects: list[dict[str, Any]]) -> str:
     <section class="metric-strip">
       <div><span>Projects</span><strong>{len(projects)}</strong></div>
       <div><span>Work units</span><strong>{total_hypotheses}</strong></div>
-      <div><span>Latest log</span><strong>{html.escape(latest_date)}</strong></div>
-      <div><span>Publication</span><strong>Public-safe</strong></div>
+      <div><span>Latest update</span><strong>{html.escape(latest_date)}</strong></div>
+      <div><span>Visibility</span><strong>Public summary</strong></div>
     </section>
     <section id="projects" class="section">
       <div class="section-head"><p class="eyebrow">Project index</p><h2>Reports and work units</h2></div>
