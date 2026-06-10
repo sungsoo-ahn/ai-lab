@@ -29,6 +29,7 @@ bin/ai-lab docs audit
 The audit checks that:
 
 - static JSON assets parse;
+- prompt manifests point at existing local prompt files;
 - Markdown links under `docs/` resolve locally;
 - active scientists have public scientist manuals;
 - every work unit has `work-unit.yaml`, `guide.md`, `report.md`, and a linked public work-unit manual;
@@ -67,6 +68,7 @@ The workflow:
 
 - Run `mkdocs build --strict` before committing site changes.
 - Run `bin/ai-lab docs audit` before committing system, scientist, work-unit, or public manual changes.
+- Record important LLM prompts with `bin/ai-lab prompt record` and reference the prompt manifest from the relevant run, scientist, or work-unit page.
 - Confirm new manuals are linked from the relevant System or Scientist index. Work-unit manuals should be linked from their owning scientist manual instead of listed in the global navigation.
 - Confirm pages explain behavior and decisions directly instead of only pointing to implementation files.
 - Confirm implementation paths are accurate when used as provenance.

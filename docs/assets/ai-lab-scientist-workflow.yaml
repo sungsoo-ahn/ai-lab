@@ -11,6 +11,10 @@ nodes:
     type: agent
     label: Work Unit Planner
     output: work-unit.yaml
+  - id: prompt_recorder
+    type: artifact
+    label: Prompt Recorder
+    output: prompt-manifest.yaml
   - id: source_checkout
     type: source
     label: Source Checkout
@@ -36,6 +40,9 @@ edges:
     to: planner
     artifact: current_report.md
   - from: planner
+    to: prompt_recorder
+    artifact: exact_run_prompt.md
+  - from: prompt_recorder
     to: source_checkout
     artifact: source_ref
   - from: source_checkout

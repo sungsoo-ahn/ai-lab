@@ -11,6 +11,7 @@ A user, developer, or maintainer should not need to inspect the repository to un
 - what inputs, outputs, and artifacts matter;
 - how decisions are made;
 - what risks and constraints apply;
+- what prompts or prompt artifacts controlled the run;
 - how to safely continue the work.
 
 Repository paths are allowed as implementation references and provenance, but the explanation must stand on its own.
@@ -35,6 +36,7 @@ Include the following when applicable:
 - Agent/tool roles and data flow.
 - Assets, data, source refs, and implementation references.
 - Current result and decision state.
+- Prompt provenance for important runs.
 - Score-search plot or other evidence visualization.
 - Trial or experiment interpretations.
 - Active and completed work units.
@@ -49,6 +51,7 @@ Include the following when applicable:
 - Purpose and why the work unit exists.
 - Method overview and operational commands.
 - Inputs, outputs, artifacts, and provenance paths.
+- Prompt artifact path when the work unit was LLM-driven.
 - Agent/tool roles.
 - Result, decision, and safety checklist.
 - Failure modes and suspicious signals.
@@ -64,6 +67,14 @@ For JSON/YAML assets used by plots or diagrams:
 - Add hover or table fields that explain why a point matters.
 - Validate JSON/YAML before committing.
 
+## Prompt Checklist
+
+- Record exact prompts under the owning run directory, not under `docs/`.
+- Add or update `prompt-manifest.yaml` when a run has prompt artifacts.
+- Link prompt artifacts from scientist or work-unit manuals by local path.
+- Do not store secrets, connector-private content, credentials, or unnecessary personal data in prompt artifacts.
+- Public pages should summarize prompt purpose and path, not paste long raw prompts.
+
 ## Audit Protocol
 
 Run `bin/ai-lab docs audit` whenever system, scientist, work-unit, static asset, or public manual files change. The command is also part of the GitHub Pages workflow, so documentation drift blocks deployment.
@@ -72,13 +83,14 @@ Run `bin/ai-lab docs audit` whenever system, scientist, work-unit, static asset,
 
 System maintenance changes should update the relevant System Manual page, `README.md` or `reports/system-status.md` when entry points change, and `logs/activity.md` when the change is significant.
 
-Scientist changes should update the scientist manifest, scientist report or guide, public scientist manual, static plot data when the evidence surface changes, and the active/completed work-unit lists.
+Scientist changes should update the scientist manifest, scientist report or guide, public scientist manual, prompt manifests for new runs, static plot data when the evidence surface changes, and the active/completed work-unit lists.
 
-Work-unit changes should update `work-unit.yaml`, `guide.md`, `report.md`, the public work-unit manual, and the owning scientist manual's work-unit table. When a work unit finishes, close or complete the manifest and keep the report status consistent.
+Work-unit changes should update `work-unit.yaml`, `guide.md`, `report.md`, the public work-unit manual, prompt artifact references when applicable, and the owning scientist manual's work-unit table. When a work unit finishes, close or complete the manifest and keep the report status consistent.
 
 ## Writing Style
 
 - Use clear academic wording.
+- Start with the general system concept before diving into the current example.
 - Prefer operational specificity over broad claims.
 - Distinguish score-maximizing trials from broader evidence-producing work units.
 - Link work-unit manuals from the owning scientist manual to keep global navigation small.

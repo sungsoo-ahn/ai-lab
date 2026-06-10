@@ -49,6 +49,7 @@ nav:
   - System Manual:
       - Overview: system/index.md
       - Architecture: system/architecture.md
+      - Prompt Provenance: system/prompt-provenance.md
       - Maintenance: system/maintenance.md
       - Documentation Standards: system/documentation-standards.md
   - Scientist Manuals:

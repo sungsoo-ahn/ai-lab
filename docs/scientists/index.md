@@ -1,22 +1,23 @@
 # Scientist Manuals
 
-Scientist manuals explain a complete AI scientist version. A reader should understand the scientist's goal, metric, constraints, workflow, evidence, decisions, embedded work units, and maintenance path without opening implementation files.
+Scientist manuals explain concrete AI scientist versions. A scientist is not just a model or script; it is a versioned research scheme with goals, constraints, prompt/run artifacts, work units, reports, and decision gates.
+
+## What To Look For
+
+| Section | Why it matters |
+| --- | --- |
+| Purpose and non-goals | Defines what the scientist is allowed to optimize or investigate. |
+| Agent and tool roles | Shows how planning, execution, criticism, synthesis, and human review are separated. |
+| Prompt provenance | Points to exact local prompts for important LLM runs. |
+| Work units | Shows the bounded investigations that produced the current state. |
+| Current decision | States what should happen next and what should not be promoted yet. |
 
 ## Active Scientists
 
-| Scientist | Task | Status | Current Decision |
+| Scientist | Task | Role in this manual | Current Decision |
 | --- | --- | --- | --- |
-| [BTC AutoResearch v1](btc-autoresearch-v1/index.md) | `btc` | active | Continue with a narrow `t094` robustness work unit before any sealed holdout consideration. |
+| [BTC AutoResearch v1](btc-autoresearch-v1/index.md) | `btc` | Current worked example | Continue with a narrow `t094` robustness work unit before any sealed holdout consideration. |
 
-## Scientist Manual Requirements
+## Adding Another Scientist
 
-Each scientist manual should include:
-
-- target metric and evaluation context;
-- non-goals and safety constraints;
-- agent and tool roles;
-- assets and provenance paths;
-- score-search or evidence visualizations when useful;
-- completed and active work units;
-- decisions, open risks, and next action;
-- maintenance notes for future developers.
+When a new scientist is added, keep its public manual focused on the scheme and decision record. Put detailed work-unit pages under the scientist, but link them from the scientist manual instead of expanding global navigation.

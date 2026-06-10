@@ -29,6 +29,12 @@ uv run --no-sync python -m scripts.run_m5_5_audit
 uv run --no-sync python -m scripts.run_autoresearch --max-trials 100 --seed 42
 ```
 
+## Prompt Artifacts
+
+- Prompt manifest: `prompt-manifest.yaml`
+- Historical orchestration prompt: `prompts/orchestration.md`
+- Note: the prompt was captured from the historical `codex-exec.log` and still references the old `agent-system` path used before this workspace became `ai-lab`.
+
 ## Package Installs
 
 - `uv pip install -e '.[models,plot,dev]'`

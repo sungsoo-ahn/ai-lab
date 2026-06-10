@@ -38,6 +38,7 @@ bin/ai-lab task status btc
 bin/ai-lab scientist status btc btc_autoresearch_v1
 bin/ai-lab work-unit status btc btc_autoresearch_v1 regime_filter_probe
 bin/ai-lab source status btc_autoresearch
+bin/ai-lab prompt record btc btc_autoresearch_v1 overnight-2026-06-09 orchestration --from-file prompt.md
 bin/ai-lab docs audit
 bin/ai-lab memory index
 bin/ai-lab memory search btc
@@ -88,4 +89,4 @@ mkdocs serve
 
 Deployment uses `.github/workflows/pages.yml`. Push to `main`, then enable GitHub Pages with GitHub Actions as the source if it is not already enabled.
 
-To add or update public documentation, edit the relevant system, scientist, or work-unit manual under `docs/`. Static plot data lives under `docs/assets/`. Use `docs/system/documentation-standards.md` as the checklist for keeping manuals self-contained.
+To add or update public documentation, edit the relevant system, scientist, or work-unit manual under `docs/`. Static plot data lives under `docs/assets/`. Exact LLM prompts live under scientist run directories, not under `docs/`. Use `docs/system/documentation-standards.md` as the checklist for keeping manuals self-contained.

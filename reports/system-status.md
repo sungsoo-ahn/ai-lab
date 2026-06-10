@@ -8,6 +8,7 @@ Date: 2026-06-10
 - Source registry: `/Users/sungs/ai-lab/sources/sources.yaml`
 - Former compatibility symlink `/Users/sungs/agent-system` has been removed.
 - Canonical storage: Markdown and YAML
+- Prompt provenance: exact prompts are local run artifacts under scientist `runs/<run_id>/prompts/`
 - Generated search index: `memory/index.sqlite`
 - Memory hierarchy: lab -> task -> scientist -> work unit
 - Self-evolution policy: work-unit proposals are gated into new scientist versions
@@ -29,6 +30,7 @@ Date: 2026-06-10
 - `README.md`
 - `docs/index.md`
 - `docs/system/index.md`
+- `docs/system/prompt-provenance.md`
 - `docs/scientists/btc-autoresearch-v1/index.md`
 - `reports/system-status.md`
 - `sources/sources.yaml`

@@ -3,43 +3,39 @@
 <div class="run-metadata">
 <p><strong>Scientist ID:</strong> btc_autoresearch_v1</p>
 <p><strong>Task:</strong> btc</p>
-<p><strong>Status:</strong> active</p>
+<p><strong>Status:</strong> active example scientist</p>
 <p><strong>Updated:</strong> 2026-06-10 00:27 KST</p>
 </div>
 
-## Purpose
+## One-Screen Summary
 
-BTC AutoResearch v1 studies BTCUSDT short-horizon backtests through an AI-scientist loop. It searches for candidate trading configurations, audits the research pipeline, preserves negative findings, and gates any promotion through explicit evidence.
+BTC AutoResearch v1 is the current worked example of an AI Lab scientist. It studies BTCUSDT short-horizon backtests using an inherited research pipeline, but it also runs non-score-maximizing work units such as pipeline audits, horizon checks, and report synthesis.
 
-The scientist is not a live-trading system. It does not place orders, use private exchange credentials, or authorize deployment of a strategy.
+The current decision is conservative: continue with a narrow `t094` robustness work unit. Do not use sealed holdout yet, and do not promote H>1 candidates until horizon-matched holding is part of primary ranking.
 
-## Goal And Target Metric
+## Purpose And Boundaries
 
 Specific goal: improve the BTCUSDT short-horizon research pipeline to find a better backtested candidate while preserving causal, comparable, cost-correct evaluation.
+
+This scientist is not a live-trading system. It does not place orders, use private exchange credentials, or authorize deployment of a strategy.
 
 | Field | Value |
 | --- | --- |
 | Target metric | `backtested_net_return` |
-| Direction | maximize |
+| Direction | maximize for score-search work units |
+| Broader evidence | Audits, ablations, failure analysis, reporting, and prompt/run provenance |
 | Evaluation context | Official BTC research backtester under 1x transaction-cost assumptions, with audit metrics reported before any sealed holdout use. |
-
-## Non-Negotiable Constraints
-
-- Do not change backtester accounting, transaction costs, timestamp alignment, walk-forward splits, or sealed holdout protection to inflate performance.
-- Preserve failed and rejected trials in ledgers.
-- Report fold stability, cost sensitivity, random-baseline comparison, drawdown, and profit concentration.
-- Do not use live trading, private API keys, or account credentials.
-- Do not touch the sealed holdout during exploratory research.
 
 ## Agent And Tool Roles
 
-| Role | Responsibility | Current BTC Example |
+| Role | Responsibility | BTC example |
 | --- | --- | --- |
 | Work Unit Planner | Chooses bounded next investigations from current scientist state. | Opened baseline reproduction, pipeline audit, H4 audit, regime probe, and synthesis work units. |
+| Prompt Recorder | Preserves exact LLM run prompts as local artifacts. | Recorded the historical overnight orchestration prompt under the run directory. |
 | Source Checkout / Tool Runner | Runs reproducible code and commands against immutable source refs. | Uses `sources/checkouts/btc_autoresearch` at git ref `ca251130e1f97b6233ceb957cb85e209bc136073`. |
-| Experiment Evaluator | Produces trial ledgers, metrics, backtests, and audit records. | Extended the M5 score-search ledger to 100 trials. |
+| Experiment Evaluator | Produces ledgers, metrics, backtests, and audit records. | Extended the M5 score-search ledger to 100 trials. |
 | Scientific Critic / Auditor | Checks leakage, horizon mismatch, cost stress, concentration, fold stability, and invalid shortcuts. | Flagged H=4 horizon mismatch and `t094` concentration risk. |
-| Report Synthesis | Preserves findings and next actions in scientist and work-unit manuals. | Summarized the overnight run and conservative next step. |
+| Report Synthesis | Preserves findings and next actions in manuals. | Summarized the overnight run and conservative next step. |
 | Human Gate | Accepts, rejects, reruns, or requests a next-version proposal. | Current gate: robustness work before holdout. |
 
 ## Workflow
@@ -47,15 +43,40 @@ Specific goal: improve the BTCUSDT short-horizon research pipeline to find a bet
 ```mermaid
 flowchart LR
   S[Scientist State] -->|goal, constraints, prior evidence| P[Work Unit Planner]
-  P -->|work-unit scope| C[Source Checkout]
+  P -->|exact run instruction| PR[Prompt Artifact]
+  PR -->|work-unit scope| C[Source Checkout]
   C -->|configs, code, data| E[Experiment Evaluator]
-  E -->|trial ledger and metrics| A[Scientific Critic]
+  E -->|ledger, metrics, artifacts| A[Scientific Critic]
   A -->|caveats and decision| R[Report Synthesis]
   R -->|manuals and proposals| H[Human Gate]
   H -->|accept / reject / rerun| S
 ```
 
 Machine-readable workflow reference: `docs/assets/ai-lab-scientist-workflow.yaml`.
+
+## Prompt Provenance
+
+The exact historical prompt for the overnight BTC run is stored locally, not copied into the public site:
+
+```text
+tasks/active/btc/scientists/btc_autoresearch_v1/runs/overnight-2026-06-09/prompts/orchestration.md
+```
+
+Prompt manifest:
+
+```text
+tasks/active/btc/scientists/btc_autoresearch_v1/runs/overnight-2026-06-09/prompt-manifest.yaml
+```
+
+That prompt references the old `agent-system` path because it was captured from a historical run log before the workspace was renamed to `ai-lab`.
+
+## Safety Constraints
+
+- Do not change backtester accounting, transaction costs, timestamp alignment, walk-forward splits, or sealed holdout protection to inflate performance.
+- Preserve failed and rejected trials in ledgers.
+- Report fold stability, cost sensitivity, random-baseline comparison, drawdown, and profit concentration.
+- Do not use live trading, private API keys, or account credentials.
+- Do not touch the sealed holdout during exploratory research.
 
 ## Assets And Provenance
 
@@ -65,6 +86,14 @@ Machine-readable workflow reference: `docs/assets/ai-lab-scientist-workflow.yaml
 | `btcusdt_futures_1h_dataset` | dataset | Main ML/backtest dataset. | Built locally from Binance public futures data; expected processed file `data/processed/BTCUSDT_futures_um_1h.parquet`. |
 | `baseline_t054` | result bundle | Local baseline comparison. | Reproduced locally with updated metrics; still below buy-and-hold over the same OOS window. |
 | `btc-trials.json` | static public plot data | Curated documentation dataset for hover inspection. | `docs/assets/btc-trials.json`; derived from selected local ledger rows and report summaries. |
+
+## Score-Search Evidence
+
+The plot below shows selected score-maximizing BTC trials. It is one evidence surface, not the whole scientist.
+
+<div class="ai-lab-vega-plot" data-json="../../assets/btc-trials.json" data-title="BTC score-search trial inspection"></div>
+
+Hover over points to inspect hypothesis, config snippet, trace/report snippet, metric delta, and status. High return alone is not a promotion decision.
 
 ## Current Result
 
@@ -77,25 +106,7 @@ Best headline H=1 candidate from the 100-trial ledger:
 
 Reason not promoted: only `6/14` folds were positive and profit concentration top-5 was `0.887`.
 
-## Baseline
-
-The local reproduced baseline is `t054_a19bd141e75b`:
-
-- `technical_core`, `H=1`, `long_cash`, `cost_aware`, lambda `3.0`
-- Net `+94.0%`, Sharpe `0.71`, max drawdown `-41%`, trades `70`
-- M5.5 audit: `READY_FOR_ONE_SHOT_HOLDOUT`
-- Funding-aware net: `+72.4%`
-- Fold-positive `8/14`; PBO `0.4127`; comparable DSR `0.4570`
-
-This differs from the earlier documented `+60.0%` baseline, likely because the local data build now runs through `2026-05-31`.
-
-## Score-Search Plot
-
-The plot below shows selected score-maximizing BTC trials. It is one evidence surface, not the whole scientist.
-
-<div class="ai-lab-vega-plot" data-json="../../assets/btc-trials.json" data-title="BTC score-search trial inspection"></div>
-
-Hover over points to inspect hypothesis, config snippet, trace/report snippet, metric delta, and status. High return alone is not a promotion decision.
+The local reproduced baseline is `t054_a19bd141e75b`: net `+94.0%`, Sharpe `0.71`, max drawdown `-41%`, trades `70`, M5.5 audit `READY_FOR_ONE_SHOT_HOLDOUT`.
 
 ## Trial Interpretations
 
@@ -125,10 +136,6 @@ Hover over points to inspect hypothesis, config snippet, trace/report snippet, m
 - Cost sensitivity that collapses under stress.
 - Fold performance unstable across time.
 - Any change to accounting, timestamp alignment, split policy, or sealed holdout rules.
-
-## Current Decision
-
-Continue with a narrow `t094` robustness work unit. Do not promote to sealed holdout yet. Do not promote H>1 candidates until horizon-matched holding is part of the primary search and ranking path.
 
 ## Implementation References
 
