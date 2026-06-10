@@ -42,6 +42,12 @@ This scientist is not a live-trading system. It does not place orders, use excha
 | Companion evidence | Sharpe, Sortino, max drawdown, cost stress, next-open net, funding-aware net, random percentile, buy-hold comparison, per-year behavior |
 | Holdout rule | sealed holdout remains host-owned and unused locally |
 
+## Candidate Performance Plot
+
+The chart below compares the bundled baselines, buy-and-hold reference, initial EMA search winner, robustness alternatives, and promoted candidate. It uses curated local benchmark outputs rather than the ignored raw result directories.
+
+<div class="ai-lab-vega-plot" data-json="../../assets/btc-benchmark-candidates.json" data-title="BTC benchmark candidate performance" data-x-field="search_rank" data-x-title="Candidate order" data-y-field="net_return" data-y-title="Official dev net return" data-size-field="success_rate" data-size-title="Gate pass indicator"></div>
+
 ## Agent And Tool Roles
 
 | Role | Responsibility | Benchmark example |

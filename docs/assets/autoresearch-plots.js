@@ -15,6 +15,12 @@ document.addEventListener("DOMContentLoaded", () => {
       }
       const values = await response.json();
       const title = plot.dataset.title || "BTC score-search trials";
+      const xField = plot.dataset.xField || "gpu_hours";
+      const xTitle = plot.dataset.xTitle || "Approx. compute budget";
+      const yField = plot.dataset.yField || "net_return";
+      const yTitle = plot.dataset.yTitle || "Net return";
+      const sizeField = plot.dataset.sizeField || "success_rate";
+      const sizeTitle = plot.dataset.sizeTitle || "Fold success proxy";
 
       const spec = {
         $schema: "https://vega.github.io/schema/vega-lite/v5.json",
@@ -31,14 +37,14 @@ document.addEventListener("DOMContentLoaded", () => {
         },
         encoding: {
           x: {
-            field: "gpu_hours",
+            field: xField,
             type: "quantitative",
-            title: "Approx. compute budget"
+            title: xTitle
           },
           y: {
-            field: "net_return",
+            field: yField,
             type: "quantitative",
-            title: "Net return",
+            title: yTitle,
             axis: { format: ".0%" }
           },
           color: {
@@ -47,9 +53,9 @@ document.addEventListener("DOMContentLoaded", () => {
             title: "Status"
           },
           size: {
-            field: "success_rate",
+            field: sizeField,
             type: "quantitative",
-            title: "Fold success proxy",
+            title: sizeTitle,
             scale: { range: [80, 520] }
           },
           href: {
