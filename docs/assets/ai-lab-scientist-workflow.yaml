@@ -1,0 +1,55 @@
+workflow_id: ai_lab_scientist_loop_v1
+description: Static example of the AI Lab scientist loop, using the BTC scientist as the running case.
+example_task: btc
+example_scientist: btc_autoresearch_v1
+nodes:
+  - id: scientist_state
+    type: manifest
+    label: Scientist State
+    file: tasks/active/btc/scientists/btc_autoresearch_v1/scientist.yaml
+  - id: planner
+    type: agent
+    label: Work Unit Planner
+    output: work-unit.yaml
+  - id: source_checkout
+    type: source
+    label: Source Checkout
+    file: sources/sources.yaml
+  - id: evaluator
+    type: tool
+    label: Experiment Evaluator
+    output: trial_ledger.csv
+  - id: auditor
+    type: agent
+    label: Critic And Auditor
+    output: audit_notes.md
+  - id: synthesis
+    type: agent
+    label: Report Synthesis
+    output: report.md
+  - id: human_gate
+    type: human
+    label: Human Gate
+    output: accept_reject_rerun
+edges:
+  - from: scientist_state
+    to: planner
+    artifact: current_report.md
+  - from: planner
+    to: source_checkout
+    artifact: source_ref
+  - from: source_checkout
+    to: evaluator
+    artifact: immutable_git_ref
+  - from: evaluator
+    to: auditor
+    artifact: metrics_and_ledger
+  - from: auditor
+    to: synthesis
+    artifact: critique_and_caveats
+  - from: synthesis
+    to: human_gate
+    artifact: scientist_report
+  - from: human_gate
+    to: scientist_state
+    artifact: accept_reject_rerun

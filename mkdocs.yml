@@ -1,0 +1,59 @@
+site_name: AI Lab Manual
+site_description: Static manual for AI Lab scientists, work units, and BTC trial inspection.
+site_url: https://sungsoo-ahn.github.io/ai-lab/
+repo_url: https://github.com/sungsoo-ahn/ai-lab
+
+theme:
+  name: material
+  features:
+    - navigation.sections
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+  palette:
+    - scheme: default
+      primary: green
+      accent: teal
+
+plugins:
+  - search
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - pymdownx.details
+  - pymdownx.highlight
+  - pymdownx.inlinehilite
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+
+extra_javascript:
+  - https://cdn.jsdelivr.net/npm/vega@5
+  - https://cdn.jsdelivr.net/npm/vega-lite@5
+  - https://cdn.jsdelivr.net/npm/vega-embed@6
+  - assets/autoresearch-plots.js
+
+extra_css:
+  - assets/extra.css
+
+nav:
+  - Home: index.md
+  - Tutorials:
+      - First BTC Trial Inspection: tutorials/first-btc-trial.md
+      - Adding a Benchmark: tutorials/adding-benchmark.md
+      - Reading Failures: tutorials/reading-failures.md
+  - Workflows:
+      - AI Lab Scientist Loop: workflows/ai-lab-loop.md
+  - Trials:
+      - Trial Index: trials/index.md
+      - t054 Baseline: trials/trial_t054.md
+      - t094 Needs Refinement: trials/trial_t094.md
+      - t063 H4 Caveat: trials/trial_t063.md
+  - Work Units:
+      - Work Unit Index: work-units/index.md
+  - Lab Guide: tutorial.md

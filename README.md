@@ -4,6 +4,8 @@ This directory is the local-first workspace for developing AI scientists on this
 
 An AI scientist is a task-specific orchestration layer for agents. It tries to solve a hard, uncertain task by running work units, preserving evidence, and evolving its scheme and target metric over versions.
 
+The public GitHub Pages site is built with MkDocs Material from `docs/`. It is a static lab manual for explaining the AI Lab model, inspecting BTC scientist work, and reviewing curated trial plots.
+
 ## Layout
 
 - `catalog/`: broad task descriptions and reusable scientist scheme descriptions.
@@ -56,3 +58,32 @@ Use `codex-lab` to start a new session with the account AI Lab prompt and `/User
 ```sh
 codex-lab 'Use AI Lab to continue btc.'
 ```
+
+## Documentation Site
+
+The site is static and deploys to GitHub Pages from the `main` branch.
+
+Install and preview with `uv`:
+
+```sh
+uv run --with-requirements requirements.txt mkdocs serve
+```
+
+Build locally:
+
+```sh
+uv run --with-requirements requirements.txt mkdocs build
+```
+
+Fallback without `uv`:
+
+```sh
+python3 -m venv .venv
+source .venv/bin/activate
+python3 -m pip install -r requirements.txt
+mkdocs serve
+```
+
+Deployment uses `.github/workflows/pages.yml`. Push to `main`, then enable GitHub Pages with GitHub Actions as the source if it is not already enabled.
+
+To add a new score trial, edit `docs/assets/btc-trials.json`, add a Markdown detail page under `docs/trials/`, and add the page to `mkdocs.yml` if it should appear in navigation. To add a new workflow diagram, create a Markdown page with a Mermaid fence and link any static YAML or JSON assets from `docs/assets/`.

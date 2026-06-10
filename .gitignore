@@ -15,6 +15,7 @@ __pycache__/
 memory/*.sqlite
 research/active/*/state/*.sqlite
 dashboard/dist/
+site/
 
 # Keep raw private exports and bulky generated artifacts out of the audit repo.
 inbox/raw/
