@@ -44,5 +44,6 @@ The current recommendation is conservative: continue with a narrow `t094` robust
 
 - [First BTC trial inspection](tutorials/first-btc-trial.md)
 - [AI Lab scientist loop](workflows/ai-lab-loop.md)
+- [BTC AutoResearch v1 scientist report](scientists/btc-autoresearch-v1.md)
 - [BTC trial index](trials/index.md)
 - [Work unit index](work-units/index.md)

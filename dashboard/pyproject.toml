@@ -1,6 +1,0 @@
-[project]
-name = "ai-lab-dashboard"
-version = "0.1.0"
-description = "Static dashboard generator for the local ai-lab workspace."
-requires-python = ">=3.11"
-dependencies = []

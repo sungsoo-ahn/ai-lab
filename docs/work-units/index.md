@@ -4,11 +4,11 @@ Work units are not the same as score trials. A work unit may produce a result bu
 
 | Work Unit | Status | Purpose | Current Read |
 | --- | --- | --- | --- |
-| `baseline_reproduction` | complete | Reproduce the local baseline and readiness gate. | `t054` reproduced at +94.0% net with sealed holdout unused. |
-| `pipeline_audit` | complete | Audit leakage, cost, holdout, and reproducibility risks. | No accounting/split/holdout blocker found; reporting hygiene remains. |
-| `horizon_h4_audit` | complete | Investigate H=4 horizon-matched behavior. | H=4 default winners weaken sharply under horizon-matched holding. |
-| `regime_filter_probe` | complete | Audit the strongest H=1 candidate family. | `t094` is promising but needs lower concentration and better fold coverage. |
-| `report_synthesis` | complete | Summarize overnight results and next actions. | Continue with robustness work, not holdout promotion. |
+| [`baseline_reproduction`](baseline-reproduction.md) | complete | Reproduce the local baseline and readiness gate. | `t054` reproduced at +94.0% net with sealed holdout unused. |
+| [`pipeline_audit`](pipeline-audit.md) | complete | Audit leakage, cost, holdout, and reproducibility risks. | No accounting/split/holdout blocker found; reporting hygiene remains. |
+| [`horizon_h4_audit`](horizon-h4-audit.md) | complete | Investigate H=4 horizon-matched behavior. | H=4 default winners weaken sharply under horizon-matched holding. |
+| [`regime_filter_probe`](regime-filter-probe.md) | complete | Audit the strongest H=1 candidate family. | `t094` is promising but needs lower concentration and better fold coverage. |
+| [`report_synthesis`](report-synthesis.md) | complete | Summarize overnight results and next actions. | Continue with robustness work, not holdout promotion. |
 
 ## Why This Matters
 

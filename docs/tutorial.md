@@ -1,6 +1,6 @@
 # AI Lab Guide
 
-This guide explains how the public dashboard maps back to the local AI Lab workspace.
+This guide explains how the public MkDocs site maps back to the local AI Lab workspace.
 
 ## What You Are Looking At
 
