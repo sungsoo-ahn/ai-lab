@@ -1,0 +1,30 @@
+work_unit_id: horizon_h4_audit
+task_id: btc
+scientist_id: btc_autoresearch_v1
+status: complete
+created_at: 2026-06-09
+updated_at: 2026-06-10
+type: observation
+parallel_safe: true
+claimed_by: null
+run_id: overnight-2026-06-09
+touch_scope: scientist_owned_files
+conflicts_with: []
+proposal_refs: []
+statement: Investigate the documented H=4 horizon-matched lead after baseline artifacts exist.
+method: Overnight research work unit.
+expected_signal: Useful scientist knowledge, verified baseline state, or bounded improvement candidate.
+assets_used:
+  - upstream_repo
+  - btcusdt_futures_1h_dataset
+source_refs:
+  - source_id: btc_autoresearch
+    git_ref: ca251130e1f97b6233ceb957cb85e209bc136073
+    purpose: Optimized BTC AutoResearch codebase for this work unit.
+evaluation_plan: Follow the overnight runbook and write a complete work-unit report.
+outcome: H=4 default candidates weakened sharply under horizon-matched holding; t063 fell to -3.9% and t096 fell to +47.9%.
+decision: Do not promote H>1 candidates until horizon-matched holding is part of primary search and ranking.
+reports:
+  current: report.md
+guides:
+  user: guide.md

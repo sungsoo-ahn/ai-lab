@@ -1,0 +1,14 @@
+scheme_id: <scheme_id>
+title: <Scheme Title>
+status: active
+created_at: <YYYY-MM-DD>
+updated_at: <YYYY-MM-DD>
+category: <metric_loop|parallel_team|reviewer|synthesis|other>
+description: <Reusable AI scientist scheme description>
+autonomy_model:
+  default_authority: <local_commands|propose_only|scoped_work_units>
+  requires_approval: []
+work_unit_pattern: []
+evidence_discipline: []
+references: []
+public_brief: docs/schemes/<scheme_slug>.md

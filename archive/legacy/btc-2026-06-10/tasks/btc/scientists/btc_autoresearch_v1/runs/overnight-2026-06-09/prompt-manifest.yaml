@@ -1,0 +1,16 @@
+run_id: overnight-2026-06-09
+task_id: btc
+scientist_id: btc_autoresearch_v1
+visibility: local_artifact_not_public_docs
+notes: Historical prompt captured from codex-exec.log after the workspace was migrated from agent-system to ai-lab.
+prompts:
+  - prompt_id: orchestration
+    path: prompts/orchestration.md
+    source: codex-exec-log-lines-12-28
+    sensitivity: local
+    related_work_units:
+      - baseline_reproduction
+      - pipeline_audit
+      - horizon_h4_audit
+      - regime_filter_probe
+      - report_synthesis

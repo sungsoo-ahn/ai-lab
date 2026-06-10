@@ -1,0 +1,67 @@
+workflow_id: ai_lab_matrix_loop_v1
+description: Static example of the AI Lab matrix flow.
+nodes:
+  - id: task
+    type: manifest
+    label: Task
+    file: tasks/active/<task_id>/task.yaml
+  - id: scheme
+    type: manifest
+    label: Scientist Scheme
+    file: scientists/schemes/<scheme_id>/scheme.yaml
+  - id: cell
+    type: manifest
+    label: Evaluation Cell
+    file: evaluations/active/<cell_id>/evaluation-cell.yaml
+  - id: run_spec
+    type: manifest
+    label: Fixed Run Spec
+    file: evaluations/active/<cell_id>/run-spec.yaml
+  - id: work_unit
+    type: manifest
+    label: Work Unit
+    output: work-unit.yaml
+  - id: prompt_recorder
+    type: artifact
+    label: Prompt Recorder
+    output: prompt-manifest.yaml
+  - id: evaluator
+    type: tool
+    label: Evaluation Command
+    output: metrics_and_artifacts
+  - id: synthesis
+    type: agent
+    label: Synthesis
+    output: report.md
+  - id: meta
+    type: meta_scientist
+    label: Meta Scientist
+    output: system_proposal
+edges:
+  - from: task
+    to: cell
+    artifact: task_constraints
+  - from: scheme
+    to: cell
+    artifact: orchestration_pattern
+  - from: cell
+    to: run_spec
+    artifact: target_metric_and_constraints
+  - from: run_spec
+    to: work_unit
+    artifact: fixed_command_contract
+  - from: work_unit
+    to: prompt_recorder
+    artifact: exact_prompt
+  - from: prompt_recorder
+    to: evaluator
+    artifact: run_context
+  - from: evaluator
+    to: synthesis
+    artifact: metrics_and_artifacts
+  - from: synthesis
+    to: cell
+    artifact: updated_report
+  - from: cell
+    to: meta
+    artifact: comparable_evidence

@@ -1,0 +1,1863 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+
+import argparse
+import contextlib
+import datetime as dt
+import fnmatch
+import glob
+import hashlib
+import io
+import json
+import os
+import re
+import shutil
+import subprocess
+import sys
+import time
+import urllib.parse
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[1]
+TASKS = ROOT / "tasks" / "active"
+SCHEMES = ROOT / "scientists" / "schemes"
+EVALUATIONS = ROOT / "evaluations" / "active"
+META = ROOT / "meta" / "active"
+ARCHIVE = ROOT / "archive"
+SOURCES = ROOT / "sources"
+SOURCE_REGISTRY = SOURCES / "sources.yaml"
+DOCS = ROOT / "docs"
+BREWFILE = ROOT / "Brewfile"
+RUN_SPEC_SCHEMA = "ai_lab_cell_run_v1"
+SECRET_ENV_RE = re.compile(r"(token|secret|password|passwd|api[_-]?key|private[_-]?key)", re.IGNORECASE)
+PUBLIC_TERMINOLOGY_CHECKS = {
+    "AI Lab Manual": "Use AI Lab.",
+    "System Manual": "Use System Guide.",
+    "Scientist Manuals": "Use Scientist Schemes or Evaluation Matrix.",
+    "Scientist Manual": "Use scheme page or evaluation cell brief.",
+    "Work-Unit Manual": "Use Work Unit Brief.",
+    "Work Unit Manual": "Use Work Unit Brief.",
+    "Plain-English Summary": "Use Summary.",
+    "One-Screen Summary": "Use Current State.",
+    "Role in this manual": "Use Purpose.",
+    "[Manual]": "Use [Brief].",
+    "| Manual |": "Use | Brief |.",
+    "work unit/work-unit": "Use work-unit.",
+    "minimal context for one hypothesis": "Use method, audit, ablation, observation, proxy, or synthesis.",
+    "tasks/active/<task_id>/scientists": "Use evaluations/active/<cell_id>.",
+}
+ALLOWED_PLACEHOLDERS = {
+    "cell_id",
+    "task_id",
+    "scheme_id",
+    "run_id",
+    "cycle",
+    "run_dir",
+    "cell_dir",
+    "root",
+}
+
+
+RUNTIME_PROFILES = {
+    "xgboost-macos": {
+        "homebrew": ["libomp"],
+        "python_imports": ["xgboost"],
+        "description": "macOS OpenMP runtime needed by current XGBoost wheels.",
+    }
+}
+
+
+def today() -> str:
+    return dt.date.today().isoformat()
+
+
+def timestamp() -> str:
+    return dt.datetime.now(dt.timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+
+
+def now_iso() -> str:
+    return dt.datetime.now(dt.timezone.utc).isoformat()
+
+
+def safe_id(value: str, label: str) -> str:
+    if "/" in value or value in {"", ".", ".."}:
+        raise SystemExit(f"Invalid {label}.")
+    return value
+
+
+def doc_slug(value: str) -> str:
+    return value.replace("_", "-")
+
+
+def yaml_string(value: str) -> str:
+    return json.dumps(value)
+
+
+def write_new(path: Path, text: str) -> None:
+    if path.exists():
+        return
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(text, encoding="utf-8")
+
+
+def require_yaml():
+    try:
+        import yaml  # type: ignore
+    except ModuleNotFoundError as exc:
+        raise SystemExit(
+            "PyYAML is required. Run from /Users/sungs/ai-lab with `uv run python bin/ai-lab ...` "
+            "after `uv sync`."
+        ) from exc
+    return yaml
+
+
+def load_yaml_file(path: Path) -> dict[str, object]:
+    if not path.exists():
+        raise SystemExit(f"YAML file not found: {path}")
+    yaml = require_yaml()
+    data = yaml.safe_load(path.read_text(encoding="utf-8"))
+    if not isinstance(data, dict):
+        raise SystemExit(f"YAML file must contain a mapping: {path}")
+    return data
+
+
+def yaml_scalar(value: str) -> str | bool | None:
+    value = value.strip()
+    if value in {"null", "~"}:
+        return None
+    if value == "true":
+        return True
+    if value == "false":
+        return False
+    if (value.startswith('"') and value.endswith('"')) or (
+        value.startswith("'") and value.endswith("'")
+    ):
+        return value[1:-1]
+    return value
+
+
+def read_yaml_scalar(path: Path, key: str) -> str | None:
+    prefix = f"{key}:"
+    if not path.exists():
+        return None
+    for raw in path.read_text(encoding="utf-8").splitlines():
+        if raw.startswith(prefix):
+            value = raw.split(":", 1)[1].strip()
+            parsed = yaml_scalar(value)
+            return str(parsed) if parsed is not None else None
+    return None
+
+
+def read_yaml_list(path: Path, key: str) -> list[str]:
+    if not path.exists():
+        return []
+    lines = path.read_text(encoding="utf-8").splitlines()
+    values: list[str] = []
+    in_list = False
+    for raw in lines:
+        if raw.startswith(f"{key}:"):
+            in_list = True
+            rest = raw.split(":", 1)[1].strip()
+            if rest == "[]":
+                return []
+            continue
+        if in_list:
+            if raw.startswith("  - "):
+                values.append(raw.split("- ", 1)[1].strip())
+                continue
+            if raw and not raw.startswith(" "):
+                break
+    return values
+
+
+def read_yaml_values(path: Path, key: str) -> list[str]:
+    if not path.exists():
+        return []
+    prefix = f"{key}:"
+    values: list[str] = []
+    for raw in path.read_text(encoding="utf-8").splitlines():
+        line = raw.strip()
+        if line.startswith(prefix):
+            value = line.split(":", 1)[1].strip()
+            parsed = yaml_scalar(value)
+            if parsed is not None:
+                values.append(str(parsed))
+    return values
+
+
+def replace_yaml_scalar_line(text: str, key: str, value: str) -> str:
+    prefix = f"{key}:"
+    lines = []
+    replaced = False
+    for line in text.splitlines():
+        if not replaced and line.startswith(prefix):
+            lines.append(f"{key}: {value}")
+            replaced = True
+        else:
+            lines.append(line)
+    return "\n".join(lines) + ("\n" if text.endswith("\n") else "")
+
+
+def report_status(path: Path) -> str | None:
+    if not path.exists():
+        return None
+    match = re.search(r"^Status:\s*([A-Za-z0-9_-]+)\s*$", path.read_text(encoding="utf-8"), re.MULTILINE)
+    return match.group(1) if match else None
+
+
+def run_git(path: Path, *args: str, check: bool = True) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        ["git", "-C", str(path), *args],
+        check=check,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+
+
+def command_exists(name: str) -> bool:
+    return shutil.which(name) is not None
+
+
+def run_print(cmd: list[str], cwd: Path | None = None, check: bool = False) -> subprocess.CompletedProcess[str]:
+    print("+ " + " ".join(cmd))
+    return subprocess.run(cmd, cwd=str(cwd) if cwd else None, text=True, check=check)
+
+
+def run_capture(cmd: list[str], cwd: Path | None = None) -> subprocess.CompletedProcess[str]:
+    print("+ " + " ".join(cmd))
+    return subprocess.run(
+        cmd,
+        cwd=str(cwd) if cwd else None,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+
+
+def task_dir(task_id: str) -> Path:
+    return TASKS / safe_id(task_id, "task_id")
+
+
+def scheme_dir(scheme_id: str) -> Path:
+    return SCHEMES / safe_id(scheme_id, "scheme_id")
+
+
+def cell_dir(cell_id: str) -> Path:
+    return EVALUATIONS / safe_id(cell_id, "cell_id")
+
+
+def work_unit_dir(cell_id: str, work_unit_id: str) -> Path:
+    return cell_dir(cell_id) / "work_units" / safe_id(work_unit_id, "work_unit_id")
+
+
+def meta_dir(meta_scientist_id: str) -> Path:
+    return META / safe_id(meta_scientist_id, "meta_scientist_id")
+
+
+def cell_manifest_path(cell_id: str) -> Path:
+    return cell_dir(cell_id) / "evaluation-cell.yaml"
+
+
+def cell_run_spec_path(cell_id: str) -> Path:
+    return cell_dir(cell_id) / "run-spec.yaml"
+
+
+def cell_task_scheme(cell_id: str) -> tuple[str, str]:
+    manifest = cell_manifest_path(cell_id)
+    data = load_yaml_file(manifest)
+    task_id = data.get("task_id")
+    scheme_id = data.get("scheme_id")
+    if not isinstance(task_id, str) or not isinstance(scheme_id, str):
+        raise SystemExit(f"Cell manifest must define task_id and scheme_id: {manifest}")
+    return task_id, scheme_id
+
+
+def load_sources() -> dict[str, dict[str, object]]:
+    if not SOURCE_REGISTRY.exists():
+        return {}
+    sources: dict[str, dict[str, object]] = {}
+    current: dict[str, object] | None = None
+    for raw in SOURCE_REGISTRY.read_text(encoding="utf-8").splitlines():
+        if not raw.strip() or raw.lstrip().startswith("#"):
+            continue
+        line = raw.strip()
+        if line.startswith("- "):
+            current = {}
+            rest = line[2:]
+            if ":" in rest:
+                key, value = rest.split(":", 1)
+                current[key.strip()] = yaml_scalar(value)
+            source_id = current.get("source_id")
+            if isinstance(source_id, str):
+                sources[source_id] = current
+            continue
+        if current is not None and ":" in line:
+            key, value = line.split(":", 1)
+            current[key.strip()] = yaml_scalar(value)
+            source_id = current.get("source_id")
+            if isinstance(source_id, str):
+                sources[source_id] = current
+    return sources
+
+
+def get_source(source_id: str) -> dict[str, object]:
+    source_id = safe_id(source_id, "source_id")
+    sources = load_sources()
+    if source_id not in sources:
+        raise SystemExit(f"Source not found: {source_id}")
+    return sources[source_id]
+
+
+def source_path(source: dict[str, object]) -> Path:
+    raw = source.get("materialized_path")
+    if not isinstance(raw, str) or not raw:
+        raise SystemExit("Source has no materialized_path.")
+    return Path(raw).expanduser()
+
+
+def cmd_source_status(args: argparse.Namespace) -> None:
+    source = get_source(args.source_id)
+    path = source_path(source)
+    expected = str(source.get("git_ref") or "")
+    print(f"source_id: {source.get('source_id')}")
+    print(f"remote_url: {source.get('remote_url')}")
+    print(f"git_ref: {expected}")
+    print(f"materialized_path: {path}")
+    if not path.exists():
+        print("materialized: false")
+        return
+    head = run_git(path, "rev-parse", "HEAD", check=False)
+    tracked_status = run_git(path, "status", "--short", "--untracked-files=no", check=False)
+    full_status = run_git(path, "status", "--short", check=False)
+    current = head.stdout.strip() if head.returncode == 0 else ""
+    dirty_tracked = bool(tracked_status.stdout.strip())
+    has_untracked = bool(full_status.stdout.strip() and full_status.stdout != tracked_status.stdout)
+    print("materialized: true")
+    print(f"current_head: {current or 'unknown'}")
+    print(f"head_matches_ref: {str(bool(expected and current.startswith(expected))).lower()}")
+    print(f"dirty_tracked: {str(dirty_tracked).lower()}")
+    print(f"has_untracked: {str(has_untracked).lower()}")
+    if full_status.stdout.strip():
+        print("status:")
+        print(full_status.stdout.rstrip())
+
+
+def cmd_source_materialize(args: argparse.Namespace) -> None:
+    source = get_source(args.source_id)
+    path = source_path(source)
+    remote = source.get("remote_url")
+    ref = args.ref or source.get("git_ref")
+    if not isinstance(remote, str) or not remote:
+        raise SystemExit("Source has no remote_url.")
+    if not isinstance(ref, str) or not ref:
+        raise SystemExit("No git ref provided or registered.")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if path.exists():
+        if not (path / ".git").exists():
+            raise SystemExit(f"Materialized path exists but is not a git repository: {path}")
+        status = run_git(path, "status", "--short", "--untracked-files=no", check=False).stdout.strip()
+        if status and not args.force:
+            raise SystemExit(f"Refusing to checkout into dirty source. Use --force after preserving artifacts: {path}")
+        run_git(path, "fetch", "--all", "--tags")
+    else:
+        subprocess.run(["git", "clone", remote, str(path)], check=True)
+    run_git(path, "checkout", ref)
+    print(path)
+
+
+def runtime_profile(name: str) -> dict[str, object]:
+    if name not in RUNTIME_PROFILES:
+        known = ", ".join(sorted(RUNTIME_PROFILES))
+        raise SystemExit(f"Unknown runtime profile: {name}. Known profiles: {known}")
+    return RUNTIME_PROFILES[name]
+
+
+def cmd_runtime_check(args: argparse.Namespace) -> None:
+    profile = runtime_profile(args.profile)
+    ok = True
+    print(f"profile: {args.profile}")
+    print(f"description: {profile['description']}")
+    if command_exists("brew"):
+        print("brew: present")
+        bundle = run_print(["brew", "bundle", "check", "--file", str(BREWFILE)], check=False)
+        ok = ok and bundle.returncode == 0
+        for package in profile.get("homebrew", []):
+            result = subprocess.run(["brew", "list", str(package)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            installed = result.returncode == 0
+            ok = ok and installed
+            print(f"homebrew:{package}: {'installed' if installed else 'missing'}")
+    else:
+        ok = False
+        print("brew: missing")
+    if args.repo:
+        repo = Path(args.repo).expanduser()
+        for module in profile.get("python_imports", []):
+            code = f"import {module}; print({module}.__version__ if hasattr({module}, '__version__') else 'ok')"
+            print(f"python_import:{module}:")
+            result = run_capture(["uv", "run", "python", "-c", code], cwd=repo)
+            ok = ok and result.returncode == 0
+            if result.returncode == 0:
+                print(result.stdout.strip() or "ok")
+            else:
+                combined = "\n".join(part for part in [result.stdout.strip(), result.stderr.strip()] if part)
+                if "libomp" in combined or "OpenMP" in combined:
+                    print("failed: XGBoost cannot load because the OpenMP runtime libomp is missing.")
+                else:
+                    print("failed: Python import check failed.")
+    if not ok:
+        raise SystemExit(1)
+
+
+def cmd_runtime_ensure(args: argparse.Namespace) -> None:
+    profile = runtime_profile(args.profile)
+    if not command_exists("brew"):
+        raise SystemExit("Homebrew is required for runtime ensure, but brew is not on PATH.")
+    if not BREWFILE.exists():
+        raise SystemExit(f"Brewfile not found: {BREWFILE}")
+    packages = ", ".join(str(item) for item in profile.get("homebrew", [])) or "none"
+    print(f"Ensuring runtime profile {args.profile}: {packages}")
+    result = run_print(["brew", "bundle", "--file", str(BREWFILE), "--no-upgrade"], check=False)
+    if result.returncode != 0:
+        raise SystemExit(
+            "Runtime install failed. Check Homebrew permissions, then rerun the same command. "
+            "If brew reports unwritable /opt/homebrew paths, repair ownership outside Codex."
+        )
+    if args.repo:
+        repo = Path(args.repo).expanduser()
+        for module in profile.get("python_imports", []):
+            code = f"import {module}; print({module}.__version__ if hasattr({module}, '__version__') else 'ok')"
+            result = run_print(["uv", "run", "python", "-c", code], cwd=repo, check=False)
+            if result.returncode != 0:
+                raise SystemExit(f"Runtime profile installed, but Python import verification failed: {module}")
+
+
+def cmd_task_init(args: argparse.Namespace) -> None:
+    task_id = safe_id(args.task_id, "task_id")
+    p = task_dir(task_id)
+    p.mkdir(parents=True, exist_ok=True)
+    write_new(
+        p / "README.md",
+        f"""# Task: {task_id}
+
+This task defines a broad challenge or dataset family. Evaluation cells apply reusable AI scientist schemes to it.
+
+Read `task.yaml`, then inspect linked cells under `evaluations/active/`.
+""",
+    )
+    write_new(
+        p / "task.yaml",
+        f"""task_id: {task_id}
+title: {task_id}
+status: active
+created_at: {today()}
+updated_at: {today()}
+category: uncategorized
+vague_goal: Define the broad task or challenge.
+known_assets: []
+candidate_metrics: []
+constraints: []
+linked_evaluation_cells: []
+legacy_refs: []
+""",
+    )
+    print(p)
+
+
+def cmd_task_status(args: argparse.Namespace) -> None:
+    p = task_dir(args.task_id)
+    if not p.exists():
+        raise SystemExit(f"Task not found: {args.task_id}")
+    manifest = p / "task.yaml"
+    print(manifest.read_text(encoding="utf-8") if manifest.exists() else f"No task.yaml for {args.task_id}")
+
+
+def cmd_task_archive(args: argparse.Namespace) -> None:
+    p = task_dir(args.task_id)
+    if not p.exists():
+        raise SystemExit(f"Task not found: {args.task_id}")
+    dest = ARCHIVE / "tasks" / args.task_id / timestamp()
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    shutil.move(str(p), str(dest))
+    print(f"Archived: {dest}")
+
+
+def cmd_task_restart(args: argparse.Namespace) -> None:
+    p = task_dir(args.task_id)
+    if not p.exists():
+        raise SystemExit(f"Task not found: {args.task_id}")
+    dest = ARCHIVE / "tasks" / args.task_id / timestamp()
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    shutil.move(str(p), str(dest))
+    cmd_task_init(args)
+    print(f"Archived prior task: {dest}")
+
+
+def cmd_scheme_init(args: argparse.Namespace) -> None:
+    scheme_id = safe_id(args.scheme_id, "scheme_id")
+    p = scheme_dir(scheme_id)
+    p.mkdir(parents=True, exist_ok=True)
+    write_new(
+        p / "README.md",
+        f"""# Scheme: {scheme_id}
+
+This directory defines a reusable AI scientist scheme. Task-specific metrics and runs belong to evaluation cells.
+""",
+    )
+    write_new(
+        p / "scheme.yaml",
+        f"""scheme_id: {scheme_id}
+title: {scheme_id}
+status: active
+created_at: {today()}
+updated_at: {today()}
+category: uncategorized
+description: Define the reusable AI scientist scheme.
+autonomy_model:
+  default_authority: run_declared_local_commands
+  requires_approval:
+    - external writes
+    - account configuration changes
+work_unit_pattern: []
+evidence_discipline: []
+references: []
+public_brief: docs/schemes/{doc_slug(scheme_id)}.md
+""",
+    )
+    write_new(
+        p / "guide.md",
+        f"""# Scheme Guide: {scheme_id}
+
+Date: {today()}
+Status: active
+
+## Purpose
+
+Describe when to use this reusable AI scientist scheme and how an evaluation cell should operate it.
+""",
+    )
+    print(p)
+
+
+def cmd_scheme_status(args: argparse.Namespace) -> None:
+    p = scheme_dir(args.scheme_id)
+    if not p.exists():
+        raise SystemExit(f"Scheme not found: {args.scheme_id}")
+    manifest = p / "scheme.yaml"
+    print(manifest.read_text(encoding="utf-8") if manifest.exists() else f"No scheme.yaml for {args.scheme_id}")
+
+
+def cmd_scheme_list(args: argparse.Namespace) -> None:
+    if not SCHEMES.exists():
+        return
+    for p in sorted(path for path in SCHEMES.iterdir() if path.is_dir()):
+        status = read_yaml_scalar(p / "scheme.yaml", "status") or "unknown"
+        print(f"{p.name}\t{status}")
+
+
+def default_cell_run_spec(cell_id: str, task_id: str, scheme_id: str) -> str:
+    return f"""schema_version: {RUN_SPEC_SCHEMA}
+cell_id: {cell_id}
+task_id: {task_id}
+scheme_id: {scheme_id}
+profile_id: local_empty_loop
+description: Placeholder fixed loop for this evaluation cell. Add source gates and commands before real runs.
+loop:
+  mode: manual
+  sleep_seconds: 0
+  max_cycles: 1
+  max_wall_minutes: 60
+  stop_file: STOP
+  stop_on_no_artifact_change: false
+source_gates: []
+commands:
+  preflight: []
+  cycle: []
+  synthesis: []
+"""
+
+
+def cmd_cell_init(args: argparse.Namespace) -> None:
+    cell_id = safe_id(args.cell_id, "cell_id")
+    task_id = safe_id(args.task_id, "task_id")
+    scheme_id = safe_id(args.scheme_id, "scheme_id")
+    if not task_dir(task_id).exists():
+        raise SystemExit(f"Task not found: {task_id}")
+    if not scheme_dir(scheme_id).exists():
+        raise SystemExit(f"Scheme not found: {scheme_id}")
+    p = cell_dir(cell_id)
+    p.mkdir(parents=True, exist_ok=True)
+    for d in ["memory", "runs", "state", "work_units", "proposals"]:
+        (p / d).mkdir(exist_ok=True)
+    write_new(
+        p / "README.md",
+        f"""# Evaluation Cell: {cell_id}
+
+This cell applies scheme `{scheme_id}` to task `{task_id}`.
+
+Read `guide.md`, `evaluation-cell.yaml`, `report.md`, and `run-spec.yaml`.
+""",
+    )
+    write_new(
+        p / "guide.md",
+        f"""# Evaluation Cell Guide: {cell_id}
+
+Date: {today()}
+Status: active
+
+## Purpose
+
+Describe how scheme `{scheme_id}` is being applied to task `{task_id}` and how to continue the cell safely.
+""",
+    )
+    write_new(
+        p / "evaluation-cell.yaml",
+        f"""cell_id: {cell_id}
+task_id: {task_id}
+scheme_id: {scheme_id}
+title: {cell_id}
+status: active
+version: 1
+parent_cell_id: null
+created_at: {today()}
+updated_at: {today()}
+specific_goal: Define the task-specific cell goal.
+target_metric:
+  name: define_metric
+  direction: maximize
+  evaluation_context: Define evaluation command, dataset, split, and constraints.
+optimization_constraints: []
+accepted_proposals: []
+active_work_units: []
+completed_work_units: []
+proposal_gate:
+  policy: accepted_proposals_create_next_cell_version
+  proposals_dir: proposals
+assets: assets.yaml
+source_maps:
+  - source-map.md
+reports:
+  current: report.md
+guides:
+  user: guide.md
+run_spec: run-spec.yaml
+public_brief: docs/evaluations/{doc_slug(cell_id)}/index.md
+agent_instructions: guide.md
+""",
+    )
+    write_new(p / "report.md", f"# Evaluation Cell Report: {cell_id}\n\nDate: {today()}\nStatus: active\n\nNo result yet.\n")
+    write_new(p / "run-spec.yaml", default_cell_run_spec(cell_id, task_id, scheme_id))
+    write_new(p / "memory" / "README.md", "# Cell Memory\n\nReusable cell-specific memory lives here.\n")
+    write_new(p / "runs" / "README.md", "# Cell Runs\n\nRun records live here.\n")
+    write_new(p / "state" / "README.md", "# Cell State\n\nGenerated state lives here.\n")
+    write_new(p / "proposals" / "README.md", "# Cell Proposals\n\nProposal-gated cell evolution records live here.\n")
+    print(p)
+
+
+def cmd_cell_status(args: argparse.Namespace) -> None:
+    p = cell_dir(args.cell_id)
+    if not p.exists():
+        raise SystemExit(f"Evaluation cell not found: {args.cell_id}")
+    report = p / "report.md"
+    print(report.read_text(encoding="utf-8") if report.exists() else f"No report.md for {args.cell_id}")
+
+
+def cmd_cell_archive(args: argparse.Namespace) -> None:
+    p = cell_dir(args.cell_id)
+    if not p.exists():
+        raise SystemExit(f"Evaluation cell not found: {args.cell_id}")
+    dest = ARCHIVE / "evaluations" / args.cell_id / timestamp()
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    shutil.move(str(p), str(dest))
+    print(f"Archived: {dest}")
+
+
+def cmd_cell_version(args: argparse.Namespace) -> None:
+    src = cell_dir(args.cell_id)
+    if not src.exists():
+        raise SystemExit(f"Evaluation cell not found: {args.cell_id}")
+    dest = cell_dir(args.new_cell_id)
+    if dest.exists():
+        raise SystemExit(f"Evaluation cell already exists: {args.new_cell_id}")
+    shutil.copytree(src, dest, symlinks=True)
+    manifest = dest / "evaluation-cell.yaml"
+    text = manifest.read_text(encoding="utf-8")
+    text = text.replace(f"cell_id: {args.cell_id}", f"cell_id: {args.new_cell_id}", 1)
+    text = text.replace("parent_cell_id: null", f"parent_cell_id: {args.cell_id}", 1)
+    text = replace_yaml_scalar_line(text, "updated_at", today())
+    manifest.write_text(text, encoding="utf-8")
+    spec = dest / "run-spec.yaml"
+    if spec.exists():
+        spec_text = spec.read_text(encoding="utf-8")
+        spec_text = spec_text.replace(f"cell_id: {args.cell_id}", f"cell_id: {args.new_cell_id}", 1)
+        spec.write_text(spec_text, encoding="utf-8")
+    print(dest)
+
+
+def require_mapping(value: object, label: str, issues: list[str]) -> dict[str, object]:
+    if isinstance(value, dict):
+        return value
+    issues.append(f"{label} must be a mapping")
+    return {}
+
+
+def require_list(value: object, label: str, issues: list[str]) -> list[object]:
+    if isinstance(value, list):
+        return value
+    issues.append(f"{label} must be a list")
+    return []
+
+
+def command_kind(command: dict[str, object]) -> str | None:
+    kinds = [key for key in ("argv", "script", "builtin") if key in command]
+    return kinds[0] if len(kinds) == 1 else None
+
+
+def collect_placeholders(value: object) -> set[str]:
+    found: set[str] = set()
+    if isinstance(value, str):
+        for match in re.finditer(r"\{([A-Za-z0-9_]+)\}", value):
+            found.add(match.group(1))
+    elif isinstance(value, list):
+        for item in value:
+            found.update(collect_placeholders(item))
+    elif isinstance(value, dict):
+        for item in value.values():
+            found.update(collect_placeholders(item))
+    return found
+
+
+def validate_run_spec(spec: dict[str, object], *, path: Path | None = None) -> list[str]:
+    issues: list[str] = []
+    if spec.get("schema_version") != RUN_SPEC_SCHEMA:
+        issues.append(f"schema_version must be {RUN_SPEC_SCHEMA}")
+    for key in ("cell_id", "task_id", "scheme_id", "profile_id"):
+        if not isinstance(spec.get(key), str) or not str(spec.get(key)).strip():
+            issues.append(f"{key} must be a non-empty string")
+    if "scientist_id" in spec:
+        issues.append("scientist_id is obsolete; use scheme_id and cell_id")
+    if path is not None:
+        expected_cell = path.parent.name
+        if spec.get("cell_id") != expected_cell:
+            issues.append(f"cell_id does not match path: expected {expected_cell}")
+        manifest = path.parent / "evaluation-cell.yaml"
+        if manifest.exists():
+            data = load_yaml_file(manifest)
+            if spec.get("task_id") != data.get("task_id"):
+                issues.append(f"task_id does not match cell manifest: expected {data.get('task_id')}")
+            if spec.get("scheme_id") != data.get("scheme_id"):
+                issues.append(f"scheme_id does not match cell manifest: expected {data.get('scheme_id')}")
+
+    loop = require_mapping(spec.get("loop"), "loop", issues)
+    if loop.get("mode") not in {"continuous", "manual"}:
+        issues.append("loop.mode must be continuous or manual")
+    for key in ("sleep_seconds", "max_cycles", "max_wall_minutes"):
+        if key in loop and (not isinstance(loop.get(key), int) or int(loop.get(key)) < 0):
+            issues.append(f"loop.{key} must be a non-negative integer")
+    if "stop_file" in loop and not isinstance(loop.get("stop_file"), str):
+        issues.append("loop.stop_file must be a string")
+    if "stop_on_no_artifact_change" in loop and not isinstance(loop.get("stop_on_no_artifact_change"), bool):
+        issues.append("loop.stop_on_no_artifact_change must be a boolean")
+
+    for idx, gate_obj in enumerate(require_list(spec.get("source_gates", []), "source_gates", issues)):
+        gate = require_mapping(gate_obj, f"source_gates[{idx}]", issues)
+        if not isinstance(gate.get("source_id"), str) or not str(gate.get("source_id")).strip():
+            issues.append(f"source_gates[{idx}].source_id must be a non-empty string")
+        if gate.get("head_policy") not in {"require_registered_ref", "warn_registered_ref", "ignore_registered_ref"}:
+            issues.append(f"source_gates[{idx}].head_policy is invalid")
+        if "tracked_clean" in gate and not isinstance(gate.get("tracked_clean"), bool):
+            issues.append(f"source_gates[{idx}].tracked_clean must be a boolean")
+        if "allow_untracked" in gate:
+            patterns = require_list(gate.get("allow_untracked"), f"source_gates[{idx}].allow_untracked", issues)
+            for pat_idx, pattern in enumerate(patterns):
+                if not isinstance(pattern, str) or not pattern:
+                    issues.append(f"source_gates[{idx}].allow_untracked[{pat_idx}] must be a non-empty string")
+
+    commands = require_mapping(spec.get("commands"), "commands", issues)
+    for group in ("preflight", "cycle", "synthesis"):
+        entries = require_list(commands.get(group, []), f"commands.{group}", issues)
+        for idx, command_obj in enumerate(entries):
+            label = f"commands.{group}[{idx}]"
+            command = require_mapping(command_obj, label, issues)
+            if not isinstance(command.get("id"), str) or not str(command.get("id")).strip():
+                issues.append(f"{label}.id must be a non-empty string")
+            kind = command_kind(command)
+            if kind is None:
+                issues.append(f"{label} must define exactly one of argv, script, or builtin")
+            if kind == "argv":
+                argv = command.get("argv")
+                if not isinstance(argv, list) or not argv or not all(isinstance(item, str) for item in argv):
+                    issues.append(f"{label}.argv must be a non-empty list of strings")
+            if kind == "script" and not isinstance(command.get("script"), str):
+                issues.append(f"{label}.script must be a string")
+            if kind == "builtin":
+                if command.get("builtin") not in {"source_status", "synthesize"}:
+                    issues.append(f"{label}.builtin is invalid")
+                if command.get("builtin") == "synthesize" and group != "synthesis":
+                    issues.append(f"{label}.builtin synthesize is only allowed in commands.synthesis")
+            if "cwd" in command and not isinstance(command.get("cwd"), str):
+                issues.append(f"{label}.cwd must be a string")
+            if "env" in command:
+                env = require_mapping(command.get("env"), f"{label}.env", issues)
+                for key, value in env.items():
+                    if not isinstance(key, str) or not isinstance(value, str):
+                        issues.append(f"{label}.env entries must be string:string")
+            if "timeout_seconds" in command and (
+                not isinstance(command.get("timeout_seconds"), int) or int(command.get("timeout_seconds")) <= 0
+            ):
+                issues.append(f"{label}.timeout_seconds must be a positive integer")
+            if "artifacts" in command:
+                artifacts = require_list(command.get("artifacts"), f"{label}.artifacts", issues)
+                for art_idx, pattern in enumerate(artifacts):
+                    if not isinstance(pattern, str) or not pattern:
+                        issues.append(f"{label}.artifacts[{art_idx}] must be a non-empty string")
+            unknown_placeholders = collect_placeholders(command) - ALLOWED_PLACEHOLDERS
+            for placeholder in sorted(unknown_placeholders):
+                issues.append(f"{label} uses unknown placeholder {{{placeholder}}}")
+    return issues
+
+
+def load_run_spec(path: Path) -> dict[str, object]:
+    return load_yaml_file(path)
+
+
+def active_cell_ids() -> list[str]:
+    if not EVALUATIONS.exists():
+        return []
+    ids: list[str] = []
+    for path in sorted(item for item in EVALUATIONS.iterdir() if item.is_dir()):
+        manifest = path / "evaluation-cell.yaml"
+        if manifest.exists() and read_yaml_scalar(manifest, "status") == "active":
+            ids.append(path.name)
+    return ids
+
+
+def cmd_cell_run_spec_validate(args: argparse.Namespace) -> None:
+    if not args.all and not args.cell_id:
+        raise SystemExit("Specify cell_id, or use --all.")
+    targets = active_cell_ids() if args.all else [args.cell_id]
+    if not targets:
+        print("No active evaluation cells.")
+        return
+    failed = False
+    for cell_id in targets:
+        path = cell_run_spec_path(cell_id)
+        spec = load_run_spec(path)
+        issues = validate_run_spec(spec, path=path)
+        if issues:
+            failed = True
+            print(f"{path.relative_to(ROOT)}: invalid")
+            for issue in issues:
+                print(f"- {issue}")
+        else:
+            print(f"{path.relative_to(ROOT)}: valid")
+    if failed:
+        raise SystemExit(1)
+
+
+def redact_env(env: dict[str, str]) -> dict[str, str]:
+    redacted: dict[str, str] = {}
+    for key, value in env.items():
+        redacted[key] = "[REDACTED]" if SECRET_ENV_RE.search(key) else value
+    return redacted
+
+
+def render_placeholders(value: object, context: dict[str, str]) -> object:
+    if isinstance(value, str):
+        rendered = value
+        for key, replacement in context.items():
+            rendered = rendered.replace("{" + key + "}", replacement)
+        return rendered
+    if isinstance(value, list):
+        return [render_placeholders(item, context) for item in value]
+    if isinstance(value, dict):
+        return {str(key): render_placeholders(val, context) for key, val in value.items()}
+    return value
+
+
+def append_event(run_dir: Path, event: dict[str, object]) -> None:
+    event = {"time": now_iso(), **event}
+    with (run_dir / "events.jsonl").open("a", encoding="utf-8") as f:
+        f.write(json.dumps(event, sort_keys=True) + "\n")
+
+
+def untracked_allowed(path: str, patterns: list[str]) -> bool:
+    clean = path.rstrip("/")
+    for pattern in patterns:
+        pat = pattern.rstrip("/")
+        if pattern.endswith("/") and (clean == pat or clean.startswith(pat + "/")):
+            return True
+        if fnmatch.fnmatch(clean, pat) or fnmatch.fnmatch(clean + "/", pattern):
+            return True
+    return False
+
+
+def check_source_gate(gate: dict[str, object], *, strict: bool, run_dir: Path | None = None) -> None:
+    source_id = str(gate["source_id"])
+    source = get_source(source_id)
+    path = source_path(source)
+    if not path.exists():
+        raise SystemExit(f"Source gate failed for {source_id}: materialized path missing: {path}")
+    expected = str(source.get("git_ref") or "")
+    head = run_git(path, "rev-parse", "HEAD", check=False)
+    current = head.stdout.strip() if head.returncode == 0 else ""
+    head_policy = str(gate.get("head_policy") or "require_registered_ref")
+    head_matches = bool(expected and current.startswith(expected))
+    if head_policy == "require_registered_ref" and not head_matches:
+        raise SystemExit(f"Source gate failed for {source_id}: HEAD {current or 'unknown'} does not match {expected}")
+    if head_policy == "warn_registered_ref" and not head_matches:
+        message = f"Source gate warning for {source_id}: HEAD {current or 'unknown'} does not match {expected}"
+        print(message)
+        if run_dir is not None:
+            append_event(run_dir, {"event": "source_gate_warning", "source_id": source_id, "message": message})
+
+    if bool(gate.get("tracked_clean", False)):
+        tracked = run_git(path, "status", "--short", "--untracked-files=no", check=False).stdout.strip()
+        if tracked:
+            raise SystemExit(f"Source gate failed for {source_id}: tracked files are dirty:\n{tracked}")
+    patterns = [str(item) for item in gate.get("allow_untracked", []) if isinstance(item, str)]
+    full_status = run_git(path, "status", "--short", check=False).stdout.splitlines()
+    untracked = [line[3:] for line in full_status if line.startswith("?? ")]
+    disallowed = [item for item in untracked if not untracked_allowed(item, patterns)]
+    if disallowed:
+        label = "failed" if strict else "warning"
+        message = f"Source gate {label} for {source_id}: disallowed untracked paths: {', '.join(disallowed)}"
+        if strict:
+            raise SystemExit(message)
+        print(message)
+        if run_dir is not None:
+            append_event(run_dir, {"event": "source_gate_warning", "source_id": source_id, "message": message})
+
+
+def write_run_summary(run_dir: Path, cell_id: str, task_id: str, scheme_id: str, status: str) -> None:
+    summary = run_dir / "run-summary.md"
+    if summary.exists():
+        return
+    summary.write_text(
+        f"""# Fixed Runner Summary: {cell_id}
+
+Run ID: {run_dir.name}
+Status: {status}
+Task: {task_id}
+Scheme: {scheme_id}
+Started: {now_iso()}
+
+Events: `events.jsonl`
+Command logs: `commands/`
+Spec snapshot: `run-spec.snapshot.yaml`
+""",
+        encoding="utf-8",
+    )
+
+
+def command_artifact_fingerprint(command: dict[str, object], cwd: Path) -> list[str]:
+    fingerprints: list[str] = []
+    artifact_patterns = command.get("artifacts", []) if isinstance(command.get("artifacts"), list) else []
+    for raw_pattern in artifact_patterns:
+        if not isinstance(raw_pattern, str):
+            continue
+        pattern_path = Path(raw_pattern)
+        pattern = str(pattern_path if pattern_path.is_absolute() else cwd / pattern_path)
+        for match in sorted(glob.glob(pattern, recursive=True)):
+            p = Path(match)
+            if p.is_file():
+                stat = p.stat()
+                fingerprints.append(f"{p}:{stat.st_size}:{int(stat.st_mtime)}")
+    return fingerprints
+
+
+def artifact_fingerprint(commands: list[dict[str, object]], default_cwd: Path) -> str:
+    values: list[str] = []
+    for command in commands:
+        cwd = Path(str(command.get("cwd") or default_cwd)).expanduser()
+        values.extend(command_artifact_fingerprint(command, cwd))
+    payload = "\n".join(sorted(values))
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
+def command_display(command: dict[str, object], context: dict[str, str]) -> str:
+    rendered = render_placeholders(command, context)
+    if isinstance(rendered, dict) and "argv" in rendered:
+        return " ".join(str(item) for item in rendered["argv"])
+    if isinstance(rendered, dict) and "script" in rendered:
+        return str(rendered["script"])
+    if isinstance(rendered, dict) and "builtin" in rendered:
+        args = rendered.get("args", [])
+        arg_text = " ".join(str(item) for item in args) if isinstance(args, list) else ""
+        return f"builtin:{rendered['builtin']} {arg_text}".strip()
+    return "<invalid command>"
+
+
+def run_source_status_builtin(args: list[str]) -> tuple[int, str, str]:
+    if len(args) != 1:
+        return 2, "", "source_status requires exactly one source_id"
+    ns = argparse.Namespace(source_id=args[0])
+    out = io.StringIO()
+    err = io.StringIO()
+    code = 0
+    with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+        try:
+            cmd_source_status(ns)
+        except SystemExit as exc:
+            code = int(exc.code) if isinstance(exc.code, int) else 1
+    return code, out.getvalue(), err.getvalue()
+
+
+def synthesize_prompt(cell_id: str, run_id: str, cycle: int) -> str:
+    cell = cell_dir(cell_id)
+    prompt_file = cell / "synthesis-prompt.md"
+    if not prompt_file.exists():
+        raise SystemExit(f"Synthesis prompt not found: {prompt_file}")
+    task_id, scheme_id = cell_task_scheme(cell_id)
+    run_dir = cell / "runs" / run_id
+    return (
+        "Use the account agent setup. Read ~/AGENTS.md. "
+        f"Read {prompt_file}. Current run directory: {run_dir}. "
+        f"Evaluation cell: {cell_id}. Task: {task_id}. Scheme: {scheme_id}. Run ID: {run_id}. Cycle: {cycle}. "
+        "Execute the synthesis instructions exactly and then stop."
+    )
+
+
+def run_synthesize_builtin(cell_id: str, run_id: str, cycle: int, timeout: int) -> subprocess.CompletedProcess[str]:
+    prompt = synthesize_prompt(cell_id, run_id, cycle)
+    return subprocess.run(
+        [str(ROOT / "bin" / "codex-lab"), prompt],
+        cwd=str(ROOT.parent),
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        timeout=timeout,
+        check=False,
+    )
+
+
+def run_command(
+    command: dict[str, object],
+    *,
+    group: str,
+    context: dict[str, str],
+    run_dir: Path,
+    dry_run: bool,
+) -> int:
+    rendered_obj = render_placeholders(command, context)
+    if not isinstance(rendered_obj, dict):
+        raise SystemExit("Rendered command is invalid.")
+    command_id = str(rendered_obj.get("id") or "command")
+    cycle = context["cycle"]
+    print(f"[{group}] {command_id}: {command_display(command, context)}")
+    if dry_run:
+        return 0
+    timeout = int(rendered_obj.get("timeout_seconds") or 3600)
+    logs = run_dir / "commands"
+    logs.mkdir(parents=True, exist_ok=True)
+    base = logs / f"cycle-{cycle}-{group}-{command_id}"
+    started = time.time()
+    append_event(
+        run_dir,
+        {
+            "event": "command_start",
+            "group": group,
+            "cycle": int(cycle),
+            "command_id": command_id,
+            "command": command_display(command, context),
+            "cwd": rendered_obj.get("cwd"),
+            "env": redact_env(rendered_obj.get("env", {}) if isinstance(rendered_obj.get("env"), dict) else {}),
+        },
+    )
+    try:
+        if "builtin" in rendered_obj:
+            builtin = str(rendered_obj["builtin"])
+            args = [str(item) for item in rendered_obj.get("args", [])] if isinstance(rendered_obj.get("args", []), list) else []
+            if builtin == "source_status":
+                code, stdout, stderr = run_source_status_builtin(args)
+                result = subprocess.CompletedProcess(["builtin", builtin, *args], code, stdout, stderr)
+            elif builtin == "synthesize":
+                result = run_synthesize_builtin(context["cell_id"], context["run_id"], int(cycle), timeout)
+            else:
+                raise SystemExit(f"Unknown builtin: {builtin}")
+        elif "argv" in rendered_obj:
+            argv = [str(item) for item in rendered_obj["argv"]]
+            cwd = Path(str(rendered_obj.get("cwd") or ROOT)).expanduser()
+            env = os.environ.copy()
+            if isinstance(rendered_obj.get("env"), dict):
+                env.update({str(key): str(value) for key, value in rendered_obj["env"].items()})
+            result = subprocess.run(
+                argv,
+                cwd=str(cwd),
+                env=env,
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                timeout=timeout,
+                check=False,
+            )
+        elif "script" in rendered_obj:
+            script = str(rendered_obj["script"])
+            script_path = Path(script).expanduser()
+            if not script_path.is_absolute():
+                script_path = Path(context["cell_dir"]) / script_path
+            cwd = Path(str(rendered_obj.get("cwd") or script_path.parent)).expanduser()
+            result = subprocess.run(
+                [str(script_path)],
+                cwd=str(cwd),
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                timeout=timeout,
+                check=False,
+            )
+        else:
+            raise SystemExit(f"Command has no executable body: {command_id}")
+    except subprocess.TimeoutExpired as exc:
+        (base.with_suffix(".stdout.log")).write_text(exc.stdout or "", encoding="utf-8")
+        (base.with_suffix(".stderr.log")).write_text(exc.stderr or f"timeout after {timeout}s", encoding="utf-8")
+        append_event(
+            run_dir,
+            {
+                "event": "command_finish",
+                "group": group,
+                "cycle": int(cycle),
+                "command_id": command_id,
+                "returncode": 124,
+                "duration_seconds": round(time.time() - started, 3),
+            },
+        )
+        return 124
+    (base.with_suffix(".stdout.log")).write_text(result.stdout or "", encoding="utf-8")
+    (base.with_suffix(".stderr.log")).write_text(result.stderr or "", encoding="utf-8")
+    append_event(
+        run_dir,
+        {
+            "event": "command_finish",
+            "group": group,
+            "cycle": int(cycle),
+            "command_id": command_id,
+            "returncode": result.returncode,
+            "duration_seconds": round(time.time() - started, 3),
+            "stdout": str(base.with_suffix(".stdout.log").relative_to(run_dir)),
+            "stderr": str(base.with_suffix(".stderr.log").relative_to(run_dir)),
+        },
+    )
+    return int(result.returncode)
+
+
+def cmd_cell_run(args: argparse.Namespace) -> None:
+    spec_path = cell_run_spec_path(args.cell_id)
+    spec = load_run_spec(spec_path)
+    issues = validate_run_spec(spec, path=spec_path)
+    if issues:
+        for issue in issues:
+            print(f"- {issue}")
+        raise SystemExit(1)
+    cell = cell_dir(args.cell_id)
+    task_id = str(spec["task_id"])
+    scheme_id = str(spec["scheme_id"])
+    run_id = args.run_id or f"fixed-{timestamp()}"
+    run_dir = cell / "runs" / run_id
+    loop = spec.get("loop", {}) if isinstance(spec.get("loop"), dict) else {}
+    max_cycles = 1 if args.once else int(args.max_cycles or loop.get("max_cycles") or 1)
+    if args.continuous:
+        max_cycles = int(args.max_cycles or loop.get("max_cycles") or 1)
+    max_wall_minutes = int(loop.get("max_wall_minutes") or 0)
+    sleep_seconds = int(loop.get("sleep_seconds") or 0)
+    stop_file = cell / str(loop.get("stop_file") or "STOP")
+    commands = spec["commands"] if isinstance(spec["commands"], dict) else {}
+    preflight = [item for item in commands.get("preflight", []) if isinstance(item, dict)]
+    cycle_commands = [item for item in commands.get("cycle", []) if isinstance(item, dict)]
+    synthesis = [item for item in commands.get("synthesis", []) if isinstance(item, dict)]
+    context = {
+        "cell_id": args.cell_id,
+        "task_id": task_id,
+        "scheme_id": scheme_id,
+        "run_id": run_id,
+        "cycle": "0",
+        "run_dir": str(run_dir),
+        "cell_dir": str(cell),
+        "root": str(ROOT),
+    }
+    if args.dry_run:
+        print(f"dry_run: {args.cell_id} run_id={run_id}")
+    else:
+        run_dir.mkdir(parents=True, exist_ok=True)
+        (run_dir / "run-spec.snapshot.yaml").write_text(spec_path.read_text(encoding="utf-8"), encoding="utf-8")
+        write_run_summary(run_dir, args.cell_id, task_id, scheme_id, "running")
+        append_event(run_dir, {"event": "run_start", "cell_id": args.cell_id, "task_id": task_id, "scheme_id": scheme_id})
+
+    for gate_obj in spec.get("source_gates", []) if isinstance(spec.get("source_gates"), list) else []:
+        if isinstance(gate_obj, dict):
+            check_source_gate(gate_obj, strict=not args.dry_run, run_dir=None if args.dry_run else run_dir)
+    for command in preflight:
+        code = run_command(command, group="preflight", context=context, run_dir=run_dir, dry_run=args.dry_run)
+        if code != 0:
+            raise SystemExit(code)
+    start = time.time()
+    previous_fingerprint = ""
+    for cycle in range(1, max_cycles + 1):
+        if stop_file.exists():
+            print(f"stop_file present: {stop_file}")
+            break
+        if max_wall_minutes and (time.time() - start) > max_wall_minutes * 60:
+            print(f"max_wall_minutes reached: {max_wall_minutes}")
+            break
+        context["cycle"] = str(cycle)
+        for command in cycle_commands:
+            code = run_command(command, group="cycle", context=context, run_dir=run_dir, dry_run=args.dry_run)
+            if code != 0:
+                raise SystemExit(code)
+        if bool(loop.get("stop_on_no_artifact_change")) and not args.dry_run:
+            current_fingerprint = artifact_fingerprint(cycle_commands, cell)
+            if current_fingerprint == previous_fingerprint:
+                append_event(run_dir, {"event": "exit_condition", "reason": "no_artifact_change", "cycle": cycle})
+                print("exit_condition: no_artifact_change")
+                break
+            previous_fingerprint = current_fingerprint
+        for command in synthesis:
+            code = run_command(command, group="synthesis", context=context, run_dir=run_dir, dry_run=args.dry_run)
+            if code != 0:
+                raise SystemExit(code)
+        if cycle < max_cycles and sleep_seconds and args.continuous and not args.dry_run:
+            time.sleep(sleep_seconds)
+    if not args.dry_run:
+        append_event(run_dir, {"event": "run_finish", "cell_id": args.cell_id, "task_id": task_id, "scheme_id": scheme_id})
+    print(f"run_id: {run_id}")
+
+
+def cmd_cell_run_all(args: argparse.Namespace) -> None:
+    targets = active_cell_ids()
+    if not targets:
+        print("No active evaluation cells.")
+        return
+    for cell_id in targets:
+        ns = argparse.Namespace(
+            cell_id=cell_id,
+            run_id=None,
+            once=args.once,
+            continuous=args.continuous,
+            dry_run=args.dry_run,
+            max_cycles=args.max_cycles,
+        )
+        cmd_cell_run(ns)
+
+
+def cmd_cell_synthesize(args: argparse.Namespace) -> None:
+    prompt = synthesize_prompt(args.cell_id, args.run_id, args.cycle)
+    if args.print_prompt:
+        print(prompt)
+        return
+    result = subprocess.run(
+        [str(ROOT / "bin" / "codex-lab"), prompt],
+        cwd=str(ROOT.parent),
+        text=True,
+        check=False,
+    )
+    raise SystemExit(result.returncode)
+
+
+def cmd_work_unit_init(args: argparse.Namespace) -> None:
+    c = cell_dir(args.cell_id)
+    if not c.exists():
+        raise SystemExit(f"Evaluation cell not found: {args.cell_id}")
+    task_id, scheme_id = cell_task_scheme(args.cell_id)
+    p = work_unit_dir(args.cell_id, args.work_unit_id)
+    p.mkdir(parents=True, exist_ok=True)
+    for d in ["memory", "runs"]:
+        (p / d).mkdir(exist_ok=True)
+    write_new(
+        p / "README.md",
+        f"""# Work Unit: {args.work_unit_id}
+
+This is the minimal context for one method, ablation, observation, proxy dataset, audit, or synthesis pass in cell `{args.cell_id}`.
+""",
+    )
+    write_new(
+        p / "work-unit.yaml",
+        f"""work_unit_id: {args.work_unit_id}
+cell_id: {args.cell_id}
+task_id: {task_id}
+scheme_id: {scheme_id}
+type: observation
+status: active
+created_at: {today()}
+updated_at: {today()}
+parallel_safe: true
+claimed_by: null
+run_id: null
+touch_scope: cell_owned_files
+conflicts_with: []
+proposal_refs: []
+statement: Define the work-unit statement.
+method: Define the method or subtask.
+expected_signal: Define the expected signal.
+assets_used: []
+source_refs: []
+evaluation_plan: Define the evaluation plan.
+outcome: null
+decision: pending
+reports:
+  current: report.md
+guides:
+  user: guide.md
+public_brief: docs/evaluations/{doc_slug(args.cell_id)}/work-units/{doc_slug(args.work_unit_id)}.md
+agent_instructions: guide.md
+""",
+    )
+    write_new(
+        p / "guide.md",
+        f"""# Work Unit Guide: {args.work_unit_id}
+
+Date: {today()}
+Status: active
+
+## Purpose
+
+Explain the work unit and how to continue it safely.
+""",
+    )
+    write_new(p / "report.md", f"# Work Unit Report: {args.work_unit_id}\n\nDate: {today()}\nStatus: active\n\nNo result yet.\n")
+    write_new(p / "memory" / "README.md", "# Work Unit Memory\n\nReusable work-unit memory lives here.\n")
+    write_new(p / "runs" / "README.md", "# Work Unit Runs\n\nRun records live here.\n")
+    print(p)
+
+
+def cmd_work_unit_status(args: argparse.Namespace) -> None:
+    p = work_unit_dir(args.cell_id, args.work_unit_id)
+    if not p.exists():
+        raise SystemExit(f"Work unit not found: {args.cell_id}/{args.work_unit_id}")
+    report = p / "report.md"
+    print(report.read_text(encoding="utf-8") if report.exists() else f"No report.md for {args.work_unit_id}")
+
+
+def cmd_work_unit_close(args: argparse.Namespace) -> None:
+    p = work_unit_dir(args.cell_id, args.work_unit_id)
+    report = p / "report.md"
+    manifest = p / "work-unit.yaml"
+    if not report.exists():
+        raise SystemExit(f"Work-unit report not found: {report}")
+    text = report.read_text(encoding="utf-8")
+    if "Status: closed" not in text:
+        text = text.replace("Status: active", "Status: closed")
+        text += f"\n\n## Closed\n\nClosed on {today()}. Review proposals before promoting changes into the next cell version.\n"
+        report.write_text(text, encoding="utf-8")
+    if manifest.exists():
+        manifest_text = manifest.read_text(encoding="utf-8")
+        manifest_text = replace_yaml_scalar_line(manifest_text, "status", "closed")
+        manifest_text = replace_yaml_scalar_line(manifest_text, "updated_at", today())
+        manifest_text = replace_yaml_scalar_line(manifest_text, "decision", "closed")
+        manifest.write_text(manifest_text, encoding="utf-8")
+    print(report)
+
+
+def cmd_prompt_record(args: argparse.Namespace) -> None:
+    cell = cell_dir(args.cell_id)
+    if not cell.exists():
+        raise SystemExit(f"Evaluation cell not found: {args.cell_id}")
+    task_id, scheme_id = cell_task_scheme(args.cell_id)
+    run_dir = cell / "runs" / safe_id(args.run_id, "run_id")
+    prompt_id = safe_id(args.prompt_id, "prompt_id")
+    prompt_dir = run_dir / "prompts"
+    prompt_path = prompt_dir / f"{prompt_id}.md"
+    if args.from_file:
+        source_path = Path(args.from_file).expanduser()
+        if not source_path.exists():
+            raise SystemExit(f"Prompt source file not found: {source_path}")
+        text = source_path.read_text(encoding="utf-8")
+    else:
+        text = sys.stdin.read()
+    if not text.strip():
+        raise SystemExit("Refusing to record an empty prompt.")
+    if prompt_path.exists() and not args.force:
+        raise SystemExit(f"Prompt already exists: {prompt_path}. Use --force to replace it.")
+    prompt_dir.mkdir(parents=True, exist_ok=True)
+    prompt_path.write_text(text, encoding="utf-8")
+    manifest = run_dir / "prompt-manifest.yaml"
+    work_units = args.work_unit or []
+    work_unit_lines = (
+        "    related_work_units:\n" + "\n".join(f"      - {item}" for item in work_units)
+        if work_units
+        else "    related_work_units: []"
+    )
+    entry = f"""  - prompt_id: {prompt_id}
+    path: prompts/{prompt_id}.md
+    source: {yaml_string(args.source)}
+    sensitivity: {yaml_string(args.sensitivity)}
+{work_unit_lines}
+"""
+    if manifest.exists():
+        manifest_text = manifest.read_text(encoding="utf-8")
+        if f"prompt_id: {prompt_id}" in manifest_text and not args.force:
+            raise SystemExit(f"Prompt manifest already contains prompt_id: {prompt_id}. Use --force to replace manually.")
+        manifest.write_text(manifest_text.rstrip() + "\n" + entry, encoding="utf-8")
+    else:
+        manifest.parent.mkdir(parents=True, exist_ok=True)
+        manifest.write_text(
+            f"""run_id: {args.run_id}
+cell_id: {args.cell_id}
+task_id: {task_id}
+scheme_id: {scheme_id}
+visibility: local_artifact_not_public_docs
+prompts:
+{entry}""",
+            encoding="utf-8",
+        )
+    print(prompt_path)
+
+
+def cmd_meta_status(args: argparse.Namespace) -> None:
+    p = meta_dir(args.meta_scientist_id)
+    if not p.exists():
+        raise SystemExit(f"Meta scientist not found: {args.meta_scientist_id}")
+    report = p / "report.md"
+    print(report.read_text(encoding="utf-8") if report.exists() else f"No report.md for {args.meta_scientist_id}")
+
+
+def cmd_meta_analyze(args: argparse.Namespace) -> None:
+    p = meta_dir(args.meta_scientist_id)
+    if not p.exists():
+        raise SystemExit(f"Meta scientist not found: {args.meta_scientist_id}")
+    analysis_dir = p / "analyses"
+    analysis_dir.mkdir(parents=True, exist_ok=True)
+    task_count = len([item for item in TASKS.iterdir() if item.is_dir()]) if TASKS.exists() else 0
+    scheme_count = len([item for item in SCHEMES.iterdir() if item.is_dir()]) if SCHEMES.exists() else 0
+    cell_count = len([item for item in EVALUATIONS.iterdir() if item.is_dir() and (item / "evaluation-cell.yaml").exists()]) if EVALUATIONS.exists() else 0
+    path = analysis_dir / f"analysis-{timestamp()}.md"
+    path.write_text(
+        f"""# Meta Analysis: {args.meta_scientist_id}
+
+Date: {today()}
+Status: draft
+
+## Matrix Counts
+
+- Active tasks: {task_count}
+- Active schemes: {scheme_count}
+- Active evaluation cells: {cell_count}
+
+## Observation
+
+The meta scientist is in analyze-and-propose mode. It should recommend concrete matrix or automation changes before any implementation mutates tasks, schemes, cells, or run specs.
+""",
+        encoding="utf-8",
+    )
+    print(path)
+
+
+def cmd_meta_propose(args: argparse.Namespace) -> None:
+    p = meta_dir(args.meta_scientist_id)
+    if not p.exists():
+        raise SystemExit(f"Meta scientist not found: {args.meta_scientist_id}")
+    proposal_id = safe_id(args.proposal_id, "proposal_id")
+    proposal_dir = p / "proposals"
+    proposal_dir.mkdir(parents=True, exist_ok=True)
+    path = proposal_dir / f"{proposal_id}.md"
+    if path.exists() and not args.force:
+        raise SystemExit(f"Proposal already exists: {path}. Use --force to replace it.")
+    title = args.title or proposal_id.replace("_", " ").title()
+    path.write_text(
+        f"""# Meta Proposal: {title}
+
+Date: {today()}
+Status: proposed
+Meta Scientist: {args.meta_scientist_id}
+
+## Problem
+
+Define the system issue.
+
+## Proposed Change
+
+Define the concrete change.
+
+## Evidence
+
+List matrix evidence, runs, docs audits, tests, or user feedback.
+
+## Acceptance Criteria
+
+- Define the verification steps.
+""",
+        encoding="utf-8",
+    )
+    print(path)
+
+
+def check_docs_links(issues: list[str]) -> None:
+    for path in sorted(DOCS.rglob("*.md")):
+        text = path.read_text(encoding="utf-8")
+        for match in re.finditer(r"\[[^\]]*\]\(([^)]+)\)", text):
+            target = match.group(1).strip()
+            if target.startswith(("http://", "https://", "mailto:", "#")):
+                continue
+            target_path = target.split("#", 1)[0]
+            if not target_path:
+                continue
+            target_path = urllib.parse.unquote(target_path)
+            resolved = (path.parent / target_path).resolve()
+            exists = resolved.exists() or resolved.with_suffix(".md").exists() or (resolved / "index.md").exists()
+            if not exists:
+                issues.append(f"broken docs link: {path.relative_to(ROOT)} -> {target}")
+
+
+def check_static_assets(issues: list[str]) -> None:
+    for path in sorted((DOCS / "assets").glob("*.json")):
+        try:
+            json.loads(path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError as exc:
+            issues.append(f"invalid JSON: {path.relative_to(ROOT)}: {exc}")
+
+
+def check_public_terminology(issues: list[str]) -> None:
+    paths = sorted(DOCS.rglob("*.md")) + [
+        ROOT / "README.md",
+        ROOT / "mkdocs.yml",
+    ]
+    paths.extend(sorted((ROOT / "research" / "templates").glob("*.md")))
+    paths.extend(sorted((ROOT / "research" / "templates").glob("*.yaml")))
+    for path in paths:
+        if not path.exists():
+            continue
+        legacy_allowed = path == DOCS / "legacy" / "btc-evidence.md"
+        if path == DOCS / "reference" / "audience-and-terminology.md":
+            continue
+        text = path.read_text(encoding="utf-8")
+        for phrase, replacement in PUBLIC_TERMINOLOGY_CHECKS.items():
+            if phrase in text:
+                issues.append(
+                    f"discouraged public terminology in {path.relative_to(ROOT)}: "
+                    f"{phrase!r}. {replacement}"
+                )
+        if path.is_relative_to(DOCS):
+            match = re.search(r"^audience:\s*agent\s*$", text, re.MULTILINE)
+            if match:
+                issues.append(f"agent-only page must not be under public docs: {path.relative_to(ROOT)}")
+
+
+def check_prompt_manifests(issues: list[str]) -> None:
+    if not EVALUATIONS.exists():
+        return
+    for manifest in sorted(EVALUATIONS.glob("*/runs/*/prompt-manifest.yaml")):
+        run_dir = manifest.parent
+        paths = read_yaml_values(manifest, "path")
+        if not paths:
+            issues.append(f"prompt manifest has no prompt paths: {manifest.relative_to(ROOT)}")
+            continue
+        for raw_path in paths:
+            prompt_path = (run_dir / raw_path).resolve()
+            try:
+                prompt_path.relative_to(run_dir.resolve())
+            except ValueError:
+                issues.append(f"prompt path escapes run directory: {manifest.relative_to(ROOT)} -> {raw_path}")
+                continue
+            if not prompt_path.exists():
+                issues.append(f"prompt manifest points at missing file: {manifest.relative_to(ROOT)} -> {raw_path}")
+            elif not prompt_path.read_text(encoding="utf-8").strip():
+                issues.append(f"prompt file is empty: {prompt_path.relative_to(ROOT)}")
+
+
+def check_matrix_docs(issues: list[str]) -> None:
+    if TASKS.exists():
+        for task_path in sorted(path for path in TASKS.iterdir() if path.is_dir()):
+            manifest = task_path / "task.yaml"
+            if not manifest.exists():
+                issues.append(f"missing task manifest: {manifest.relative_to(ROOT)}")
+            public_task = DOCS / "tasks" / f"{doc_slug(task_path.name)}.md"
+            if not public_task.exists():
+                issues.append(f"missing public task page: {public_task.relative_to(ROOT)}")
+
+    if SCHEMES.exists():
+        for scheme_path in sorted(path for path in SCHEMES.iterdir() if path.is_dir()):
+            manifest = scheme_path / "scheme.yaml"
+            guide = scheme_path / "guide.md"
+            for required in [manifest, guide]:
+                if not required.exists():
+                    issues.append(f"missing scheme file: {required.relative_to(ROOT)}")
+            public_scheme = DOCS / "schemes" / f"{doc_slug(scheme_path.name)}.md"
+            if not public_scheme.exists():
+                issues.append(f"missing public scheme page: {public_scheme.relative_to(ROOT)}")
+
+    if EVALUATIONS.exists():
+        for cell_path in sorted(path for path in EVALUATIONS.iterdir() if path.is_dir()):
+            manifest = cell_path / "evaluation-cell.yaml"
+            guide = cell_path / "guide.md"
+            report = cell_path / "report.md"
+            run_spec = cell_path / "run-spec.yaml"
+            if not manifest.exists():
+                continue
+            for required in [manifest, guide, report, run_spec]:
+                if not required.exists():
+                    issues.append(f"missing evaluation-cell file: {required.relative_to(ROOT)}")
+            cell_id = cell_path.name
+            public_cell = DOCS / "evaluations" / doc_slug(cell_id) / "index.md"
+            if read_yaml_scalar(manifest, "status") == "active" and not public_cell.exists():
+                issues.append(f"missing public evaluation cell brief: {public_cell.relative_to(ROOT)}")
+            declared_active = set(read_yaml_list(manifest, "active_work_units"))
+            declared_completed = set(read_yaml_list(manifest, "completed_work_units"))
+            actual_active: set[str] = set()
+            actual_completed: set[str] = set()
+            work_units_root = cell_path / "work_units"
+            if work_units_root.exists():
+                public_text = public_cell.read_text(encoding="utf-8") if public_cell.exists() else ""
+                for work_unit_path in sorted(path for path in work_units_root.iterdir() if path.is_dir()):
+                    work_unit_id = work_unit_path.name
+                    work_manifest = work_unit_path / "work-unit.yaml"
+                    work_guide = work_unit_path / "guide.md"
+                    work_report = work_unit_path / "report.md"
+                    for required in [work_manifest, work_guide, work_report]:
+                        if not required.exists():
+                            issues.append(f"missing work-unit file: {required.relative_to(ROOT)}")
+                    if not work_manifest.exists():
+                        continue
+                    status = read_yaml_scalar(work_manifest, "status")
+                    if status == "active":
+                        actual_active.add(work_unit_id)
+                    elif status in {"complete", "closed"}:
+                        actual_completed.add(work_unit_id)
+                    else:
+                        issues.append(f"unexpected work-unit status in {work_manifest.relative_to(ROOT)}: {status}")
+                    current_report_status = report_status(work_report)
+                    if current_report_status and status and current_report_status != status:
+                        issues.append(
+                            "work-unit status mismatch: "
+                            f"{work_manifest.relative_to(ROOT)} has {status}, "
+                            f"{work_report.relative_to(ROOT)} has {current_report_status}"
+                        )
+                    public_work = (
+                        DOCS
+                        / "evaluations"
+                        / doc_slug(cell_id)
+                        / "work-units"
+                        / f"{doc_slug(work_unit_id)}.md"
+                    )
+                    if not public_work.exists():
+                        issues.append(f"missing public work-unit brief: {public_work.relative_to(ROOT)}")
+                    elif public_cell.exists():
+                        relative_link = f"work-units/{doc_slug(work_unit_id)}.md"
+                        if relative_link not in public_text:
+                            issues.append(
+                                "evaluation cell brief does not link work-unit brief: "
+                                f"{public_cell.relative_to(ROOT)} -> {relative_link}"
+                            )
+            if declared_active != actual_active:
+                issues.append(
+                    f"active_work_units mismatch in {manifest.relative_to(ROOT)}: "
+                    f"declared={sorted(declared_active)} actual={sorted(actual_active)}"
+                )
+            if declared_completed != actual_completed:
+                issues.append(
+                    f"completed_work_units mismatch in {manifest.relative_to(ROOT)}: "
+                    f"declared={sorted(declared_completed)} actual={sorted(actual_completed)}"
+                )
+
+    if META.exists():
+        for meta_path in sorted(path for path in META.iterdir() if path.is_dir()):
+            manifest = meta_path / "meta-scientist.yaml"
+            guide = meta_path / "guide.md"
+            report = meta_path / "report.md"
+            for required in [manifest, guide, report]:
+                if not required.exists():
+                    issues.append(f"missing meta-scientist file: {required.relative_to(ROOT)}")
+            public_meta = DOCS / "meta" / f"{doc_slug(meta_path.name)}.md"
+            if not public_meta.exists():
+                issues.append(f"missing public meta-scientist page: {public_meta.relative_to(ROOT)}")
+
+    for path in sorted(DOCS.rglob("*.md")):
+        if path == DOCS / "legacy" / "btc-evidence.md":
+            continue
+        text = path.read_text(encoding="utf-8")
+        if "tasks/active/" in text and "/scientists/" in text:
+            issues.append(f"active docs point to old task-nested scientist path: {path.relative_to(ROOT)}")
+        if "archive/legacy/btc-2026-06-10" in text:
+            issues.append(f"legacy archive path should only be linked from legacy evidence page: {path.relative_to(ROOT)}")
+
+
+def cmd_docs_audit(args: argparse.Namespace) -> None:
+    issues: list[str] = []
+    check_static_assets(issues)
+    check_public_terminology(issues)
+    check_docs_links(issues)
+    check_prompt_manifests(issues)
+    check_matrix_docs(issues)
+    if issues:
+        print("Docs audit failed:")
+        for issue in issues:
+            print(f"- {issue}")
+        raise SystemExit(1)
+    print("Docs audit passed.")
+
+
+def cmd_memory(args: argparse.Namespace) -> None:
+    target = ROOT / "bin" / "agent-memory"
+    os.execv(str(target), [str(target), *args.memory_args])
+
+
+def cmd_meta_propose_wrapper(args: argparse.Namespace) -> None:
+    cmd_meta_propose(
+        argparse.Namespace(
+            meta_scientist_id=args.meta_scientist_id,
+            proposal_id=args.proposal_id,
+            title=args.title,
+            force=args.force,
+        )
+    )
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description="Manage the AI Lab workspace.")
+    sub = parser.add_subparsers(dest="area", required=True)
+
+    task = sub.add_parser("task", help="manage task definitions")
+    task_sub = task.add_subparsers(dest="cmd", required=True)
+    p = task_sub.add_parser("init")
+    p.add_argument("task_id")
+    p.set_defaults(func=cmd_task_init)
+    p = task_sub.add_parser("status")
+    p.add_argument("task_id")
+    p.set_defaults(func=cmd_task_status)
+    p = task_sub.add_parser("archive")
+    p.add_argument("task_id")
+    p.set_defaults(func=cmd_task_archive)
+    p = task_sub.add_parser("restart")
+    p.add_argument("task_id")
+    p.set_defaults(func=cmd_task_restart)
+
+    scheme = sub.add_parser("scheme", help="manage reusable AI scientist schemes")
+    scheme_sub = scheme.add_subparsers(dest="cmd", required=True)
+    p = scheme_sub.add_parser("init")
+    p.add_argument("scheme_id")
+    p.set_defaults(func=cmd_scheme_init)
+    p = scheme_sub.add_parser("status")
+    p.add_argument("scheme_id")
+    p.set_defaults(func=cmd_scheme_status)
+    p = scheme_sub.add_parser("list")
+    p.set_defaults(func=cmd_scheme_list)
+
+    cell = sub.add_parser("cell", help="manage task-by-scheme evaluation cells")
+    cell_sub = cell.add_subparsers(dest="cmd", required=True)
+    p = cell_sub.add_parser("init")
+    p.add_argument("cell_id")
+    p.add_argument("task_id")
+    p.add_argument("scheme_id")
+    p.set_defaults(func=cmd_cell_init)
+    p = cell_sub.add_parser("status")
+    p.add_argument("cell_id")
+    p.set_defaults(func=cmd_cell_status)
+    p = cell_sub.add_parser("archive")
+    p.add_argument("cell_id")
+    p.set_defaults(func=cmd_cell_archive)
+    p = cell_sub.add_parser("version")
+    p.add_argument("cell_id")
+    p.add_argument("new_cell_id")
+    p.set_defaults(func=cmd_cell_version)
+    run_spec = cell_sub.add_parser("run-spec", help="validate fixed evaluation-cell run specs")
+    run_spec_sub = run_spec.add_subparsers(dest="run_spec_cmd", required=True)
+    p = run_spec_sub.add_parser("validate")
+    p.add_argument("cell_id", nargs="?")
+    p.add_argument("--all", action="store_true", help="validate all active evaluation-cell run specs")
+    p.set_defaults(func=cmd_cell_run_spec_validate)
+    p = cell_sub.add_parser("run", help="execute a fixed evaluation-cell run spec")
+    p.add_argument("cell_id")
+    mode = p.add_mutually_exclusive_group(required=True)
+    mode.add_argument("--once", action="store_true", help="run one cycle")
+    mode.add_argument("--continuous", action="store_true", help="run until manifest exit conditions")
+    p.add_argument("--dry-run", action="store_true", help="print commands without executing them")
+    p.add_argument("--run-id")
+    p.add_argument("--max-cycles", type=int)
+    p.set_defaults(func=cmd_cell_run)
+    p = cell_sub.add_parser("run-all", help="execute fixed run specs for all active evaluation cells")
+    mode = p.add_mutually_exclusive_group(required=True)
+    mode.add_argument("--once", action="store_true", help="run one cycle for each cell")
+    mode.add_argument("--continuous", action="store_true", help="run each cell until manifest exit conditions")
+    p.add_argument("--dry-run", action="store_true", help="print commands without executing them")
+    p.add_argument("--max-cycles", type=int)
+    p.set_defaults(func=cmd_cell_run_all)
+    p = cell_sub.add_parser("synthesize", help="run the fixed Codex synthesis prompt for a cell run")
+    p.add_argument("cell_id")
+    p.add_argument("--run-id", required=True)
+    p.add_argument("--cycle", type=int, required=True)
+    p.add_argument("--print-prompt", action="store_true")
+    p.set_defaults(func=cmd_cell_synthesize)
+
+    wu = sub.add_parser("work-unit", help="manage evaluation-cell work units")
+    wu_sub = wu.add_subparsers(dest="cmd", required=True)
+    p = wu_sub.add_parser("init")
+    p.add_argument("cell_id")
+    p.add_argument("work_unit_id")
+    p.set_defaults(func=cmd_work_unit_init)
+    p = wu_sub.add_parser("status")
+    p.add_argument("cell_id")
+    p.add_argument("work_unit_id")
+    p.set_defaults(func=cmd_work_unit_status)
+    p = wu_sub.add_parser("close")
+    p.add_argument("cell_id")
+    p.add_argument("work_unit_id")
+    p.set_defaults(func=cmd_work_unit_close)
+
+    prompt = sub.add_parser("prompt", help="record local LLM prompt artifacts")
+    prompt_sub = prompt.add_subparsers(dest="cmd", required=True)
+    p = prompt_sub.add_parser("record")
+    p.add_argument("cell_id")
+    p.add_argument("run_id")
+    p.add_argument("prompt_id")
+    p.add_argument("--from-file")
+    p.add_argument("--source", default="manual")
+    p.add_argument("--sensitivity", default="local")
+    p.add_argument("--work-unit", action="append")
+    p.add_argument("--force", action="store_true")
+    p.set_defaults(func=cmd_prompt_record)
+
+    meta = sub.add_parser("meta", help="manage meta-AI scientist analyses and proposals")
+    meta_sub = meta.add_subparsers(dest="cmd", required=True)
+    p = meta_sub.add_parser("status")
+    p.add_argument("meta_scientist_id", nargs="?", default="ai_lab_meta_v1")
+    p.set_defaults(func=cmd_meta_status)
+    p = meta_sub.add_parser("analyze")
+    p.add_argument("meta_scientist_id", nargs="?", default="ai_lab_meta_v1")
+    p.set_defaults(func=cmd_meta_analyze)
+    p = meta_sub.add_parser("propose")
+    p.add_argument("proposal_id")
+    p.add_argument("--meta-scientist-id", default="ai_lab_meta_v1")
+    p.add_argument("--title")
+    p.add_argument("--force", action="store_true")
+    p.set_defaults(func=cmd_meta_propose_wrapper)
+
+    docs = sub.add_parser("docs", help="audit generated and hand-maintained documentation")
+    docs_sub = docs.add_subparsers(dest="cmd", required=True)
+    p = docs_sub.add_parser("audit")
+    p.set_defaults(func=cmd_docs_audit)
+
+    runtime = sub.add_parser("runtime", help="check or ensure allowlisted runtime profiles")
+    runtime_sub = runtime.add_subparsers(dest="cmd", required=True)
+    p = runtime_sub.add_parser("check")
+    p.add_argument("profile", choices=sorted(RUNTIME_PROFILES))
+    p.add_argument("--repo", help="optional repository path for uv import checks")
+    p.set_defaults(func=cmd_runtime_check)
+    p = runtime_sub.add_parser("ensure")
+    p.add_argument("profile", choices=sorted(RUNTIME_PROFILES))
+    p.add_argument("--repo", help="optional repository path for uv import verification")
+    p.set_defaults(func=cmd_runtime_ensure)
+
+    p = sub.add_parser("memory", help="search and maintain AI Lab memory")
+    p.add_argument("memory_args", nargs=argparse.REMAINDER)
+    p.set_defaults(func=cmd_memory)
+
+    source = sub.add_parser("source", help="manage optimized source code references")
+    source_sub = source.add_subparsers(dest="cmd", required=True)
+    p = source_sub.add_parser("status")
+    p.add_argument("source_id")
+    p.set_defaults(func=cmd_source_status)
+    p = source_sub.add_parser("materialize")
+    p.add_argument("source_id")
+    p.add_argument("--ref")
+    p.add_argument("--force", action="store_true")
+    p.set_defaults(func=cmd_source_materialize)
+    return parser
+
+
+def main() -> None:
+    parser = build_parser()
+    args = parser.parse_args()
+    args.func(args)
+
+
+if __name__ == "__main__":
+    main()

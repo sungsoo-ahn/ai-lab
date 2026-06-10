@@ -1,0 +1,21 @@
+meta_scientist_id: ai_lab_meta_v1
+title: AI Lab Meta Scientist v1
+status: active
+created_at: 2026-06-10
+updated_at: 2026-06-10
+authority: analyze_and_propose
+inputs:
+  - tasks/active
+  - scientists/schemes
+  - evaluations/active
+  - reports/system-status.md
+  - logs/activity.md
+outputs:
+  analyses_dir: analyses
+  proposals_dir: proposals
+  report: report.md
+proposal_policy:
+  applies_changes_directly: false
+  accepted_by: user_or_followup_implementation
+cadence: run after significant matrix, automation, or evaluation changes
+public_brief: docs/meta/ai-lab-meta-v1.md

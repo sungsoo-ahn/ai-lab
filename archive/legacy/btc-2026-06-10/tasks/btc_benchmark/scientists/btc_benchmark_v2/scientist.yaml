@@ -1,0 +1,39 @@
+scientist_id: btc_benchmark_v2
+task_id: btc_benchmark
+scheme_id: benchmark_autoresearch
+title: BTC Benchmark Scientist v2
+status: active
+version: 2
+parent_scientist_id: null
+created_at: 2026-06-10
+updated_at: 2026-06-10
+specific_goal: Improve participant strategies in btc_agentic_system against the frozen btc_benchmark referee while preserving causality, cost, split, and holdout rules.
+target_metric:
+  name: official_benchmark_net
+  direction: maximize
+  evaluation_context: btc_benchmark.benchmark.runner.run_benchmark on dev walk-forward folds, with causality gates passing, benchmark version 1.0.0, 10 bps base cost, next-open and funding-aware robustness reported, and sealed_holdout_used=false.
+optimization_constraints:
+  - Causality gates must pass on every scored fold for any promoted candidate.
+  - Referee costs, accounting, split generation, random baseline, and sealed-holdout policy are not optimization knobs.
+  - Report Sharpe, max drawdown, cost stress through 5x, next-open net, funding-aware net, random percentile, per-year metrics, exposure, turnover, and buy-hold comparison.
+  - Keep failed runs and disqualified strategies visible in reports or ledgers.
+  - Prefer simple causal strategies and bounded searches before adding heavier model dependencies.
+accepted_proposals: []
+active_work_units:
+  - report_synthesis
+completed_work_units:
+  - referee_reproduction
+  - bundled_baselines
+  - strategy_search
+  - ema_regime_robustness
+proposal_gate:
+  policy: accepted_proposals_create_next_scientist_version
+  proposals_dir: proposals
+assets: assets.yaml
+source_maps:
+  - source-map.md
+reports:
+  current: report.md
+guides:
+  user: guide.md
+run_spec: run-spec.yaml

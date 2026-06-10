@@ -1,0 +1,143 @@
+schema_version: ai_lab_scientist_run_v1
+task_id: btc
+scientist_id: btc_autoresearch_v1
+profile_id: btc_autoresearch_fixed_loop_v1
+description: Fixed continuous loop for the BTC AutoResearch scientist.
+loop:
+  mode: continuous
+  sleep_seconds: 60
+  max_cycles: 3
+  max_wall_minutes: 720
+  stop_file: STOP
+  stop_on_no_artifact_change: false
+source_gates:
+  - source_id: btc_autoresearch
+    head_policy: require_registered_ref
+    tracked_clean: true
+    allow_untracked:
+      - data/
+      - results/
+      - results*/
+      - .venv/
+commands:
+  preflight:
+    - id: source_status
+      builtin: source_status
+      args:
+        - btc_autoresearch
+      timeout_seconds: 60
+    - id: pytest
+      cwd: /Users/sungs/ai-lab/sources/checkouts/btc_autoresearch
+      argv:
+        - uv
+        - run
+        - --no-sync
+        - pytest
+        - -q
+        - -p
+        - no:cacheprovider
+      timeout_seconds: 1800
+      env:
+        PYTHONDONTWRITEBYTECODE: "1"
+  cycle:
+    - id: download_candles
+      cwd: /Users/sungs/ai-lab/sources/checkouts/btc_autoresearch
+      argv:
+        - uv
+        - run
+        - --no-sync
+        - python
+        - -m
+        - src.data.download_binance
+        - --market
+        - futures_um
+        - --symbol
+        - BTCUSDT
+        - --interval
+        - 1h
+        - --start
+        - "2019-09-01"
+      timeout_seconds: 7200
+    - id: impute_candles
+      cwd: /Users/sungs/ai-lab/sources/checkouts/btc_autoresearch
+      argv:
+        - uv
+        - run
+        - --no-sync
+        - python
+        - -m
+        - src.data.impute
+        - --market
+        - futures_um
+        - --symbol
+        - BTCUSDT
+        - --interval
+        - 1h
+        - --policy
+        - flat_bar_fill
+      timeout_seconds: 1800
+    - id: validate_candles
+      cwd: /Users/sungs/ai-lab/sources/checkouts/btc_autoresearch
+      argv:
+        - uv
+        - run
+        - --no-sync
+        - python
+        - -m
+        - src.data.validate_data
+        - --market
+        - futures_um
+        - --symbol
+        - BTCUSDT
+        - --interval
+        - 1h
+      timeout_seconds: 1800
+    - id: download_funding
+      cwd: /Users/sungs/ai-lab/sources/checkouts/btc_autoresearch
+      argv:
+        - uv
+        - run
+        - --no-sync
+        - python
+        - -m
+        - src.data.download_derivatives
+        - --kind
+        - funding
+        - --symbol
+        - BTCUSDT
+        - --start
+        - "2019-09-09"
+      timeout_seconds: 7200
+    - id: autoresearch
+      cwd: /Users/sungs/ai-lab/sources/checkouts/btc_autoresearch
+      argv:
+        - uv
+        - run
+        - --no-sync
+        - python
+        - -m
+        - scripts.run_autoresearch
+        - --max-trials
+        - "100"
+        - --seed
+        - "42"
+      timeout_seconds: 14400
+      artifacts:
+        - results/reports/m5_autoresearch/**
+        - results/experiments/m5_candidates/**
+    - id: m5_5_audit
+      cwd: /Users/sungs/ai-lab/sources/checkouts/btc_autoresearch
+      argv:
+        - uv
+        - run
+        - --no-sync
+        - python
+        - -m
+        - scripts.run_m5_5_audit
+      timeout_seconds: 7200
+      artifacts:
+        - results/reports/m5_5_audit/**
+  synthesis:
+    - id: codex_synthesis
+      builtin: synthesize
+      timeout_seconds: 3600

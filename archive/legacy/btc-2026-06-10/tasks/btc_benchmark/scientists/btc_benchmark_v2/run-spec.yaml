@@ -1,0 +1,101 @@
+schema_version: ai_lab_scientist_run_v1
+task_id: btc_benchmark
+scientist_id: btc_benchmark_v2
+profile_id: btc_benchmark_fixed_loop_v1
+description: Fixed continuous loop for the BTC benchmark scientist.
+loop:
+  mode: continuous
+  sleep_seconds: 60
+  max_cycles: 3
+  max_wall_minutes: 720
+  stop_file: STOP
+  stop_on_no_artifact_change: false
+source_gates:
+  - source_id: btc_benchmark
+    head_policy: require_registered_ref
+    tracked_clean: true
+    allow_untracked:
+      - uv.lock
+      - .venv/
+  - source_id: btc_agentic_system
+    head_policy: warn_registered_ref
+    tracked_clean: true
+    allow_untracked:
+      - results/
+      - results*/
+      - .venv/
+commands:
+  preflight:
+    - id: benchmark_source_status
+      builtin: source_status
+      args:
+        - btc_benchmark
+      timeout_seconds: 60
+    - id: participant_source_status
+      builtin: source_status
+      args:
+        - btc_agentic_system
+      timeout_seconds: 60
+    - id: referee_tests
+      cwd: /Users/sungs/ai-lab/sources/checkouts/btc_benchmark
+      argv:
+        - uv
+        - run
+        - --with-editable
+        - .
+        - --extra
+        - dev
+        - pytest
+      timeout_seconds: 1800
+  cycle:
+    - id: ema_robustness
+      cwd: /Users/sungs/ai-lab/sources/checkouts/btc_agentic_system
+      argv:
+        - uv
+        - run
+        - --with-editable
+        - .
+        - --with-editable
+        - /Users/sungs/ai-lab/sources/checkouts/btc_benchmark
+        - python
+        - -m
+        - scripts.ema_robustness
+        - --benchmark-repo
+        - /Users/sungs/ai-lab/sources/checkouts/btc_benchmark
+        - --team
+        - ai_lab_v2
+        - --top-gated
+        - "8"
+      timeout_seconds: 14400
+      env:
+        BTC_BENCHMARK_REPO: /Users/sungs/ai-lab/sources/checkouts/btc_benchmark
+      artifacts:
+        - results/ema_robustness/**
+    - id: verify_best_v2
+      cwd: /Users/sungs/ai-lab/sources/checkouts/btc_agentic_system
+      argv:
+        - uv
+        - run
+        - --with-editable
+        - .
+        - --with-editable
+        - /Users/sungs/ai-lab/sources/checkouts/btc_benchmark
+        - python
+        - -m
+        - scripts.run_benchmark
+        - --strategy
+        - agentic.strategies.rule_strategies:BestEmaRegimeV2
+        - --team
+        - ai_lab_v2
+        - --benchmark-repo
+        - /Users/sungs/ai-lab/sources/checkouts/btc_benchmark
+        - --no-sub-bars
+      timeout_seconds: 7200
+      env:
+        BTC_BENCHMARK_REPO: /Users/sungs/ai-lab/sources/checkouts/btc_benchmark
+      artifacts:
+        - results/leaderboard.jsonl
+  synthesis:
+    - id: codex_synthesis
+      builtin: synthesize
+      timeout_seconds: 3600

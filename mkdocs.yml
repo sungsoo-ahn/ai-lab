@@ -1,0 +1,70 @@
+site_name: AI Lab
+site_description: Static AI Lab guides, task pages, scientist scheme pages, evaluation matrix briefs, and meta-scientist notes.
+site_url: https://sungsoo-ahn.github.io/ai-lab/
+repo_url: https://github.com/sungsoo-ahn/ai-lab
+
+theme:
+  name: material
+  features:
+    - navigation.sections
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+  palette:
+    - scheme: default
+      primary: green
+      accent: teal
+
+plugins:
+  - search
+
+not_in_nav: |
+  evaluations/*/work-units/*.md
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - pymdownx.details
+  - pymdownx.highlight
+  - pymdownx.inlinehilite
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+
+extra_javascript:
+  - https://cdn.jsdelivr.net/npm/vega@5
+  - https://cdn.jsdelivr.net/npm/vega-lite@5
+  - https://cdn.jsdelivr.net/npm/vega-embed@6
+  - assets/autoresearch-plots.js
+
+extra_css:
+  - assets/extra.css
+
+nav:
+  - Home: index.md
+  - System Guide:
+      - Overview: system/index.md
+      - Architecture: system/architecture.md
+      - Prompt Provenance: system/prompt-provenance.md
+      - Maintenance: system/maintenance.md
+      - Documentation Standards: system/documentation-standards.md
+  - Tasks:
+      - Overview: tasks/index.md
+      - BTC Research: tasks/btc.md
+      - BTC Benchmark: tasks/btc-benchmark.md
+  - Scientist Schemes:
+      - Overview: schemes/index.md
+      - AutoResearch: schemes/autoresearch.md
+      - AutoScientist: schemes/autoscientist.md
+  - Evaluation Matrix:
+      - Overview: evaluations/index.md
+  - Meta Scientist:
+      - AI Lab Meta v1: meta/ai-lab-meta-v1.md
+  - Legacy Evidence:
+      - BTC Evidence: legacy/btc-evidence.md
+  - Reference:
+      - Audience And Terminology: reference/audience-and-terminology.md

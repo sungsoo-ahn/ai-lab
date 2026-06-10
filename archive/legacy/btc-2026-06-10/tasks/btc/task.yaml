@@ -1,0 +1,24 @@
+task_id: btc
+title: BTC
+status: active
+created_at: 2026-06-09
+updated_at: 2026-06-10
+category: financial_backtesting
+vague_goal: Solve BTC using the dataset and AutoResearch pipeline extracted from the local btc_autoresearch repository.
+known_assets:
+  - upstream_repo
+  - btcusdt_futures_1h_dataset
+candidate_metrics:
+  - backtested_net_return
+  - sharpe
+  - drawdown
+constraints:
+  - Historical backtest only.
+  - No live trading, private API keys, or account credentials.
+  - Preserve causal evaluation, timestamp alignment, cost accounting, and sealed holdout protection.
+active_scientists:
+  - btc_autoresearch_v1
+reports:
+  current: scientists/btc_autoresearch_v1/report.md
+guides:
+  current: scientists/btc_autoresearch_v1/guide.md

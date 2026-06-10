@@ -1,0 +1,18 @@
+{
+  "name": "btc-research-goal",
+  "version": "0.1.0",
+  "description": "Btc Research Goal plugin",
+  "author": {
+    "name": "Local developer"
+  },
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Btc Research Goal",
+    "shortDescription": "Use Btc Research Goal in Codex.",
+    "longDescription": "Btc Research Goal adds a local Codex plugin scaffold.",
+    "developerName": "Local developer",
+    "category": "Productivity",
+    "capabilities": [],
+    "defaultPrompt": "Help me use Btc Research Goal."
+  }
+}

@@ -1,0 +1,27 @@
+assets:
+  - id: <asset_id>
+    type: <dataset|code_repo|pdf|config|model|checkpoint|result_bundle|image|spreadsheet|binary_artifact|other>
+    description: <Short description>
+    location: <Path, URL, or connector reference>
+    format: <Format or media type>
+    schema_or_contract: <Schema, interface, or expected structure>
+    provenance: <Where it came from and how it was created>
+    created_at: <YYYY-MM-DD or null>
+    updated_at: <YYYY-MM-DD or null>
+    checksum_or_manifest: <Checksum, manifest path, or null>
+    source_id: <source_id or null>
+    git_ref: <immutable git commit SHA or null>
+    sensitivity: <public|internal|private|sensitive>
+    license_or_usage_constraints: <License or constraints>
+    valid_for:
+      - <task|scheme|evaluation_cell|work_unit|experiment>
+    known_limits:
+      - <limit>
+    ml_dataset:
+      task_type: <classification|regression|ranking|forecasting|backtest|other|null>
+      target_definition: <Target or null>
+      split_policy: <Split policy or null>
+      leakage_constraints:
+        - <constraint>
+      preprocessing_policy: <Policy or null>
+      time_range: <Range or null>

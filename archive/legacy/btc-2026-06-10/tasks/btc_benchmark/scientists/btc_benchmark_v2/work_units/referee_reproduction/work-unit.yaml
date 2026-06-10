@@ -1,0 +1,29 @@
+work_unit_id: referee_reproduction
+task_id: btc_benchmark
+scientist_id: btc_benchmark_v2
+type: observation
+status: complete
+created_at: 2026-06-10
+updated_at: 2026-06-10
+parallel_safe: true
+claimed_by: null
+run_id: null
+touch_scope: scientist_owned_files
+conflicts_with: []
+proposal_refs: []
+statement: Make the frozen btc_benchmark referee locally installable, tested, and capable of loading or bootstrapping its benchmark data bundle without altering scoring semantics.
+method: Verify the checkout, run the referee tests with uv, repair missing package structure only if required, then bootstrap or reuse benchmark-compatible data.
+expected_signal: Referee tests pass and load_benchmark_data can load the canonical 1h data bundle with sealed_holdout_used remaining false in dev scoring.
+assets_used:
+  - btc_benchmark_referee
+source_refs:
+  - source_id: btc_benchmark
+    git_ref: 166a99f0e915ba1aaaaa6da9451dfa90c49032a6
+    purpose: Frozen referee source and tests.
+evaluation_plan: Run editable install/tests with uv, run bootstrap_data or a documented equivalent, and verify the benchmark loader.
+outcome: Local referee is installable after adding the missing data package from btc_autoresearch lineage; `uv run --with-editable . --extra dev pytest` passes 131 tests with 1 skipped, and load_benchmark_data reads 56,232 candles plus funding aux.
+decision: Complete for dev evaluation; preserve the local repair and do not alter benchmark scoring or gates.
+reports:
+  current: report.md
+guides:
+  user: guide.md
