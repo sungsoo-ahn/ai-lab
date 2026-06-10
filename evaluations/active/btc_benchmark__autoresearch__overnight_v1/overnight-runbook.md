@@ -10,13 +10,13 @@ Run the AutoResearch scheme against BTC Benchmark for a bounded three-hour wall-
 
 ## Launch
 
-Use the paired launcher for the full scheme comparison:
+Use the AutoResearch launcher:
 
 ```sh
 bin/run-btc-overnight
 ```
 
-Use this cell directly only when isolating AutoResearch:
+Equivalent direct cell command:
 
 ```sh
 uv run python bin/ai-lab cell run btc_benchmark__autoresearch__overnight_v1 --continuous --run-id btc-overnight-autoresearch

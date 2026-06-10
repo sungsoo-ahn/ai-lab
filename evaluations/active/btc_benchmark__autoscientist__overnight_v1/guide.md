@@ -9,13 +9,7 @@ This cell applies AutoScientist to the frozen BTC Benchmark. It uses independent
 
 ## Fixed Launch
 
-The paired three-hour comparison launcher is:
-
-```sh
-bin/run-btc-overnight
-```
-
-To run only this cell:
+Run this cell directly:
 
 ```sh
 uv run python bin/ai-lab cell run btc_benchmark__autoscientist__overnight_v1 --continuous --run-id btc-overnight-autoscientist

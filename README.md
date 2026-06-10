@@ -109,7 +109,7 @@ uv run python bin/ai-lab cell run-spec validate --all
 uv run python bin/ai-lab cell run-all --dry-run --once
 ```
 
-The BTC benchmark overnight comparison has a fixed launcher that runs the AutoResearch and AutoScientist cells in parallel, each bounded by a 180-minute run spec:
+The BTC benchmark AutoResearch overnight run has a fixed launcher bounded by a 180-minute run spec:
 
 ```sh
 bin/run-btc-overnight

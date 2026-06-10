@@ -5,7 +5,7 @@ assets:
     role: frozen_referee_checkout
   - asset_id: overnight_launcher
     path: /Users/sungs/ai-lab/bin/run-btc-overnight
-    role: parallel_three_hour_launcher
+    role: autoresearch_three_hour_launcher
   - asset_id: readiness_helper
     path: /Users/sungs/ai-lab/bin/btc-benchmark-readiness
     role: data_load_and_baseline_reproduction_gate

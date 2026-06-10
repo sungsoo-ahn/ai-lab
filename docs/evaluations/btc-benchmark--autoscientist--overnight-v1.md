@@ -21,13 +21,7 @@ This evaluation cell applies AutoScientist to BTC Benchmark for a bounded three-
 
 ## Launch
 
-Run the paired comparison:
-
-```sh
-bin/run-btc-overnight
-```
-
-Run this cell only:
+Run this cell directly:
 
 ```sh
 uv run python bin/ai-lab cell run btc_benchmark__autoscientist__overnight_v1 --continuous --run-id btc-overnight-autoscientist

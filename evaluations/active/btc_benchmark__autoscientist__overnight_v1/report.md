@@ -25,5 +25,5 @@ Manual setup checks on 2026-06-10:
 ## Launch
 
 ```sh
-bin/run-btc-overnight
+uv run python bin/ai-lab cell run btc_benchmark__autoscientist__overnight_v1 --continuous --run-id btc-overnight-autoscientist
 ```

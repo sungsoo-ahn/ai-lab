@@ -910,6 +910,22 @@ Spec snapshot: `run-spec.snapshot.yaml`
     )
 
 
+def update_run_summary_status(run_dir: Path, status: str) -> None:
+    summary = run_dir / "run-summary.md"
+    if not summary.exists():
+        return
+    text = summary.read_text(encoding="utf-8")
+    if re.search(r"^Status:\s*.*$", text, flags=re.MULTILINE):
+        text = re.sub(r"^Status:\s*.*$", f"Status: {status}", text, count=1, flags=re.MULTILINE)
+    else:
+        text += f"\nStatus: {status}\n"
+    if re.search(r"^Finished:\s*.*$", text, flags=re.MULTILINE):
+        text = re.sub(r"^Finished:\s*.*$", f"Finished: {now_iso()}", text, count=1, flags=re.MULTILINE)
+    else:
+        text += f"Finished: {now_iso()}\n"
+    summary.write_text(text, encoding="utf-8")
+
+
 def command_artifact_fingerprint(command: dict[str, object], cwd: Path) -> list[str]:
     fingerprints: list[str] = []
     artifact_patterns = command.get("artifacts", []) if isinstance(command.get("artifacts"), list) else []
@@ -1161,36 +1177,17 @@ def cmd_cell_run(args: argparse.Namespace) -> None:
         write_run_summary(run_dir, args.cell_id, task_id, scheme_id, "running")
         append_event(run_dir, {"event": "run_start", "cell_id": args.cell_id, "task_id": task_id, "scheme_id": scheme_id})
 
-    start = time.time()
-    deadline_epoch = start + max_wall_minutes * 60 if max_wall_minutes else None
+    try:
+        start = time.time()
+        deadline_epoch = start + max_wall_minutes * 60 if max_wall_minutes else None
 
-    for gate_obj in spec.get("source_gates", []) if isinstance(spec.get("source_gates"), list) else []:
-        if isinstance(gate_obj, dict):
-            check_source_gate(gate_obj, strict=not args.dry_run, run_dir=None if args.dry_run else run_dir)
-    for command in preflight:
-        code = run_command(
-            command,
-            group="preflight",
-            context=context,
-            run_dir=run_dir,
-            dry_run=args.dry_run,
-            deadline_epoch=deadline_epoch,
-        )
-        if code != 0:
-            raise SystemExit(code)
-    previous_fingerprint = ""
-    for cycle in range(1, max_cycles + 1):
-        if stop_file.exists():
-            print(f"stop_file present: {stop_file}")
-            break
-        if max_wall_minutes and (time.time() - start) > max_wall_minutes * 60:
-            print(f"max_wall_minutes reached: {max_wall_minutes}")
-            break
-        context["cycle"] = str(cycle)
-        for command in cycle_commands:
+        for gate_obj in spec.get("source_gates", []) if isinstance(spec.get("source_gates"), list) else []:
+            if isinstance(gate_obj, dict):
+                check_source_gate(gate_obj, strict=not args.dry_run, run_dir=None if args.dry_run else run_dir)
+        for command in preflight:
             code = run_command(
                 command,
-                group="cycle",
+                group="preflight",
                 context=context,
                 run_dir=run_dir,
                 dry_run=args.dry_run,
@@ -1198,28 +1195,66 @@ def cmd_cell_run(args: argparse.Namespace) -> None:
             )
             if code != 0:
                 raise SystemExit(code)
-        if bool(loop.get("stop_on_no_artifact_change")) and not args.dry_run:
-            current_fingerprint = artifact_fingerprint(cycle_commands, cell)
-            if current_fingerprint == previous_fingerprint:
-                append_event(run_dir, {"event": "exit_condition", "reason": "no_artifact_change", "cycle": cycle})
-                print("exit_condition: no_artifact_change")
+        previous_fingerprint = ""
+        for cycle in range(1, max_cycles + 1):
+            if stop_file.exists():
+                print(f"stop_file present: {stop_file}")
                 break
-            previous_fingerprint = current_fingerprint
-        for command in synthesis:
-            code = run_command(
-                command,
-                group="synthesis",
-                context=context,
-                run_dir=run_dir,
-                dry_run=args.dry_run,
-                deadline_epoch=deadline_epoch,
-            )
-            if code != 0:
-                raise SystemExit(code)
-        if cycle < max_cycles and sleep_seconds and args.continuous and not args.dry_run:
-            time.sleep(sleep_seconds)
-    if not args.dry_run:
-        append_event(run_dir, {"event": "run_finish", "cell_id": args.cell_id, "task_id": task_id, "scheme_id": scheme_id})
+            if max_wall_minutes and (time.time() - start) > max_wall_minutes * 60:
+                print(f"max_wall_minutes reached: {max_wall_minutes}")
+                break
+            context["cycle"] = str(cycle)
+            for command in cycle_commands:
+                code = run_command(
+                    command,
+                    group="cycle",
+                    context=context,
+                    run_dir=run_dir,
+                    dry_run=args.dry_run,
+                    deadline_epoch=deadline_epoch,
+                )
+                if code != 0:
+                    raise SystemExit(code)
+            if bool(loop.get("stop_on_no_artifact_change")) and not args.dry_run:
+                current_fingerprint = artifact_fingerprint(cycle_commands, cell)
+                if current_fingerprint == previous_fingerprint:
+                    append_event(run_dir, {"event": "exit_condition", "reason": "no_artifact_change", "cycle": cycle})
+                    print("exit_condition: no_artifact_change")
+                    break
+                previous_fingerprint = current_fingerprint
+            for command in synthesis:
+                code = run_command(
+                    command,
+                    group="synthesis",
+                    context=context,
+                    run_dir=run_dir,
+                    dry_run=args.dry_run,
+                    deadline_epoch=deadline_epoch,
+                )
+                if code != 0:
+                    raise SystemExit(code)
+            if cycle < max_cycles and sleep_seconds and args.continuous and not args.dry_run:
+                time.sleep(sleep_seconds)
+    except BaseException as exc:
+        if not args.dry_run:
+            event: dict[str, object] = {
+                "event": "run_failed",
+                "cell_id": args.cell_id,
+                "task_id": task_id,
+                "scheme_id": scheme_id,
+                "error_type": type(exc).__name__,
+            }
+            if isinstance(exc, SystemExit):
+                event["returncode"] = exc.code if isinstance(exc.code, int) else 1
+            else:
+                event["message"] = str(exc)
+            append_event(run_dir, event)
+            update_run_summary_status(run_dir, "failed")
+        raise
+    else:
+        if not args.dry_run:
+            append_event(run_dir, {"event": "run_finish", "cell_id": args.cell_id, "task_id": task_id, "scheme_id": scheme_id})
+            update_run_summary_status(run_dir, "completed")
     print(f"run_id: {run_id}")
 
 

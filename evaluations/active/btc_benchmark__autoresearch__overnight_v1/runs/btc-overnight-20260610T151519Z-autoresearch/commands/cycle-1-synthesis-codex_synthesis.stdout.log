@@ -1,0 +1,14 @@
+Executed the synthesis instructions and stopped.
+
+Updated:
+- `evaluations/active/btc_benchmark__autoresearch__overnight_v1/report.md`
+- `docs/evaluations/btc-benchmark--autoresearch--overnight-v1.md`
+- `runs/btc-overnight-20260610T151519Z-autoresearch/run-summary.md`
+- `runs/btc-overnight-20260610T151519Z-autoresearch/experiment_summary.md`
+- `proposals/btc_autoresearch_cycle2_buy_hold_relative.md`
+
+Key result: best confirmed candidate was `candidate_always_long_default_gates` with net `1.5005`, Sharpe `0.770`, max drawdown `-0.6670`, and all gates passed. I recorded it as the dev-score floor, not a novel alpha.
+
+Verification:
+- `uv run python bin/ai-lab docs audit` passed.
+- `uv run python -m pytest tests/test_metrics.py tests/test_benchmark_contract.py -q` passed with `21 passed`.

@@ -40,7 +40,7 @@ Do not ask the user for permission for declared local commands in this run spec.
 3. Use the taste profile to rank which seed hypothesis or quick follow-up is worth testing first.
 4. Inspect the benchmark Strategy contract, runner, baseline rules, causality gates, and tests enough to avoid invalid strategy designs.
 5. Create local experiment scripts under the current run directory. Use the benchmark source as an importable referee, not as an editable workspace.
-6. Run a small sequence of candidate strategy experiments or parameter ablations through `run_benchmark`. Preserve every report, including weak or disqualified results.
+6. Run a small sequence of candidate strategy experiments or parameter ablations through `run_benchmark`. Execute run-local scripts from the benchmark checkout environment, for example `cd /Users/sungs/ai-lab/sources/checkouts/btc_benchmark && uv run python /absolute/path/to/run-script.py`, so the benchmark dependencies and package imports are available. Preserve every report, including weak or disqualified results.
 7. Compare candidates against the preflight EMA baseline and summarize robustness risks such as turnover, costs, random percentile, gate behavior, funding-aware score, and next-open score.
 8. If no credible metric improvement is found, write the negative finding clearly and propose the next cell version or missing participant-strategy asset.
 

@@ -9,13 +9,13 @@ This cell applies AutoResearch to the frozen BTC Benchmark. It is a metric-drive
 
 ## Fixed Launch
 
-The paired three-hour comparison launcher is:
+The AutoResearch three-hour launcher is:
 
 ```sh
 bin/run-btc-overnight
 ```
 
-To run only this cell:
+Equivalent direct cell command:
 
 ```sh
 uv run python bin/ai-lab cell run btc_benchmark__autoresearch__overnight_v1 --continuous --run-id btc-overnight-autoresearch

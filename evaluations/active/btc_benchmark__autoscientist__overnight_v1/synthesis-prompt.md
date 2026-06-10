@@ -39,7 +39,7 @@ Do not ask the user for permission for declared local commands in this run spec.
 2. Create a shared-state note in the current run directory that tracks assumptions, source constraints, skill use, taste decisions, candidate hypotheses, critiques, and decisions.
 3. Use independent work-unit lanes for at least source review, baseline replication, candidate method proposals, critique, and synthesis. If a lane should persist beyond the run, create or update a work unit under this evaluation cell and add the matching public brief.
 4. Treat skills as reusable capabilities, hypotheses as falsifiable claims, and research taste as the prioritization policy for choosing among claims.
-5. Run local candidate experiments or parameter ablations through `run_benchmark` when they can be evaluated without changing the frozen referee.
+5. Run local candidate experiments or parameter ablations through `run_benchmark` when they can be evaluated without changing the frozen referee. Execute run-local scripts from the benchmark checkout environment, for example `cd /Users/sungs/ai-lab/sources/checkouts/btc_benchmark && uv run python /absolute/path/to/run-script.py`, so the benchmark dependencies and package imports are available.
 6. Preserve disagreement and negative findings. Critique each candidate for leakage, turnover, cost sensitivity, gate behavior, funding-aware score, next-open score, and random percentile.
 7. Synthesize the strongest evidence into a recommendation for the next cell version, next work units, or missing participant-strategy asset.
 

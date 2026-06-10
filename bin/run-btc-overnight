@@ -8,37 +8,36 @@ log_dir="logs/overnight"
 mkdir -p "$log_dir"
 
 autoresearch_run="${run_prefix}-autoresearch"
-autoscientist_run="${run_prefix}-autoscientist"
+autoresearch_cell="btc_benchmark__autoresearch__overnight_v1"
+autoresearch_run_dir="evaluations/active/${autoresearch_cell}/runs/${autoresearch_run}"
+autoresearch_log="${log_dir}/${autoresearch_run}.log"
 
-echo "Launching BTC overnight comparison."
+echo "Launching BTC AutoResearch overnight run."
 echo "AutoResearch run: ${autoresearch_run}"
-echo "AutoScientist run: ${autoscientist_run}"
 echo "Logs: ${log_dir}/"
+echo "AutoResearch launcher log: ${autoresearch_log}"
+echo "AutoResearch run dir: ${autoresearch_run_dir}"
 
-uv run python bin/ai-lab cell run btc_benchmark__autoresearch__overnight_v1 \
+uv run python bin/ai-lab cell run "$autoresearch_cell" \
   --continuous \
   --run-id "$autoresearch_run" \
-  > "${log_dir}/${autoresearch_run}.log" 2>&1 &
+  > "$autoresearch_log" 2>&1 &
 autoresearch_pid=$!
 
-uv run python bin/ai-lab cell run btc_benchmark__autoscientist__overnight_v1 \
-  --continuous \
-  --run-id "$autoscientist_run" \
-  > "${log_dir}/${autoscientist_run}.log" 2>&1 &
-autoscientist_pid=$!
-
 autoresearch_status=0
-autoscientist_status=0
 
 wait "$autoresearch_pid" || autoresearch_status=$?
-wait "$autoscientist_pid" || autoscientist_status=$?
 
 echo "AutoResearch status: ${autoresearch_status}"
-echo "AutoScientist status: ${autoscientist_status}"
 
-if [ "$autoresearch_status" -ne 0 ] || [ "$autoscientist_status" -ne 0 ]; then
-  echo "One or more BTC overnight cells failed. Inspect ${log_dir}/ and the cell run directories."
+if [ "$autoresearch_status" -ne 0 ]; then
+  echo "BTC AutoResearch overnight run failed."
+  echo "AutoResearch:"
+  echo "  launcher: ${autoresearch_log}"
+  echo "  events: ${autoresearch_run_dir}/events.jsonl"
+  echo "  commands: ${autoresearch_run_dir}/commands/"
+  echo "  summary: ${autoresearch_run_dir}/run-summary.md"
   exit 1
 fi
 
-echo "BTC overnight comparison completed."
+echo "BTC AutoResearch overnight run completed."

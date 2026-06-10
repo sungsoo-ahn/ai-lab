@@ -1,0 +1,248 @@
+{
+  "benchmark_version": "1.0.0",
+  "team": "ai_lab_autoresearch_cycle1_151519",
+  "strategy": "candidate_donchian_24_long_cash",
+  "declared_horizon": 1,
+  "n_folds": 14,
+  "oos_start": "2022-04-01 00:00:00+00:00",
+  "oos_end": "2025-09-30 23:00:00+00:00",
+  "gates": {
+    "scope": "all_folds",
+    "n_folds_gated": 14,
+    "passed": true,
+    "failed_folds": [],
+    "determinism": true,
+    "future_perturbation": true,
+    "future_perturbation_exhaustive": false,
+    "future_perturbation_cutoffs_min": 64,
+    "prefix_invariance": true,
+    "per_fold": [
+      {
+        "fold": 0,
+        "determinism": true,
+        "future_perturbation": true,
+        "future_perturbation_exhaustive": false,
+        "future_perturbation_cutoffs": 64,
+        "prefix_invariance": true,
+        "passed": true,
+        "gate_window": [
+          19704,
+          21888
+        ]
+      },
+      {
+        "fold": 1,
+        "determinism": true,
+        "future_perturbation": true,
+        "future_perturbation_exhaustive": false,
+        "future_perturbation_cutoffs": 65,
+        "prefix_invariance": true,
+        "passed": true,
+        "gate_window": [
+          21888,
+          24096
+        ]
+      },
+      {
+        "fold": 2,
+        "determinism": true,
+        "future_perturbation": true,
+        "future_perturbation_exhaustive": false,
+        "future_perturbation_cutoffs": 65,
+        "prefix_invariance": true,
+        "passed": true,
+        "gate_window": [
+          24096,
+          26304
+        ]
+      },
+      {
+        "fold": 3,
+        "determinism": true,
+        "future_perturbation": true,
+        "future_perturbation_exhaustive": false,
+        "future_perturbation_cutoffs": 65,
+        "prefix_invariance": true,
+        "passed": true,
+        "gate_window": [
+          26304,
+          28464
+        ]
+      },
+      {
+        "fold": 4,
+        "determinism": true,
+        "future_perturbation": true,
+        "future_perturbation_exhaustive": false,
+        "future_perturbation_cutoffs": 64,
+        "prefix_invariance": true,
+        "passed": true,
+        "gate_window": [
+          28464,
+          30648
+        ]
+      },
+      {
+        "fold": 5,
+        "determinism": true,
+        "future_perturbation": true,
+        "future_perturbation_exhaustive": false,
+        "future_perturbation_cutoffs": 65,
+        "prefix_invariance": true,
+        "passed": true,
+        "gate_window": [
+          30648,
+          32856
+        ]
+      },
+      {
+        "fold": 6,
+        "determinism": true,
+        "future_perturbation": true,
+        "future_perturbation_exhaustive": false,
+        "future_perturbation_cutoffs": 65,
+        "prefix_invariance": true,
+        "passed": true,
+        "gate_window": [
+          32856,
+          35064
+        ]
+      },
+      {
+        "fold": 7,
+        "determinism": true,
+        "future_perturbation": true,
+        "future_perturbation_exhaustive": false,
+        "future_perturbation_cutoffs": 64,
+        "prefix_invariance": true,
+        "passed": true,
+        "gate_window": [
+          35064,
+          37248
+        ]
+      },
+      {
+        "fold": 8,
+        "determinism": true,
+        "future_perturbation": true,
+        "future_perturbation_exhaustive": false,
+        "future_perturbation_cutoffs": 64,
+        "prefix_invariance": true,
+        "passed": true,
+        "gate_window": [
+          37248,
+          39432
+        ]
+      },
+      {
+        "fold": 9,
+        "determinism": true,
+        "future_perturbation": true,
+        "future_perturbation_exhaustive": false,
+        "future_perturbation_cutoffs": 65,
+        "prefix_invariance": true,
+        "passed": true,
+        "gate_window": [
+          39432,
+          41640
+        ]
+      },
+      {
+        "fold": 10,
+        "determinism": true,
+        "future_perturbation": true,
+        "future_perturbation_exhaustive": false,
+        "future_perturbation_cutoffs": 65,
+        "prefix_invariance": true,
+        "passed": true,
+        "gate_window": [
+          41640,
+          43848
+        ]
+      },
+      {
+        "fold": 11,
+        "determinism": true,
+        "future_perturbation": true,
+        "future_perturbation_exhaustive": false,
+        "future_perturbation_cutoffs": 65,
+        "prefix_invariance": true,
+        "passed": true,
+        "gate_window": [
+          43848,
+          46008
+        ]
+      },
+      {
+        "fold": 12,
+        "determinism": true,
+        "future_perturbation": true,
+        "future_perturbation_exhaustive": false,
+        "future_perturbation_cutoffs": 64,
+        "prefix_invariance": true,
+        "passed": true,
+        "gate_window": [
+          46008,
+          48192
+        ]
+      },
+      {
+        "fold": 13,
+        "determinism": true,
+        "future_perturbation": true,
+        "future_perturbation_exhaustive": false,
+        "future_perturbation_cutoffs": 65,
+        "prefix_invariance": true,
+        "passed": true,
+        "gate_window": [
+          48192,
+          50400
+        ]
+      }
+    ]
+  },
+  "disqualified": false,
+  "net": -0.8172,
+  "sharpe": -3.87,
+  "sortino": -1.507,
+  "max_drawdown": -0.8265,
+  "profit_factor": 0.474,
+  "n_trades": 822,
+  "turnover": 1644.0,
+  "n_trades_runs": 822,
+  "exposure": 0.035444357571019026,
+  "hold_mean": 1.3236009732360097,
+  "hold_median": 1.0,
+  "net_cost0x": -0.0531,
+  "net_cost1x": -0.8172,
+  "net_cost2x": -0.9648,
+  "net_cost3x": -0.9932,
+  "net_cost5x": -0.9998,
+  "net_next_open": -0.817,
+  "net_funding_aware": -0.8193,
+  "random_pctile": 0.89,
+  "per_year": {
+    "2022": {
+      "net": -0.2374,
+      "sharpe": -2.984,
+      "dd": -0.2762
+    },
+    "2023": {
+      "net": -0.321,
+      "sharpe": -3.111,
+      "dd": -0.34
+    },
+    "2024": {
+      "net": -0.405,
+      "sharpe": -3.842,
+      "dd": -0.4392
+    },
+    "2025": {
+      "net": -0.4067,
+      "sharpe": -5.891,
+      "dd": -0.4071
+    }
+  },
+  "buy_hold_net": 1.5031,
+  "sealed_holdout_used": false
+}

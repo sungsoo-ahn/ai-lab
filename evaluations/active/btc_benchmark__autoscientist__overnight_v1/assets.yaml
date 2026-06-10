@@ -3,9 +3,9 @@ assets:
     source_id: btc_benchmark
     path: /Users/sungs/ai-lab/sources/checkouts/btc_benchmark
     role: frozen_referee_checkout
-  - asset_id: overnight_launcher
-    path: /Users/sungs/ai-lab/bin/run-btc-overnight
-    role: parallel_three_hour_launcher
+  - asset_id: direct_cell_runner
+    path: /Users/sungs/ai-lab/bin/ai-lab
+    role: autoscientist_three_hour_runner
   - asset_id: readiness_helper
     path: /Users/sungs/ai-lab/bin/btc-benchmark-readiness
     role: data_load_and_baseline_reproduction_gate
