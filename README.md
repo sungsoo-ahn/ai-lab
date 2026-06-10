@@ -51,8 +51,8 @@ bin/agent-memory search btc
 
 ## Starting Codex
 
-Use `codex-agent` to start a new session with the account AI Lab prompt and `/Users/sungs` as the working root.
+Use `codex-lab` to start a new session with the account AI Lab prompt and `/Users/sungs` as the working root.
 
 ```sh
-codex-agent 'Use AI Lab to continue btc.'
+codex-lab 'Use AI Lab to continue btc.'
 ```

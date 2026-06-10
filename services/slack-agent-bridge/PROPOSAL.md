@@ -13,7 +13,7 @@ Build a small Python service under `ai-lab` that uses Slack Socket Mode and Bolt
 The bridge should:
 
 - listen for direct messages to the Slack app and direct mentions in channels;
-- pass each prompt to the existing `codex-agent` account launcher through `codex exec`;
+- pass each prompt to the existing `codex-lab` account launcher through `codex exec`;
 - reply in the same Slack thread or DM;
 - avoid storing Slack tokens, user message bodies, or Codex output in durable memory by default;
 - keep logs limited to timestamps, event IDs, and status.
