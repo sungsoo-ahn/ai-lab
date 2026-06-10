@@ -7,6 +7,18 @@ Status: active
 
 <Explain what this project is for in plain language.>
 
+## Method Overview
+
+<Explain how the project's main method or workflow works for an unfamiliar user.>
+
+## Key Terms
+
+- `<term>`: <Plain-language definition and why it matters in this project.>
+
+## Assumptions
+
+- <Domain, data, workflow, or evaluation assumption that affects how to read the project.>
+
 ## Reading Order
 
 1. `guide.md`

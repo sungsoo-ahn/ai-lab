@@ -33,3 +33,4 @@ Use this file for significant local setup, policy, and organization changes.
 | 2026-06-10 | Polished homepage metric copy | Replaced internal publication/source-report wording with visitor-facing visibility and report labels. |
 | 2026-06-10 | Added per-project and per-hypothesis guide rule | Added `guide.md` as the user-facing guide convention, updated scaffolds/templates/dashboard rendering, and backfilled BTC guides. |
 | 2026-06-10 | Reclassified Slack bridge as a service | Moved the Slack bridge proposal under `services/slack-agent-bridge/` and removed it from active research project status. |
+| 2026-06-10 | Expanded guide scope to technical explainers | Updated guide policy, templates, scaffolds, and BTC guides so guides explain methods, terminology, assumptions, and decision criteria for unfamiliar users. |

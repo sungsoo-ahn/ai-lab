@@ -66,6 +66,18 @@ Status: active
 
 This guide explains how to read and continue the `{project_id}` project.
 
+## Method Overview
+
+Describe how the project's main method or workflow works for an unfamiliar user.
+
+## Key Terms
+
+- `<term>`: Define project-specific terminology and why it matters.
+
+## Assumptions
+
+- Define any domain, data, workflow, or evaluation assumptions that affect how to read this project.
+
 ## Reading Order
 
 1. `guide.md`

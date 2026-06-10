@@ -25,7 +25,7 @@ The system uses three memory levels:
 2. Project memory for one research topic.
 3. Hypothesis memory for one method, experiment family, or subtask.
 
-Agents should start from `memory/system/core.md`, then read the active project and hypothesis context. Each project and hypothesis must include a user-facing `guide.md` that explains how to read, restart, and safely work with that specific scope. User-facing reports should explain current state from scratch so the maintainer does not need to inspect internal files.
+Agents should start from `memory/system/core.md`, then read the active project and hypothesis context. Each project and hypothesis must include a user-facing `guide.md` that explains how to read, restart, and safely work with that specific scope. Guides should also explain project-specific methods, domain terminology, assumptions, and technical vocabulary for an unfamiliar user. User-facing reports should explain current state from scratch so the maintainer does not need to inspect internal files.
 
 ## Assets
 

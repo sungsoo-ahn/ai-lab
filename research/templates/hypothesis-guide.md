@@ -7,6 +7,18 @@ Status: active
 
 <Explain this hypothesis or work unit from scratch.>
 
+## Method Overview
+
+<Explain how the hypothesis method, experiment, audit, or implementation pass works.>
+
+## Key Terms
+
+- `<term>`: <Plain-language definition and why it matters for this hypothesis.>
+
+## Decision Criteria
+
+- <Metric, threshold, qualitative rule, or review criterion used to judge the hypothesis.>
+
 ## Reading Order
 
 1. `guide.md`

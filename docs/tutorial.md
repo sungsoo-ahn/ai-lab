@@ -56,6 +56,12 @@ An asset is a material used by the research: a repository, dataset, PDF, config,
 
 Each project tracks assets in `assets.yaml`. Hypotheses should reference assets by `asset_id` instead of copying raw paths into every report. For ML work, dataset assets should record the schema, split policy, target definition, leakage constraints, preprocessing, and time range.
 
+## Guides Versus Reports
+
+Use `guide.md` for orientation and explanation. A guide should explain how the project or hypothesis works, define unfamiliar domain terms, describe the method and assumptions, explain key metrics or decision rules, and tell a returning user how to safely continue.
+
+Use `report.md` for current findings. A report should summarize what happened, what result was found, what evidence supports it, what decision was made, and what the next action is.
+
 ## Common Commands
 
 Run these from `/Users/sungs/agent-system`:

@@ -61,6 +61,18 @@ Status: active
 
 This guide explains how to read and continue the `{args.hypothesis_id}` work unit in the `{args.project_id}` project.
 
+## Method Overview
+
+Describe how this hypothesis method, experiment, audit, or implementation pass works for an unfamiliar user.
+
+## Key Terms
+
+- `<term>`: Define hypothesis-specific terminology and why it matters.
+
+## Decision Criteria
+
+- Define the metrics, thresholds, qualitative rules, or review criteria used to judge this work unit.
+
 ## Reading Order
 
 1. `guide.md`
