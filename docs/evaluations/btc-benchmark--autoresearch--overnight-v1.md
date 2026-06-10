@@ -57,19 +57,19 @@ Top adaptive references:
 
 The leaderboard makes the main result visually obvious: always-long dominates raw development net, so it should be treated as the floor for Cycle 2.
 
-<div class="ai-lab-vega-plot" data-vega-spec="../assets/btc-autoresearch-cycle1-leaderboard.vl.json"></div>
+<div class="ai-lab-vega-plot" data-vega-spec="../../assets/btc-autoresearch-cycle1-leaderboard.vl.json"></div>
 
 The risk-return view shows the tradeoff hidden by the leaderboard. Adaptive variants give up raw net, but several reduce drawdown relative to full BTC exposure.
 
-<div class="ai-lab-vega-plot" data-vega-spec="../assets/btc-autoresearch-cycle1-risk-return.vl.json"></div>
+<div class="ai-lab-vega-plot" data-vega-spec="../../assets/btc-autoresearch-cycle1-risk-return.vl.json"></div>
 
 Cost stress separates passive exposure from active rules. The best adaptive candidates lose much of their appeal under 5x costs.
 
-<div class="ai-lab-vega-plot" data-vega-spec="../assets/btc-autoresearch-cycle1-cost-stress.vl.json"></div>
+<div class="ai-lab-vega-plot" data-vega-spec="../../assets/btc-autoresearch-cycle1-cost-stress.vl.json"></div>
 
 The adaptive-only relative plot frames Cycle 2 directly: no adaptive candidate beat always-long net, but some improved drawdown enough to justify overlay experiments.
 
-<div class="ai-lab-vega-plot" data-vega-spec="../assets/btc-autoresearch-cycle1-adaptive-relative.vl.json"></div>
+<div class="ai-lab-vega-plot" data-vega-spec="../../assets/btc-autoresearch-cycle1-adaptive-relative.vl.json"></div>
 
 ## Interpretation
 
