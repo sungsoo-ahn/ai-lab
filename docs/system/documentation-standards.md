@@ -64,6 +64,18 @@ For JSON/YAML assets used by plots or diagrams:
 - Add hover or table fields that explain why a point matters.
 - Validate JSON/YAML before committing.
 
+## Audit Protocol
+
+Run `bin/ai-lab docs audit` whenever system, scientist, work-unit, static asset, or public manual files change. The command is also part of the GitHub Pages workflow, so documentation drift blocks deployment.
+
+## Update Protocol By Level
+
+System maintenance changes should update the relevant System Manual page, `README.md` or `reports/system-status.md` when entry points change, and `logs/activity.md` when the change is significant.
+
+Scientist changes should update the scientist manifest, scientist report or guide, public scientist manual, static plot data when the evidence surface changes, and the active/completed work-unit lists.
+
+Work-unit changes should update `work-unit.yaml`, `guide.md`, `report.md`, the public work-unit manual, and the owning scientist manual's work-unit table. When a work unit finishes, close or complete the manifest and keep the report status consistent.
+
 ## Writing Style
 
 - Use clear academic wording.

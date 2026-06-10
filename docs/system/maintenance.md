@@ -18,6 +18,23 @@ uv run --with-requirements requirements.txt mkdocs build --strict
 
 The generated `site/` directory is a build artifact and is not committed.
 
+## Documentation Audit
+
+Run the AI Lab documentation audit before publishing changes:
+
+```sh
+bin/ai-lab docs audit
+```
+
+The audit checks that:
+
+- static JSON assets parse;
+- Markdown links under `docs/` resolve locally;
+- active scientists have public scientist manuals;
+- every work unit has `work-unit.yaml`, `guide.md`, `report.md`, and a linked public work-unit manual;
+- `active_work_units` and `completed_work_units` match the statuses in each work-unit manifest;
+- work-unit report status lines match their manifests.
+
 ## Deployment
 
 GitHub Pages deploys from `.github/workflows/pages.yml` on pushes to `main`.
@@ -27,8 +44,9 @@ The workflow:
 1. Checks out the repository.
 2. Sets up Python.
 3. Installs `requirements.txt`.
-4. Runs `mkdocs build --strict`.
-5. Uploads `site/` to GitHub Pages.
+4. Runs `python bin/ai-lab docs audit`.
+5. Runs `mkdocs build --strict`.
+6. Uploads `site/` to GitHub Pages.
 
 ## Package And Runtime Rules
 
@@ -48,6 +66,7 @@ The workflow:
 ## Maintenance Checklist
 
 - Run `mkdocs build --strict` before committing site changes.
+- Run `bin/ai-lab docs audit` before committing system, scientist, work-unit, or public manual changes.
 - Confirm new manuals are linked from the relevant System or Scientist index. Work-unit manuals should be linked from their owning scientist manual instead of listed in the global navigation.
 - Confirm pages explain behavior and decisions directly instead of only pointing to implementation files.
 - Confirm implementation paths are accurate when used as provenance.

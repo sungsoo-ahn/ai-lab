@@ -38,6 +38,7 @@ bin/ai-lab task status btc
 bin/ai-lab scientist status btc btc_autoresearch_v1
 bin/ai-lab work-unit status btc btc_autoresearch_v1 regime_filter_probe
 bin/ai-lab source status btc_autoresearch
+bin/ai-lab docs audit
 bin/ai-lab memory index
 bin/ai-lab memory search btc
 bin/ai-lab memory audit
@@ -72,6 +73,7 @@ uv run --with-requirements requirements.txt mkdocs serve
 Build locally:
 
 ```sh
+bin/ai-lab docs audit
 uv run --with-requirements requirements.txt mkdocs build
 ```
 

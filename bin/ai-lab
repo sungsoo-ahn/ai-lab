@@ -3,10 +3,13 @@ from __future__ import annotations
 
 import argparse
 import datetime as dt
+import json
 import os
+import re
 import shutil
 import subprocess
 import sys
+import urllib.parse
 from pathlib import Path
 
 
@@ -15,6 +18,7 @@ TASKS = ROOT / "tasks" / "active"
 ARCHIVE = ROOT / "archive"
 SOURCES = ROOT / "sources"
 SOURCE_REGISTRY = SOURCES / "sources.yaml"
+DOCS = ROOT / "docs"
 
 
 def today() -> str:
@@ -74,6 +78,45 @@ def replace_yaml_scalar_line(text: str, key: str, value: str) -> str:
         else:
             lines.append(line)
     return "\n".join(lines) + ("\n" if text.endswith("\n") else "")
+
+
+def read_yaml_scalar(path: Path, key: str) -> str | None:
+    prefix = f"{key}:"
+    for raw in path.read_text(encoding="utf-8").splitlines():
+        if raw.startswith(prefix):
+            value = raw.split(":", 1)[1].strip()
+            parsed = yaml_scalar(value)
+            return str(parsed) if parsed is not None else None
+    return None
+
+
+def read_yaml_list(path: Path, key: str) -> list[str]:
+    lines = path.read_text(encoding="utf-8").splitlines()
+    values: list[str] = []
+    in_list = False
+    for raw in lines:
+        if raw.startswith(f"{key}:"):
+            in_list = True
+            rest = raw.split(":", 1)[1].strip()
+            if rest == "[]":
+                return []
+            continue
+        if in_list:
+            if raw.startswith("  - "):
+                values.append(raw.split("- ", 1)[1].strip())
+                continue
+            if raw and not raw.startswith(" "):
+                break
+    return values
+
+
+def report_status(path: Path) -> str | None:
+    match = re.search(r"^Status:\s*([A-Za-z0-9_-]+)\s*$", path.read_text(encoding="utf-8"), re.MULTILINE)
+    return match.group(1) if match else None
+
+
+def doc_slug(value: str) -> str:
+    return value.replace("_", "-")
 
 
 def load_sources() -> dict[str, dict[str, object]]:
@@ -444,6 +487,135 @@ def cmd_work_unit_close(args: argparse.Namespace) -> None:
     print(report)
 
 
+def check_docs_links(issues: list[str]) -> None:
+    for path in sorted(DOCS.rglob("*.md")):
+        text = path.read_text(encoding="utf-8")
+        for match in re.finditer(r"\[[^\]]*\]\(([^)]+)\)", text):
+            target = match.group(1).strip()
+            if target.startswith(("http://", "https://", "mailto:", "#")):
+                continue
+            target_path = target.split("#", 1)[0]
+            if not target_path:
+                continue
+            target_path = urllib.parse.unquote(target_path)
+            resolved = (path.parent / target_path).resolve()
+            exists = resolved.exists() or resolved.with_suffix(".md").exists() or (resolved / "index.md").exists()
+            if not exists:
+                issues.append(f"broken docs link: {path.relative_to(ROOT)} -> {target}")
+
+
+def check_static_assets(issues: list[str]) -> None:
+    for path in sorted((DOCS / "assets").glob("*.json")):
+        try:
+            json.loads(path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError as exc:
+            issues.append(f"invalid JSON: {path.relative_to(ROOT)}: {exc}")
+
+
+def check_scientist_docs(issues: list[str]) -> None:
+    if not TASKS.exists():
+        return
+    for task_path in sorted(path for path in TASKS.iterdir() if path.is_dir()):
+        task_manifest = task_path / "task.yaml"
+        task_id = task_path.name
+        if not task_manifest.exists():
+            issues.append(f"missing task manifest: {task_manifest.relative_to(ROOT)}")
+            continue
+        active_scientists = set(read_yaml_list(task_manifest, "active_scientists"))
+        scientists_root = task_path / "scientists"
+        if not scientists_root.exists():
+            continue
+        for scientist_path in sorted(path for path in scientists_root.iterdir() if path.is_dir()):
+            scientist_id = scientist_path.name
+            manifest = scientist_path / "scientist.yaml"
+            guide = scientist_path / "guide.md"
+            report = scientist_path / "report.md"
+            for required in [manifest, guide, report]:
+                if not required.exists():
+                    issues.append(f"missing scientist file: {required.relative_to(ROOT)}")
+            if not manifest.exists():
+                continue
+            if scientist_id in active_scientists:
+                manual = DOCS / "scientists" / doc_slug(scientist_id) / "index.md"
+                if not manual.exists():
+                    issues.append(f"missing public scientist manual: {manual.relative_to(ROOT)}")
+            declared_active = set(read_yaml_list(manifest, "active_work_units"))
+            declared_completed = set(read_yaml_list(manifest, "completed_work_units"))
+            actual_active: set[str] = set()
+            actual_completed: set[str] = set()
+            work_units_root = scientist_path / "work_units"
+            if not work_units_root.exists():
+                continue
+            manual_text = ""
+            public_manual = DOCS / "scientists" / doc_slug(scientist_id) / "index.md"
+            if public_manual.exists():
+                manual_text = public_manual.read_text(encoding="utf-8")
+            for work_unit_path in sorted(path for path in work_units_root.iterdir() if path.is_dir()):
+                work_unit_id = work_unit_path.name
+                work_manifest = work_unit_path / "work-unit.yaml"
+                work_guide = work_unit_path / "guide.md"
+                work_report = work_unit_path / "report.md"
+                for required in [work_manifest, work_guide, work_report]:
+                    if not required.exists():
+                        issues.append(f"missing work-unit file: {required.relative_to(ROOT)}")
+                if not work_manifest.exists():
+                    continue
+                status = read_yaml_scalar(work_manifest, "status")
+                if status == "active":
+                    actual_active.add(work_unit_id)
+                elif status in {"complete", "closed"}:
+                    actual_completed.add(work_unit_id)
+                else:
+                    issues.append(f"unexpected work-unit status in {work_manifest.relative_to(ROOT)}: {status}")
+                if work_report.exists():
+                    current_report_status = report_status(work_report)
+                    if current_report_status and status and current_report_status != status:
+                        issues.append(
+                            "work-unit status mismatch: "
+                            f"{work_manifest.relative_to(ROOT)} has {status}, "
+                            f"{work_report.relative_to(ROOT)} has {current_report_status}"
+                        )
+                public_work_manual = (
+                    DOCS
+                    / "scientists"
+                    / doc_slug(scientist_id)
+                    / "work-units"
+                    / f"{doc_slug(work_unit_id)}.md"
+                )
+                if not public_work_manual.exists():
+                    issues.append(f"missing public work-unit manual: {public_work_manual.relative_to(ROOT)}")
+                elif public_manual.exists():
+                    relative_link = f"work-units/{doc_slug(work_unit_id)}.md"
+                    if relative_link not in manual_text:
+                        issues.append(
+                            "scientist manual does not link work-unit manual: "
+                            f"{public_manual.relative_to(ROOT)} -> {relative_link}"
+                        )
+            if declared_active != actual_active:
+                issues.append(
+                    f"active_work_units mismatch in {manifest.relative_to(ROOT)}: "
+                    f"declared={sorted(declared_active)} actual={sorted(actual_active)}"
+                )
+            if declared_completed != actual_completed:
+                issues.append(
+                    f"completed_work_units mismatch in {manifest.relative_to(ROOT)}: "
+                    f"declared={sorted(declared_completed)} actual={sorted(actual_completed)}"
+                )
+
+
+def cmd_docs_audit(args: argparse.Namespace) -> None:
+    issues: list[str] = []
+    check_static_assets(issues)
+    check_docs_links(issues)
+    check_scientist_docs(issues)
+    if issues:
+        print("Docs audit failed:")
+        for issue in issues:
+            print(f"- {issue}")
+        raise SystemExit(1)
+    print("Docs audit passed.")
+
+
 def cmd_memory(args: argparse.Namespace) -> None:
     target = ROOT / "bin" / "agent-memory"
     os.execv(str(target), [str(target), *args.memory_args])
@@ -505,6 +677,11 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("scientist_id")
     p.add_argument("work_unit_id")
     p.set_defaults(func=cmd_work_unit_close)
+
+    docs = sub.add_parser("docs", help="audit generated and hand-maintained documentation")
+    docs_sub = docs.add_subparsers(dest="cmd", required=True)
+    p = docs_sub.add_parser("audit")
+    p.set_defaults(func=cmd_docs_audit)
 
     p = sub.add_parser("memory", help="search and maintain AI Lab memory")
     p.add_argument("memory_args", nargs=argparse.REMAINDER)
