@@ -15,8 +15,10 @@ This evaluation cell applied AutoResearch to BTC Benchmark for a bounded local r
 - Research taste: `btc_robust_alpha_taste_v1`
 - Seed hypotheses: trend-following baseline ladder, cost robustness filter, funding auxiliary signal
 - Wall budget: 180 minutes
+- Max cycles: 5
 - Target metric: `referee_dev_score`
 - Synthesis prompt: `evaluations/active/btc_benchmark__autoresearch__overnight_v1/synthesis-prompt.md`
+- Cycle 2 target: `evaluations/active/btc_benchmark__autoresearch__overnight_v1/proposals/btc_autoresearch_cycle2_buy_hold_relative.md`
 
 ## Cycle 1 Run
 

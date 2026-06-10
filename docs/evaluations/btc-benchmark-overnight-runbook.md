@@ -5,7 +5,7 @@ Status: ready
 
 ## Purpose
 
-This runbook explains how to launch the BTC Benchmark AutoResearch overnight run with a 180-minute fixed run spec. AutoScientist remains an active evaluation cell, but it is run directly when isolating that scheme and is not launched by `bin/run-btc-overnight`.
+This runbook explains how to launch the BTC Benchmark AutoResearch overnight run with a 180-minute fixed run spec and up to five synthesis cycles. AutoScientist remains an active evaluation cell, but it is run directly when isolating that scheme and is not launched by `bin/run-btc-overnight`.
 
 ## Start From Repo Root
 
@@ -48,7 +48,9 @@ The AutoResearch overnight cell executes:
 2. `btc-benchmark-python` runtime check;
 3. selected referee tests;
 4. BTC data-load and EMA baseline reproduction;
-5. one Codex synthesis loop using the cell's fixed `synthesis-prompt.md`.
+5. up to five Codex synthesis cycles using the cell's fixed `synthesis-prompt.md`.
+
+Each AutoResearch cycle should read the Cycle 2 buy-hold-relative proposal and rank candidates against always-long/buy-and-hold evidence, not only against the weak EMA preflight baseline.
 
 ## Logs And Outputs
 
@@ -96,7 +98,7 @@ To prevent a cell from starting its next cycle, create its `STOP` file:
 touch evaluations/active/btc_benchmark__autoresearch__overnight_v1/STOP
 ```
 
-The current run specs use one cycle, so `STOP` is mainly useful before launching or before a retry. Remove the file before rerunning:
+The AutoResearch run spec allows up to five cycles. `STOP` is useful before launching, before a retry, or between cycles if you need the runner to stop before the next cycle starts. Remove the file before rerunning:
 
 ```sh
 rm evaluations/active/btc_benchmark__autoresearch__overnight_v1/STOP

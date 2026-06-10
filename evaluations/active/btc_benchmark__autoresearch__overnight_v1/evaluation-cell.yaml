@@ -7,7 +7,7 @@ version: 1
 parent_cell_id: null
 created_at: 2026-06-10
 updated_at: 2026-06-10
-specific_goal: Run a bounded three-hour AutoResearch loop on the frozen BTC benchmark, preserving referee rules and producing reproducible local evidence for candidate strategy improvement.
+specific_goal: Run up to five bounded AutoResearch synthesis cycles inside a three-hour wall budget on the frozen BTC benchmark, preserving referee rules and producing reproducible local evidence for buy-hold-relative candidate strategy improvement.
 target_metric:
   name: referee_dev_score
   direction: maximize

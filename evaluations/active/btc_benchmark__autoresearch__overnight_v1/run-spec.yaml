@@ -7,7 +7,7 @@ description: Three-hour AutoResearch overnight loop for BTC Benchmark with fixed
 loop:
   mode: continuous
   sleep_seconds: 0
-  max_cycles: 1
+  max_cycles: 5
   max_wall_minutes: 180
   stop_file: STOP
   stop_on_no_artifact_change: false

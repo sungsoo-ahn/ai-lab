@@ -3,6 +3,7 @@ from __future__ import annotations
 import importlib.machinery
 import importlib.util
 import subprocess
+from types import SimpleNamespace
 from pathlib import Path
 
 import pytest
@@ -204,6 +205,32 @@ def test_codex_lab_wrapper_uses_exec_for_noninteractive_synthesis() -> None:
     text = (ROOT / "bin" / "codex-lab").read_text(encoding="utf-8")
     assert "codex --cd \"$HOME\" --ask-for-approval never" in text
     assert "codex exec -c approval_policy='never'" in text
+
+
+def test_runtime_check_skips_brew_for_python_only_profile(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    cli = load_cli()
+    monkeypatch.setattr(
+        cli,
+        "RUNTIME_PROFILES",
+        {
+            "python-only": {
+                "homebrew": [],
+                "python_imports": ["numpy"],
+                "description": "Python-only test profile.",
+            }
+        },
+    )
+
+    def fail_run_print(*_args: object, **_kwargs: object) -> None:
+        raise AssertionError("python-only runtime profile should not check the Brewfile")
+
+    def fake_run_capture(*_args: object, **_kwargs: object) -> subprocess.CompletedProcess[str]:
+        return subprocess.CompletedProcess(args=[], returncode=0, stdout="ok\n", stderr="")
+
+    monkeypatch.setattr(cli, "run_print", fail_run_print)
+    monkeypatch.setattr(cli, "run_capture", fake_run_capture)
+
+    cli.cmd_runtime_check(SimpleNamespace(profile="python-only", repo=str(tmp_path)))
 
 
 def test_public_terminology_audit_rejects_manual_language(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:

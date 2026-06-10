@@ -17,7 +17,7 @@ When the user explicitly authorizes an overnight or long-running evaluation-cell
 - the exact command, package, reason, and verification result must be recorded in the cell or work-unit report;
 - failures must be recorded and should not be hidden by switching evaluation rules.
 
-The active approved runtime profile is `btc-benchmark-python`, which checks the Python imports needed by the BTC Benchmark checkout.
+The active approved runtime profile is `btc-benchmark-python`, which checks the Python imports needed by the BTC Benchmark checkout. It does not require Homebrew packages, so its runtime check should not fail merely because the broader workstation `Brewfile` baseline has unmet optional tools.
 
 ## Helper Command
 

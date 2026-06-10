@@ -378,18 +378,22 @@ def cmd_runtime_check(args: argparse.Namespace) -> None:
     ok = True
     print(f"profile: {args.profile}")
     print(f"description: {profile['description']}")
-    if command_exists("brew"):
-        print("brew: present")
-        bundle = run_print(["brew", "bundle", "check", "--file", str(BREWFILE)], check=False)
-        ok = ok and bundle.returncode == 0
-        for package in profile.get("homebrew", []):
-            result = subprocess.run(["brew", "list", str(package)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            installed = result.returncode == 0
-            ok = ok and installed
-            print(f"homebrew:{package}: {'installed' if installed else 'missing'}")
+    homebrew_packages = list(profile.get("homebrew", []))
+    if homebrew_packages:
+        if command_exists("brew"):
+            print("brew: present")
+            print(f"brewfile: {BREWFILE}")
+        else:
+            ok = False
+            print("brew: missing")
+        if command_exists("brew"):
+            for package in homebrew_packages:
+                result = subprocess.run(["brew", "list", str(package)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                installed = result.returncode == 0
+                ok = ok and installed
+                print(f"homebrew:{package}: {'installed' if installed else 'missing'}")
     else:
-        ok = False
-        print("brew: missing")
+        print("homebrew: none required by profile")
     if args.repo:
         repo = Path(args.repo).expanduser()
         for module in profile.get("python_imports", []):
