@@ -19,5 +19,6 @@ dashboard/dist/
 # Keep raw private exports and bulky generated artifacts out of the audit repo.
 inbox/raw/
 inbox/repos/
+sources/checkouts/
 research/active/tmp/
 research/active/*-raw/

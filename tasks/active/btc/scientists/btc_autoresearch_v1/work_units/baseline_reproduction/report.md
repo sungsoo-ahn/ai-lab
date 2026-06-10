@@ -10,7 +10,7 @@ Build readiness, run tests, build required data, reproduce the 60-trial baseline
 ## Commands Run
 
 ```sh
-cd /Users/sungs/ai-lab/inbox/repos/btc_autoresearch
+cd /Users/sungs/ai-lab/sources/checkouts/btc_autoresearch
 uv sync --extra models --extra plot --extra dev
 uv sync --no-extra stats --extra models --extra plot --extra dev
 uv pip install -e '.[models,plot,dev]'

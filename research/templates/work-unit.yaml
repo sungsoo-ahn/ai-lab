@@ -15,6 +15,7 @@ statement: <Hypothesis, method, observation, or subtask>
 method: <Method or subtask>
 expected_signal: <Expected signal>
 assets_used: []
+source_refs: []
 evaluation_plan: <Evaluation plan>
 outcome: null
 decision: pending

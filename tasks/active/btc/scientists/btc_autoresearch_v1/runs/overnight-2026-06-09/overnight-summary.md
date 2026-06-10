@@ -13,7 +13,7 @@ No sealed holdout was touched. No live orders, live trading code, private API ke
 ## Commands
 
 ```sh
-cd /Users/sungs/ai-lab/inbox/repos/btc_autoresearch
+cd /Users/sungs/ai-lab/sources/checkouts/btc_autoresearch
 uv sync --extra models --extra plot --extra dev
 uv sync --no-extra stats --extra models --extra plot --extra dev
 uv pip install -e '.[models,plot,dev]'
@@ -64,10 +64,10 @@ Notes:
 
 ## Files
 
-- Main ledger: `/Users/sungs/ai-lab/inbox/repos/btc_autoresearch/results/reports/m5_autoresearch/trial_ledger.parquet`
-- Main AutoResearch report: `/Users/sungs/ai-lab/inbox/repos/btc_autoresearch/results/reports/m5_autoresearch/report.md`
-- Official `t054` audit: `/Users/sungs/ai-lab/inbox/repos/btc_autoresearch/results/reports/m5_5_audit/report.md`
-- Custom `t094` audit: `/Users/sungs/ai-lab/inbox/repos/btc_autoresearch/results_t094_audit/reports/m5_5_audit/report.md`
+- Main ledger: `/Users/sungs/ai-lab/sources/checkouts/btc_autoresearch/results/reports/m5_autoresearch/trial_ledger.parquet`
+- Main AutoResearch report: `/Users/sungs/ai-lab/sources/checkouts/btc_autoresearch/results/reports/m5_autoresearch/report.md`
+- Official `t054` audit: `/Users/sungs/ai-lab/sources/checkouts/btc_autoresearch/results/reports/m5_5_audit/report.md`
+- Custom `t094` audit: `/Users/sungs/ai-lab/sources/checkouts/btc_autoresearch/results_t094_audit/reports/m5_5_audit/report.md`
 
 ## Safety Status
 

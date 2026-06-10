@@ -10,7 +10,7 @@ Try a bounded volatility/regime-filter workstream after baseline reproduction pa
 ## Commands Run
 
 ```sh
-cd /Users/sungs/ai-lab/inbox/repos/btc_autoresearch
+cd /Users/sungs/ai-lab/sources/checkouts/btc_autoresearch
 uv run --no-sync python - <<'PY'
 # Ran custom M5.5 audit for t094, including post-hoc regime breakdown and funding sensitivity.
 PY
@@ -22,7 +22,7 @@ No additional package installs beyond `baseline_reproduction`.
 
 ## Outputs
 
-- Custom audit report: `/Users/sungs/ai-lab/inbox/repos/btc_autoresearch/results_t094_audit/reports/m5_5_audit/report.md`.
+- Custom audit report: `/Users/sungs/ai-lab/sources/checkouts/btc_autoresearch/results_t094_audit/reports/m5_5_audit/report.md`.
 - `t094_f321ec793728`: `returns_only`, `H=1`, `long_cash`, `cost_aware`, lambda `5.0`.
 - Headline metrics: net `+231.1%`, Sharpe `1.05`, max drawdown `-38%`, trades `25`, turnover `49`.
 - Cost stress: `0x +248%`, `0.5x +239%`, `1x +231%`, `2x +215%`, `3x +200%`, `5x +172%`.

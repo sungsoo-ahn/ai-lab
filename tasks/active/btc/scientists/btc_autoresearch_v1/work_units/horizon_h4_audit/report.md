@@ -10,7 +10,7 @@ Investigate the documented H=4 horizon-matched lead after baseline artifacts exi
 ## Commands Run
 
 ```sh
-cd /Users/sungs/ai-lab/inbox/repos/btc_autoresearch
+cd /Users/sungs/ai-lab/sources/checkouts/btc_autoresearch
 uv run --no-sync python -m scripts.run_autoresearch --max-trials 100 --seed 42
 uv run --no-sync python - <<'PY'
 # Ran src.research.candidate_audit.run_full_audit with primary t094 and H=4 secondary candidates t063/t096.

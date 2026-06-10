@@ -17,6 +17,10 @@ expected_signal: Useful scientist knowledge, verified baseline state, or bounded
 assets_used:
   - upstream_repo
   - btcusdt_futures_1h_dataset
+source_refs:
+  - source_id: btc_autoresearch
+    git_ref: ca251130e1f97b6233ceb957cb85e209bc136073
+    purpose: Optimized BTC AutoResearch codebase for this work unit.
 evaluation_plan: Follow the overnight runbook and write a complete work-unit report.
 outcome: null
 decision: pending

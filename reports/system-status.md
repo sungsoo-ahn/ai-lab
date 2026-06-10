@@ -5,6 +5,7 @@ Date: 2026-06-10
 ## Current Shape
 
 - Workspace: `/Users/sungs/ai-lab`
+- Source registry: `/Users/sungs/ai-lab/sources/sources.yaml`
 - Former compatibility symlink `/Users/sungs/agent-system` has been removed.
 - Canonical storage: Markdown and YAML
 - Generated search index: `memory/index.sqlite`
@@ -28,6 +29,7 @@ Date: 2026-06-10
 - `README.md`
 - `docs/tutorial.md`
 - `reports/system-status.md`
+- `sources/sources.yaml`
 - `catalog/tasks.yaml`
 - `catalog/scientist-schemes.yaml`
 

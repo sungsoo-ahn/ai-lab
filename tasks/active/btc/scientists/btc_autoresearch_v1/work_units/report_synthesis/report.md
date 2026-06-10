@@ -10,7 +10,7 @@ Summarize all overnight results, negative findings, package installs, and next a
 ## Commands Run
 
 ```sh
-cd /Users/sungs/ai-lab/inbox/repos/btc_autoresearch
+cd /Users/sungs/ai-lab/sources/checkouts/btc_autoresearch
 git status --short
 find results -maxdepth 4 -type f | sort
 find results_t094_audit -maxdepth 4 -type f | sort

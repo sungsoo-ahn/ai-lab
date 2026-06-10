@@ -37,9 +37,9 @@ This differs from the originally documented `+60.0%` baseline, likely because th
 - 60-trial gate: `ACCEPT=16`, `NEEDS_REFINEMENT=34`, `REJECT=10`
 - 100-trial extension: `ACCEPT=29`, `NEEDS_REFINEMENT=56`, `REJECT=15`
 - Failed and rejected trials remain in the ledger.
-- Main ledger: `/Users/sungs/ai-lab/inbox/repos/btc_autoresearch/results/reports/m5_autoresearch/trial_ledger.parquet`
-- Main generated report: `/Users/sungs/ai-lab/inbox/repos/btc_autoresearch/results/reports/m5_autoresearch/report.md`
-- Custom `t094` audit: `/Users/sungs/ai-lab/inbox/repos/btc_autoresearch/results_t094_audit/reports/m5_5_audit/report.md`
+- Main ledger: `/Users/sungs/ai-lab/sources/checkouts/btc_autoresearch/results/reports/m5_autoresearch/trial_ledger.parquet`
+- Main generated report: `/Users/sungs/ai-lab/sources/checkouts/btc_autoresearch/results/reports/m5_autoresearch/report.md`
+- Custom `t094` audit: `/Users/sungs/ai-lab/sources/checkouts/btc_autoresearch/results_t094_audit/reports/m5_5_audit/report.md`
 
 ## Work Units
 
@@ -55,7 +55,7 @@ This differs from the originally documented `+60.0%` baseline, likely because th
 
 | Asset | Type | Role | Limits |
 | --- | --- | --- | --- |
-| `upstream_repo` | code_repo | Source code and generated research artifacts | Local clone now contains generated data/results and a scientist-local `.venv` |
+| `upstream_repo` | code_repo | Source ref and shared checkout for optimized code | Commit SHA is authoritative; checkout may contain ignored generated data/results and a scientist-local `.venv` |
 | `btcusdt_futures_1h_dataset` | dataset | Main ML/backtest dataset | Built locally from Binance public data; range starts at 2020-01-01 |
 | `baseline_t054` | result_bundle | Baseline comparison | Reproduced locally with updated metrics; still below buy-and-hold |
 

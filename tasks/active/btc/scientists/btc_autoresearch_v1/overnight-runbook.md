@@ -17,16 +17,18 @@ Run a full BTC research loop overnight. First verify environment, data, and base
 
 ## Gates
 
-1. Run tests or install missing Python deps with `uv` and record the install.
-2. Build required BTCUSDT 1h futures candles if missing.
-3. Build funding data if needed for audit.
-4. Reproduce 60-trial baseline and M5.5 audit.
-5. Launch parallel improvement/knowledge work only after baseline status is known.
+1. Verify or materialize source `btc_autoresearch` at git ref `ca251130e1f97b6233ceb957cb85e209bc136073`.
+2. Run tests or install missing Python deps with `uv` and record the install.
+3. Build required BTCUSDT 1h futures candles if missing.
+4. Build funding data if needed for audit.
+5. Reproduce 60-trial baseline and M5.5 audit.
+6. Launch parallel improvement/knowledge work only after baseline status is known.
 
 ## Baseline Commands
 
 ```sh
-cd /Users/sungs/ai-lab/inbox/repos/btc_autoresearch
+/Users/sungs/ai-lab/bin/ai-lab source status btc_autoresearch
+cd /Users/sungs/ai-lab/sources/checkouts/btc_autoresearch
 PYTHONDONTWRITEBYTECODE=1 pytest -q -p no:cacheprovider
 python -m src.data.download_binance --market futures_um --symbol BTCUSDT --interval 1h --start 2019-09-01
 python -m src.data.impute --market futures_um --symbol BTCUSDT --interval 1h --policy flat_bar_fill

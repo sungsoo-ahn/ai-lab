@@ -32,6 +32,8 @@ An asset is a material used by a scientist: a repository, dataset, PDF, config, 
 
 Scientists track assets in `assets.yaml`. Work units should reference assets by `asset_id` instead of copying raw paths into every report.
 
+Optimized codebases are tracked separately in `sources/sources.yaml` by immutable git commit SHA. A shared ignored checkout may live under `sources/checkouts/`, but work units should record the `source_id` and `git_ref` as their durable dependency.
+
 ## Proposals
 
 Work units may propose changes to the scientist scheme, target metric, constraints, or next iteration. Proposals belong under the scientist `proposals/` directory. Accepted proposals are applied by creating a new scientist version; current scientist metrics are not silently changed in place.

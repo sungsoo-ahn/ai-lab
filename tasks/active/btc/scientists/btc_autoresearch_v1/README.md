@@ -13,4 +13,4 @@ Read in this order:
 5. `overnight-runbook.md`
 6. `source-map.md`
 
-The current AutoResearch source repository is cloned at `/Users/sungs/ai-lab/inbox/repos/btc_autoresearch`.
+The current AutoResearch source repository is registered as `btc_autoresearch` in `/Users/sungs/ai-lab/sources/sources.yaml` and materialized at `/Users/sungs/ai-lab/sources/checkouts/btc_autoresearch`.

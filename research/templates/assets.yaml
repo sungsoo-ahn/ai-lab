@@ -9,6 +9,8 @@ assets:
     created_at: <YYYY-MM-DD or null>
     updated_at: <YYYY-MM-DD or null>
     checksum_or_manifest: <Checksum, manifest path, or null>
+    source_id: <source_id or null>
+    git_ref: <immutable git commit SHA or null>
     sensitivity: <public|internal|private|sensitive>
     license_or_usage_constraints: <License or constraints>
     valid_for:

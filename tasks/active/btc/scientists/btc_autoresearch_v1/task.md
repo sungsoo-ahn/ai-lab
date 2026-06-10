@@ -2,8 +2,9 @@
 
 Date: 2026-06-09
 Repository: https://github.com/YoonhoKim0527/btc_autoresearch.git
-Local clone: `/Users/sungs/ai-lab/inbox/repos/btc_autoresearch`
-Cloned commit: `ca251130e1f97b6233ceb957cb85e209bc136073`
+Source ID: `btc_autoresearch`
+Shared checkout: `/Users/sungs/ai-lab/sources/checkouts/btc_autoresearch`
+Git ref: `ca251130e1f97b6233ceb957cb85e209bc136073`
 
 ## Task
 

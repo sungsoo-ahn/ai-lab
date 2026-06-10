@@ -5,6 +5,7 @@ import argparse
 import datetime as dt
 import os
 import shutil
+import subprocess
 import sys
 from pathlib import Path
 
@@ -12,6 +13,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 TASKS = ROOT / "tasks" / "active"
 ARCHIVE = ROOT / "archive"
+SOURCES = ROOT / "sources"
+SOURCE_REGISTRY = SOURCES / "sources.yaml"
 
 
 def today() -> str:
@@ -33,6 +36,124 @@ def write_new(path: Path, text: str) -> None:
         return
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(text, encoding="utf-8")
+
+
+def run_git(path: Path, *args: str, check: bool = True) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        ["git", "-C", str(path), *args],
+        check=check,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+
+
+def yaml_scalar(value: str) -> str | bool | None:
+    value = value.strip()
+    if value in {"null", "~"}:
+        return None
+    if value == "true":
+        return True
+    if value == "false":
+        return False
+    if (value.startswith('"') and value.endswith('"')) or (
+        value.startswith("'") and value.endswith("'")
+    ):
+        return value[1:-1]
+    return value
+
+
+def load_sources() -> dict[str, dict[str, object]]:
+    if not SOURCE_REGISTRY.exists():
+        return {}
+    sources: dict[str, dict[str, object]] = {}
+    current: dict[str, object] | None = None
+    for raw in SOURCE_REGISTRY.read_text(encoding="utf-8").splitlines():
+        if not raw.strip() or raw.lstrip().startswith("#"):
+            continue
+        line = raw.strip()
+        if line.startswith("- "):
+            current = {}
+            rest = line[2:]
+            if ":" in rest:
+                key, value = rest.split(":", 1)
+                current[key.strip()] = yaml_scalar(value)
+            source_id = current.get("source_id")
+            if isinstance(source_id, str):
+                sources[source_id] = current
+            continue
+        if current is not None and ":" in line:
+            key, value = line.split(":", 1)
+            current[key.strip()] = yaml_scalar(value)
+            source_id = current.get("source_id")
+            if isinstance(source_id, str):
+                sources[source_id] = current
+    return sources
+
+
+def get_source(source_id: str) -> dict[str, object]:
+    source_id = safe_id(source_id, "source_id")
+    sources = load_sources()
+    if source_id not in sources:
+        raise SystemExit(f"Source not found: {source_id}")
+    return sources[source_id]
+
+
+def source_path(source: dict[str, object]) -> Path:
+    raw = source.get("materialized_path")
+    if not isinstance(raw, str) or not raw:
+        raise SystemExit("Source has no materialized_path.")
+    return Path(raw).expanduser()
+
+
+def cmd_source_status(args: argparse.Namespace) -> None:
+    source = get_source(args.source_id)
+    path = source_path(source)
+    expected = str(source.get("git_ref") or "")
+    print(f"source_id: {source.get('source_id')}")
+    print(f"remote_url: {source.get('remote_url')}")
+    print(f"git_ref: {expected}")
+    print(f"materialized_path: {path}")
+    if not path.exists():
+        print("materialized: false")
+        return
+    head = run_git(path, "rev-parse", "HEAD", check=False)
+    tracked_status = run_git(path, "status", "--short", "--untracked-files=no", check=False)
+    full_status = run_git(path, "status", "--short", check=False)
+    current = head.stdout.strip() if head.returncode == 0 else ""
+    dirty_tracked = bool(tracked_status.stdout.strip())
+    has_untracked = bool(full_status.stdout.strip() and full_status.stdout != tracked_status.stdout)
+    print("materialized: true")
+    print(f"current_head: {current or 'unknown'}")
+    print(f"head_matches_ref: {str(bool(expected and current.startswith(expected))).lower()}")
+    print(f"dirty_tracked: {str(dirty_tracked).lower()}")
+    print(f"has_untracked: {str(has_untracked).lower()}")
+    if full_status.stdout.strip():
+        print("status:")
+        print(full_status.stdout.rstrip())
+
+
+def cmd_source_materialize(args: argparse.Namespace) -> None:
+    source = get_source(args.source_id)
+    path = source_path(source)
+    remote = source.get("remote_url")
+    ref = args.ref or source.get("git_ref")
+    if not isinstance(remote, str) or not remote:
+        raise SystemExit("Source has no remote_url.")
+    if not isinstance(ref, str) or not ref:
+        raise SystemExit("No git ref provided or registered.")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if path.exists():
+        if not (path / ".git").exists():
+            raise SystemExit(f"Materialized path exists but is not a git repository: {path}")
+        status = run_git(path, "status", "--short", "--untracked-files=no", check=False).stdout.strip()
+        if status and not args.force:
+            raise SystemExit(f"Refusing to checkout into dirty source. Use --force after preserving artifacts: {path}")
+        run_git(path, "fetch", "--all", "--tags")
+    else:
+        subprocess.run(["git", "clone", remote, str(path)], check=True)
+    run_git(path, "checkout", ref)
+    print(path)
 
 
 def task_dir(task_id: str) -> Path:
@@ -254,6 +375,7 @@ statement: Define the work-unit statement.
 method: Define the method or subtask.
 expected_signal: Define the expected signal.
 assets_used: []
+source_refs: []
 evaluation_plan: Define the evaluation plan.
 outcome: null
 decision: pending
@@ -367,6 +489,17 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("memory", help="search and maintain AI Lab memory")
     p.add_argument("memory_args", nargs=argparse.REMAINDER)
     p.set_defaults(func=cmd_memory)
+
+    source = sub.add_parser("source", help="manage optimized source code references")
+    source_sub = source.add_subparsers(dest="cmd", required=True)
+    p = source_sub.add_parser("status")
+    p.add_argument("source_id")
+    p.set_defaults(func=cmd_source_status)
+    p = source_sub.add_parser("materialize")
+    p.add_argument("source_id")
+    p.add_argument("--ref")
+    p.add_argument("--force", action="store_true")
+    p.set_defaults(func=cmd_source_materialize)
     return parser
 
 

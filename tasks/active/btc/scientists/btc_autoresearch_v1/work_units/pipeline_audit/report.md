@@ -10,7 +10,7 @@ Audit leakage, cost, holdout, and reproducibility risks; produce actionable bloc
 ## Commands Run
 
 ```sh
-cd /Users/sungs/ai-lab/inbox/repos/btc_autoresearch
+cd /Users/sungs/ai-lab/sources/checkouts/btc_autoresearch
 rg -n "sealed|holdout|use_sealed|sealed_holdout|funding|fee_bps|slippage|turnover|timestamp|shift|future|leak|drop_duplicates|searchsorted|embargo|purge" src tests scripts configs README.md competition_guide.md
 sed -n '1,300p' src/backtest/backtester.py
 sed -n '1,260p' src/backtest/walk_forward.py

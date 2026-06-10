@@ -9,6 +9,7 @@ An AI scientist is a task-specific orchestration layer for agents. It tries to s
 - `catalog/`: broad task descriptions and reusable scientist scheme descriptions.
 - `tasks/active/`: active task, scientist, and work-unit workspaces.
 - `research/templates/`: reusable Markdown/YAML templates.
+- `sources/`: source registry plus ignored shared code checkouts.
 - `memory/`: durable system memory, reflections, source indexes, and history.
 - `policies/`: operating rules for research, privacy, connectors, packages, and approvals.
 - `archive/`: completed or superseded tasks, scientists, and packages.
@@ -34,6 +35,7 @@ Work units can propose changes to a scientist scheme, target metric, constraints
 bin/ai-lab task status btc
 bin/ai-lab scientist status btc btc_autoresearch_v1
 bin/ai-lab work-unit status btc btc_autoresearch_v1 regime_filter_probe
+bin/ai-lab source status btc_autoresearch
 bin/ai-lab memory index
 bin/ai-lab memory search btc
 bin/ai-lab memory audit
