@@ -93,7 +93,7 @@ This differs from the earlier documented `+60.0%` baseline, likely because the l
 
 The plot below shows selected score-maximizing BTC trials. It is one evidence surface, not the whole scientist.
 
-<div class="autoresearch-vega-plot" data-json="../../assets/btc-trials.json" data-title="BTC score-search trial inspection"></div>
+<div class="ai-lab-vega-plot" data-json="../../assets/btc-trials.json" data-title="BTC score-search trial inspection"></div>
 
 Hover over points to inspect hypothesis, config snippet, trace/report snippet, metric delta, and status. High return alone is not a promotion decision.
 

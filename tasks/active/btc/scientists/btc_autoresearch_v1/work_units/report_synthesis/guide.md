@@ -28,7 +28,7 @@ Report synthesis reads the completed work-unit outputs, source pointers, generat
 
 1. `guide.md`
 2. `report.md`
-3. `work unit.yaml`
+3. `work-unit.yaml`
 4. scientist `report.md`
 5. scientist `source-map.md`
 

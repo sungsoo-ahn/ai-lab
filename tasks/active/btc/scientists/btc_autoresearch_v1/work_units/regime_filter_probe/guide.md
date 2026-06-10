@@ -30,7 +30,7 @@ The probe searches for candidates whose trading behavior adapts to market condit
 
 1. `guide.md`
 2. `report.md`
-3. `work unit.yaml`
+3. `work-unit.yaml`
 4. scientist `source-map.md`
 5. relevant run records under scientist `runs/`
 

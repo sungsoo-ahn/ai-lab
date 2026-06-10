@@ -8,7 +8,8 @@ sensitivity: public
 status: active
 links:
   - /Users/sungs/AGENTS.md
-  - /Users/sungs/ai-lab/docs/tutorial.md
+  - /Users/sungs/ai-lab/docs/index.md
+  - /Users/sungs/ai-lab/docs/system/index.md
 ---
 
 # AI Lab Core Memory

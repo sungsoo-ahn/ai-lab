@@ -48,7 +48,7 @@ The workflow:
 ## Maintenance Checklist
 
 - Run `mkdocs build --strict` before committing site changes.
-- Confirm new manuals are linked from the relevant System or Scientist index. Work-unit manuals should be embedded under their owning scientist.
+- Confirm new manuals are linked from the relevant System or Scientist index. Work-unit manuals should be linked from their owning scientist manual instead of listed in the global navigation.
 - Confirm pages explain behavior and decisions directly instead of only pointing to implementation files.
 - Confirm implementation paths are accurate when used as provenance.
 - Confirm static JSON/YAML assets validate if edited.

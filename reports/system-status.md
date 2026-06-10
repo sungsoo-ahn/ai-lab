@@ -18,7 +18,7 @@ Date: 2026-06-10
 
 ## Active Scientists
 
-- `btc/btc_autoresearch_v1`: AutoResearch-style BTCUSDT short-horizon backtesting scientist. Current next step is a narrow robustness pass around the `t094` family before any sealed holdout decision.
+- `btc/btc_autoresearch_v1`: BTCUSDT short-horizon AI scientist built around the inherited `btc_autoresearch` pipeline. Current next step is a narrow robustness pass around the `t094` family before any sealed holdout decision.
 
 ## Local Services
 
@@ -27,7 +27,9 @@ Date: 2026-06-10
 ## User-Facing Entry Points
 
 - `README.md`
-- `docs/tutorial.md`
+- `docs/index.md`
+- `docs/system/index.md`
+- `docs/scientists/btc-autoresearch-v1/index.md`
 - `reports/system-status.md`
 - `sources/sources.yaml`
 - `catalog/tasks.yaml`

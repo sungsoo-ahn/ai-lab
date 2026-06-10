@@ -19,6 +19,9 @@ theme:
 plugins:
   - search
 
+not_in_nav: |
+  scientists/btc-autoresearch-v1/work-units/*.md
+
 markdown_extensions:
   - admonition
   - attr_list
@@ -52,9 +55,3 @@ nav:
       - Overview: scientists/index.md
       - BTC AutoResearch v1:
           - Scientist Manual: scientists/btc-autoresearch-v1/index.md
-          - Work Units:
-              - Baseline Reproduction: scientists/btc-autoresearch-v1/work-units/baseline-reproduction.md
-              - Pipeline Audit: scientists/btc-autoresearch-v1/work-units/pipeline-audit.md
-              - Horizon H4 Audit: scientists/btc-autoresearch-v1/work-units/horizon-h4-audit.md
-              - Regime Filter Probe: scientists/btc-autoresearch-v1/work-units/regime-filter-probe.md
-              - Report Synthesis: scientists/btc-autoresearch-v1/work-units/report-synthesis.md

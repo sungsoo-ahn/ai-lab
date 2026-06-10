@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", () => {
-  const plots = document.querySelectorAll(".autoresearch-vega-plot");
+  const plots = document.querySelectorAll(".ai-lab-vega-plot, .autoresearch-vega-plot");
 
   plots.forEach(async (plot) => {
     const dataUrl = plot.dataset.json;
@@ -85,5 +85,5 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 
-// To add another plot, add a div with class "autoresearch-vega-plot" and
+// To add another plot, add a div with class "ai-lab-vega-plot" and
 // point data-json at a static JSON file with the same field names.

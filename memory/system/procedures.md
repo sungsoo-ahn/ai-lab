@@ -8,7 +8,8 @@ sensitivity: public
 status: active
 links:
   - /Users/sungs/ai-lab/policies/update-policy.md
-  - /Users/sungs/ai-lab/docs/tutorial.md
+  - /Users/sungs/ai-lab/docs/system/maintenance.md
+  - /Users/sungs/ai-lab/docs/system/documentation-standards.md
 ---
 
 # AI Lab Procedures

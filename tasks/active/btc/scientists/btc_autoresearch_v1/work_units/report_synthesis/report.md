@@ -24,7 +24,7 @@ See `baseline_reproduction`; no additional installs during synthesis.
 
 - Updated scientist report: `/Users/sungs/ai-lab/tasks/active/btc/scientists/btc_autoresearch_v1/report.md`.
 - Updated overnight summary: `/Users/sungs/ai-lab/tasks/active/btc/scientists/btc_autoresearch_v1/runs/overnight-2026-06-09/overnight-summary.md`.
-- Updated work-unit reports for all five active work units.
+- Updated work-unit reports for all five completed work units.
 
 ## Result
 

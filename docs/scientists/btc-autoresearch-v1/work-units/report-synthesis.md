@@ -32,7 +32,7 @@ find results_t094_audit -maxdepth 4 -type f | sort
 
 - Updated scientist report: `tasks/active/btc/scientists/btc_autoresearch_v1/report.md`
 - Updated overnight summary: `tasks/active/btc/scientists/btc_autoresearch_v1/runs/overnight-2026-06-09/overnight-summary.md`
-- Updated reports for all five active work units.
+- Updated reports for all five completed work units.
 - Current public manual pages under `docs/`.
 
 ## Decision

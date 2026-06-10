@@ -63,6 +63,19 @@ def yaml_scalar(value: str) -> str | bool | None:
     return value
 
 
+def replace_yaml_scalar_line(text: str, key: str, value: str) -> str:
+    prefix = f"{key}:"
+    lines = []
+    replaced = False
+    for line in text.splitlines():
+        if not replaced and line.startswith(prefix):
+            lines.append(f"{key}: {value}")
+            replaced = True
+        else:
+            lines.append(line)
+    return "\n".join(lines) + ("\n" if text.endswith("\n") else "")
+
+
 def load_sources() -> dict[str, dict[str, object]]:
     if not SOURCE_REGISTRY.exists():
         return {}
@@ -414,6 +427,7 @@ def cmd_work_unit_status(args: argparse.Namespace) -> None:
 def cmd_work_unit_close(args: argparse.Namespace) -> None:
     p = work_unit_dir(args.task_id, args.scientist_id, args.work_unit_id)
     report = p / "report.md"
+    manifest = p / "work-unit.yaml"
     if not report.exists():
         raise SystemExit(f"Work-unit report not found: {report}")
     text = report.read_text(encoding="utf-8")
@@ -421,6 +435,12 @@ def cmd_work_unit_close(args: argparse.Namespace) -> None:
         text = text.replace("Status: active", "Status: closed")
         text += f"\n\n## Closed\n\nClosed on {today()}. Review proposals before promoting changes into the next scientist version.\n"
         report.write_text(text, encoding="utf-8")
+    if manifest.exists():
+        manifest_text = manifest.read_text(encoding="utf-8")
+        manifest_text = replace_yaml_scalar_line(manifest_text, "status", "closed")
+        manifest_text = replace_yaml_scalar_line(manifest_text, "updated_at", today())
+        manifest_text = replace_yaml_scalar_line(manifest_text, "decision", "closed")
+        manifest.write_text(manifest_text, encoding="utf-8")
     print(report)
 
 

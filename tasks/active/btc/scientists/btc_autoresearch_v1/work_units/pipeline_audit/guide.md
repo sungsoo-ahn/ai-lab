@@ -29,7 +29,7 @@ The audit inspects whether the pipeline can accidentally overstate performance. 
 
 1. `guide.md`
 2. `report.md`
-3. `work unit.yaml`
+3. `work-unit.yaml`
 4. scientist `source-map.md`
 5. relevant run records under scientist `runs/`
 

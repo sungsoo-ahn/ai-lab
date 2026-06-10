@@ -17,7 +17,8 @@ optimization_constraints:
   - Preserve failed and rejected trials in ledgers.
   - Report fold stability, cost sensitivity, random-baseline comparison, drawdown, and profit concentration.
 accepted_proposals: []
-active_work_units:
+active_work_units: []
+completed_work_units:
   - baseline_reproduction
   - pipeline_audit
   - horizon_h4_audit

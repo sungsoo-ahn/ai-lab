@@ -69,5 +69,6 @@ For JSON/YAML assets used by plots or diagrams:
 - Use clear academic wording.
 - Prefer operational specificity over broad claims.
 - Distinguish score-maximizing trials from broader evidence-producing work units.
+- Link work-unit manuals from the owning scientist manual to keep global navigation small.
 - Explain negative findings and rejected directions as useful evidence.
 - Avoid marketing language and hidden assumptions.
