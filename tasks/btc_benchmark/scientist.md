@@ -18,7 +18,7 @@ This task uses the single AI scientist loop for BTC Benchmark. The goal is not t
 4. Run local scripts from the benchmark checkout environment, keeping generated code and result files in ignored task artifact directories.
 5. Compare candidates against the preflight EMA baseline and passive always-long floor.
 6. Preserve weak, failed, or disqualified results when they explain the next decision.
-7. Before stopping, decide whether the run produced durable insights, negative results, or candidates. If it did, update the relevant tracked memory file under `tasks/btc_benchmark/memory/` or leave an explicit memory-promotion next action.
+7. Before stopping, decide whether the run produced durable insights, negative results, candidates, or run telemetry. If it did, update the relevant tracked memory file under `tasks/btc_benchmark/memory/` or leave an explicit memory-promotion next action.
 8. Do not commit experiment products. Promote only durable structural changes into task metadata, loop specs, scientist instructions, maintained helper scripts, memory, or generated docs.
 
 ## Evaluation Taste
@@ -49,6 +49,6 @@ Before stopping, update the relevant local run summary. Keep the runner-owned se
 
 The runner converts those sections into `observations.jsonl` when the run is summarized. Every generated experiment file should live under ignored task artifact directories such as `code/`, `results/`, `plots/`, `reports/`, `runs/`, or `assets/`. If the observation changes the task contract or operating structure, update canonical task metadata, loop specs, scientist instructions, maintained helper scripts, memory, or generated docs.
 
-Run `uv run python bin/ai-lab task summarize btc_benchmark --run-id <run_id>` before stopping when time allows. Use `uv run python bin/ai-lab memory promote btc_benchmark --run-id <run_id>` only when explicitly promoting a run observation into tracked task memory. Candidate promotion is not a substitute for memory: preserve durable lessons in `insights.yaml` and weak or failed approaches in `negative-results.yaml`.
+Run `uv run python bin/ai-lab task summarize btc_benchmark --run-id <run_id>` before stopping when time allows. Use `uv run python bin/ai-lab memory promote btc_benchmark --run-id <run_id>` only when explicitly promoting a run observation into tracked task memory. Candidate promotion is not a substitute for memory: preserve durable lessons in `insights.yaml`, weak or failed approaches in `negative-results.yaml`, notable candidates in `candidates.yaml`, and compact run/cycle telemetry in `runs.yaml`.
 
 Run `uv run python bin/ai-lab docs sync`, `uv run python bin/ai-lab docs audit`, and targeted tests when time allows after tracked memory or task metadata changes.

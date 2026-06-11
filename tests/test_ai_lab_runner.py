@@ -3,6 +3,7 @@ from __future__ import annotations
 import importlib.machinery
 import importlib.util
 import json
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -411,6 +412,17 @@ def test_memory_promote_creates_task_memory_and_docs(tmp_path: Path, monkeypatch
     monkeypatch.setattr(cli, "CONFIG", config)
     run_dir = task / "runs" / "run2"
     run_dir.mkdir(parents=True)
+    cli.append_event(
+        run_dir,
+        {
+            "event": "command_finish",
+            "group": "agent",
+            "cycle": 1,
+            "command_id": "agent",
+            "duration_seconds": 12.5,
+            "returncode": 0,
+        },
+    )
     cli.append_event(run_dir, {"event": "run_finish", "task_id": "demo", "run_id": "run2"})
     (run_dir / "run.json").write_text(
         json.dumps(
@@ -442,17 +454,47 @@ Funding-aware filters need a lower-turnover variant.
 ## Next Action
 
 Test a weekly turnover cap.
-""",
+        """,
+        encoding="utf-8",
+    )
+    results = run_dir / "results"
+    results.mkdir()
+    (results / "cycle1_demo_summary.json").write_text(
+        json.dumps(
+            {
+                "candidates": [
+                    {"strategy": "baseline", "net": 0.2, "net_cost5x": 0.1, "max_drawdown": -0.5},
+                    {
+                        "strategy": "winner",
+                        "net": 0.8,
+                        "net_funding_aware": 0.6,
+                        "net_cost5x": 0.7,
+                        "max_drawdown": -0.2,
+                        "random_pctile": 0.9,
+                        "turnover": 3.0,
+                    },
+                ]
+            }
+        )
+        + "\n",
         encoding="utf-8",
     )
 
     cli.cmd_memory_promote(["demo", "--run-id", "run2"])
+    shutil.rmtree(run_dir)
     cli.cmd_docs_sync(SimpleNamespace(check=False))
 
     insights = cli.load_yaml_file(task / "memory" / "insights.yaml")
     runs = cli.load_yaml_file(task / "memory" / "runs.yaml")
     assert insights["insights"][0]["claim"] == "Funding-aware filters need a lower-turnover variant."
     assert runs["runs"][0]["run_id"] == "run2"
+    assert runs["runs"][0]["agent_cycles"] == 1
+    assert runs["runs"][0]["command_count"] == 1
+    assert runs["runs"][0]["observation_count"] == 1
+    assert runs["runs"][0]["agent_durations_seconds"] == [12.5]
+    assert runs["runs"][0]["cycle_metrics"][0]["cycle"] == 1
+    assert runs["runs"][0]["cycle_metrics"][0]["label"] == "winner"
+    assert runs["runs"][0]["cycle_metrics"][0]["net"] == 0.8
     task_doc = (docs / "task" / "demo.md").read_text(encoding="utf-8")
     assert "Funding-aware filters need a lower-turnover variant." in task_doc
     assert "Recent Curated Runs" in task_doc
@@ -461,6 +503,52 @@ Test a weekly turnover cap.
     assert "ai-lab-vega-spec" in task_doc
     assert "Best candidate net by cycle" in task_doc
     assert "Completed agent cycles by run" in task_doc
+
+
+def test_memory_promote_allows_telemetry_without_observation(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    cli = load_cli()
+    tasks = tmp_path / "tasks"
+    task = write_task(tasks)
+    config = tmp_path / "lab.yaml"
+    write_lab_config(config)
+    monkeypatch.setattr(cli, "TASKS", tasks)
+    monkeypatch.setattr(cli, "CONFIG", config)
+    run_dir = task / "runs" / "run3"
+    run_dir.mkdir(parents=True)
+    cli.append_event(
+        run_dir,
+        {
+            "event": "command_finish",
+            "group": "agent",
+            "cycle": 1,
+            "command_id": "agent",
+            "duration_seconds": 9.0,
+            "returncode": 0,
+        },
+    )
+    (run_dir / "run.json").write_text(
+        json.dumps(
+            {
+                "schema_version": "ai_lab_run_v1",
+                "task_id": "demo",
+                "run_id": "run3",
+                "status": "completed",
+                "started_at": "2026-06-11T00:00:00+00:00",
+                "finished_at": "2026-06-11T00:02:00+00:00",
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    cli.cmd_memory_promote(["demo", "--run-id", "run3"])
+
+    insights = cli.load_yaml_file(task / "memory" / "insights.yaml")
+    runs = cli.load_yaml_file(task / "memory" / "runs.yaml")
+    assert insights["insights"] == []
+    assert runs["runs"][0]["run_id"] == "run3"
+    assert runs["runs"][0]["agent_cycles"] == 1
+    assert runs["runs"][0]["agent_durations_seconds"] == [9.0]
 
 
 def test_run_command_respects_elapsed_wall_deadline(tmp_path: Path) -> None:

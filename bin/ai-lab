@@ -10,6 +10,7 @@ import hashlib
 import html
 import io
 import json
+import math
 import netrc
 import os
 import re
@@ -1576,6 +1577,91 @@ def promote_observation(task_id: str, observation: dict[str, Any], status: str) 
     return target
 
 
+def finite_float(value: Any) -> float | None:
+    if value is None:
+        return None
+    try:
+        result = float(value)
+    except (TypeError, ValueError):
+        return None
+    return result if math.isfinite(result) else None
+
+
+def run_execution_summary(run_dir: Path, metadata: dict[str, Any]) -> dict[str, Any]:
+    events = read_jsonl(run_dir / "events.jsonl")
+    command_finishes = [event for event in events if event.get("event") == "command_finish"]
+    agent_finishes = [event for event in command_finishes if event.get("group") == "agent"]
+    all_cycles = [int(event.get("cycle", 0)) for event in events if isinstance(event.get("cycle"), int)]
+    failed = next((event for event in reversed(events) if event.get("event") == "run_failed"), {})
+    duration = seconds_between(metadata.get("started_at"), metadata.get("finished_at"))
+    if duration is None:
+        duration = sum(float(event.get("duration_seconds") or 0.0) for event in command_finishes)
+    summary: dict[str, Any] = {
+        "duration_seconds": duration,
+        "agent_cycles": len(agent_finishes),
+        "last_cycle": max(all_cycles) if all_cycles else len(agent_finishes),
+        "command_count": len(command_finishes),
+        "artifact_count": len(read_jsonl(run_dir / "artifacts.jsonl")),
+        "observation_count": len(read_jsonl(run_dir / "observations.jsonl")),
+        "agent_durations_seconds": [float(event.get("duration_seconds") or 0.0) for event in agent_finishes],
+    }
+    if failed.get("message"):
+        summary["failure"] = str(failed.get("message"))
+    return summary
+
+
+def metric_label(path: str, metrics: dict[str, Any]) -> str:
+    for key in ("strategy", "label", "candidate", "name", "team"):
+        value = metrics.get(key)
+        if value:
+            return str(value)
+    return path or "metric"
+
+
+def iter_metric_dicts(value: Any, path: str = "") -> list[tuple[str, dict[str, Any]]]:
+    found: list[tuple[str, dict[str, Any]]] = []
+    if isinstance(value, dict):
+        if finite_float(value.get("net")) is not None:
+            found.append((path, value))
+        for key, child in value.items():
+            child_path = f"{path}.{key}" if path else str(key)
+            found.extend(iter_metric_dicts(child, child_path))
+    elif isinstance(value, list):
+        for idx, child in enumerate(value):
+            found.extend(iter_metric_dicts(child, f"{path}[{idx}]"))
+    return found
+
+
+def extract_cycle_metrics(run_dir: Path) -> list[dict[str, Any]]:
+    results_dir = run_dir / "results"
+    rows: list[dict[str, Any]] = []
+    for path in sorted(results_dir.glob("cycle*_summary.json")):
+        match = re.search(r"cycle(\d+)", path.name)
+        if not match:
+            continue
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            continue
+        best: tuple[str, dict[str, Any], float] | None = None
+        for metric_path, metrics in iter_metric_dicts(data):
+            net = finite_float(metrics.get("net"))
+            if net is None:
+                continue
+            if best is None or net > best[2]:
+                best = (metric_path, metrics, net)
+        if best is None:
+            continue
+        metric_path, metrics, net = best
+        row: dict[str, Any] = {"cycle": int(match.group(1)), "label": metric_label(metric_path, metrics), "net": net}
+        for key in ("net_funding_aware", "net_next_open", "net_cost5x", "max_drawdown", "random_pctile", "turnover"):
+            number = finite_float(metrics.get(key))
+            if number is not None:
+                row[key] = number
+        rows.append(row)
+    return sorted(rows, key=lambda row: int(row.get("cycle", 0)))
+
+
 def update_run_memory(task_id: str, run_id: str, status: str) -> None:
     run_dir = task_run_dir(task_id, run_id)
     metadata = read_json_file(run_dir / "run.json")
@@ -1585,21 +1671,22 @@ def update_run_memory(task_id: str, run_id: str, status: str) -> None:
     runs = data.get("runs", [])
     if not isinstance(runs, list):
         runs = []
-    data["runs"] = upsert_list_item(
-        runs,
-        "run_id",
-        {
-            "run_id": run_id,
-            "memory_status": status,
-            "run_status": metadata.get("status", infer_run_status(run_dir)),
-            "started_at": metadata.get("started_at"),
-            "finished_at": metadata.get("finished_at"),
-            "wandb_url": metadata.get("wandb_url"),
-            "summary": primary.get("claim", ""),
-            "next_action": primary.get("next_action", ""),
-            "updated_at": today(),
-        },
-    )
+    item = {
+        "run_id": run_id,
+        "memory_status": status,
+        "run_status": metadata.get("status", infer_run_status(run_dir)),
+        "started_at": metadata.get("started_at"),
+        "finished_at": metadata.get("finished_at"),
+        "wandb_url": metadata.get("wandb_url"),
+        "summary": primary.get("claim", ""),
+        "next_action": primary.get("next_action", ""),
+        "updated_at": today(),
+    }
+    item.update(run_execution_summary(run_dir, metadata))
+    cycle_metrics = extract_cycle_metrics(run_dir)
+    if cycle_metrics:
+        item["cycle_metrics"] = cycle_metrics
+    data["runs"] = upsert_list_item(runs, "run_id", item)
     write_task_memory_file(task_id, "runs.yaml", data)
 
 
@@ -1617,8 +1704,6 @@ def cmd_memory_promote(argv: list[str]) -> None:
     ensure_task_memory_files(task_id)
     cmd_task_summarize(argparse.Namespace(task_id=task_id, run_id=run_id))
     observations = read_jsonl(run_dir / "observations.jsonl")
-    if not observations:
-        raise SystemExit(f"No promotable observations found in {rel_display(run_dir / 'observations.jsonl')}")
     touched: set[str] = set()
     for observation in observations:
         if str(observation.get("schema_version")) == OBSERVATION_SCHEMA and str(observation.get("claim") or "").strip():

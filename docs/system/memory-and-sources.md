@@ -7,7 +7,10 @@ Task-local curated memory lives under `tasks/<task_id>/memory/`:
 - `insights.yaml`: durable lessons that should affect future runs.
 - `negative-results.yaml`: failed or weak approaches worth remembering.
 - `candidates.yaml`: notable candidate strategies or implementations.
-- `runs.yaml`: promoted run index for generated user-facing docs.
+- `runs.yaml`: promoted run index and compact telemetry for generated user-facing docs.
+
+Promoted run entries should contain enough non-sensitive structure for CI to rebuild the public run explorer without ignored raw logs: run status, timestamps, W&B URL, command/artifact/observation counts, agent cycle durations, and cycle-level metrics when available.
+Runs may be promoted for telemetry even when they do not contain a durable observation; in that case `runs.yaml` is updated without adding an insight or negative result.
 
 Useful commands:
 
