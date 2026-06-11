@@ -21,7 +21,7 @@ Make important observations and improve candidate strategies for the frozen BTC 
 | Field | State |
 | --- | --- |
 | Mode | `continuous` |
-| Max cycles | `5` |
+| Max cycles | `100` |
 | Max wall minutes | `180` |
 | Stop file | `STOP` |
 
@@ -38,12 +38,32 @@ No experiment code, assets, reports, plots, results, or run logs are tracked as 
 ## Workspace
 
 - `tasks/btc_benchmark/bin/`
+- `tasks/btc_benchmark/memory/`
 - `tasks/btc_benchmark/code/`
 - `tasks/btc_benchmark/results/`
 - `tasks/btc_benchmark/plots/`
 - `tasks/btc_benchmark/reports/`
 - `tasks/btc_benchmark/runs/`
 - `tasks/btc_benchmark/assets/`
+
+## Curated Memory
+
+### Insights
+
+No promoted insights yet.
+
+### Negative Results
+
+No promoted negative results yet.
+
+### Candidates
+
+No promoted candidates yet.
+
+### Recent Curated Runs
+
+No curated runs yet.
+
 
 ## Run
 

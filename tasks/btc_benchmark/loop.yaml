@@ -4,7 +4,7 @@ description: W&B-observed AI scientist loop for the frozen BTC Benchmark task.
 loop:
   mode: continuous
   sleep_seconds: 0
-  max_cycles: 5
+  max_cycles: 100
   max_wall_minutes: 180
   stop_file: STOP
 source_gates:

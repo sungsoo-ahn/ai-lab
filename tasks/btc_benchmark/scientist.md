@@ -46,6 +46,8 @@ Before stopping, update the relevant local run summary. Keep the runner-owned se
 - `Observation`: the most important evidence-backed result from the cycle, including weak or failed results when they affect the next decision.
 - `Next Action`: the next bounded experiment, audit, or stop condition.
 
-Every generated experiment file should live under ignored task artifact directories such as `code/`, `results/`, `plots/`, `reports/`, `runs/`, or `assets/`. If the observation changes the task contract or operating structure, update canonical task metadata, loop specs, scientist instructions, maintained helper scripts, memory, or generated docs.
+The runner converts those sections into `observations.jsonl` when the run is summarized. Every generated experiment file should live under ignored task artifact directories such as `code/`, `results/`, `plots/`, `reports/`, `runs/`, or `assets/`. If the observation changes the task contract or operating structure, update canonical task metadata, loop specs, scientist instructions, maintained helper scripts, memory, or generated docs.
 
-Run `uv run python bin/ai-lab docs sync`, `uv run python bin/ai-lab docs audit`, and targeted tests when time allows.
+Run `uv run python bin/ai-lab task summarize btc_benchmark --run-id <run_id>` before stopping when time allows. Use `uv run python bin/ai-lab memory promote btc_benchmark --run-id <run_id>` only when explicitly promoting a run observation into tracked task memory.
+
+Run `uv run python bin/ai-lab docs sync`, `uv run python bin/ai-lab docs audit`, and targeted tests when time allows after tracked memory or task metadata changes.

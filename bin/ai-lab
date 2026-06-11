@@ -29,6 +29,15 @@ DOCS = ROOT / "docs"
 CONFIG = ROOT / "lab.yaml"
 TASK_SCHEMA = "ai_lab_task_v1"
 LOOP_SCHEMA = "ai_lab_loop_v1"
+RUN_SCHEMA = "ai_lab_run_v1"
+OBSERVATION_SCHEMA = "ai_lab_observation_v1"
+ARTIFACT_SCHEMA = "ai_lab_artifact_v1"
+TASK_MEMORY_SCHEMAS = {
+    "insights.yaml": ("ai_lab_task_insights_v1", "insights"),
+    "negative-results.yaml": ("ai_lab_task_negative_results_v1", "negative_results"),
+    "candidates.yaml": ("ai_lab_task_candidates_v1", "candidates"),
+    "runs.yaml": ("ai_lab_task_runs_v1", "runs"),
+}
 SECRET_ENV_RE = re.compile(r"(token|secret|password|passwd|api[_-]?key|private[_-]?key)", re.IGNORECASE)
 ALLOWED_PLACEHOLDERS = {"task_id", "run_id", "cycle", "run_dir", "task_dir", "root"}
 
@@ -103,8 +112,68 @@ def task_loop_path(task_id: str) -> Path:
     return task_dir(task_id) / "loop.yaml"
 
 
+def task_memory_dir(task_id: str) -> Path:
+    return task_dir(task_id) / "memory"
+
+
+def task_run_dir(task_id: str, run_id: str) -> Path:
+    return task_dir(task_id) / "runs" / safe_id(run_id, "run_id")
+
+
 def load_lab_config() -> dict[str, Any]:
     return load_yaml_file(CONFIG)
+
+
+def read_json_file(path: Path) -> dict[str, Any]:
+    if not path.exists():
+        return {}
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise SystemExit(f"Invalid JSON: {rel_display(path)}: {exc}") from exc
+    if not isinstance(data, dict):
+        raise SystemExit(f"JSON file must contain an object: {rel_display(path)}")
+    return data
+
+
+def write_json_file(path: Path, data: dict[str, Any]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(data, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+
+def read_jsonl(path: Path) -> list[dict[str, Any]]:
+    if not path.exists():
+        return []
+    rows: list[dict[str, Any]] = []
+    for lineno, line in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
+        if not line.strip():
+            continue
+        try:
+            data = json.loads(line)
+        except json.JSONDecodeError as exc:
+            raise SystemExit(f"Invalid JSONL: {rel_display(path)}:{lineno}: {exc}") from exc
+        if not isinstance(data, dict):
+            raise SystemExit(f"JSONL row must contain an object: {rel_display(path)}:{lineno}")
+        rows.append(data)
+    return rows
+
+
+def write_jsonl(path: Path, rows: list[dict[str, Any]]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    text = "".join(json.dumps(row, sort_keys=True) + "\n" for row in rows)
+    path.write_text(text, encoding="utf-8")
+
+
+def append_jsonl(path: Path, row: dict[str, Any]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("a", encoding="utf-8") as f:
+        f.write(json.dumps(row, sort_keys=True) + "\n")
+
+
+def upsert_jsonl(path: Path, key: str, row: dict[str, Any]) -> None:
+    rows = [item for item in read_jsonl(path) if item.get(key) != row.get(key)]
+    rows.append(row)
+    write_jsonl(path, rows)
 
 
 def run_git(path: Path, *args: str, check: bool = True) -> subprocess.CompletedProcess[str]:
@@ -352,6 +421,49 @@ def validate_loop_spec(task_id: str, spec: dict[str, Any]) -> list[str]:
     return issues
 
 
+def validate_task_memory(task_id: str) -> list[str]:
+    issues: list[str] = []
+    memory = task_memory_dir(task_id)
+    if not memory.exists():
+        return issues
+    for filename, (schema, field) in TASK_MEMORY_SCHEMAS.items():
+        path = memory / filename
+        if not path.exists():
+            continue
+        data = load_yaml_file(path)
+        if data.get("schema_version") != schema:
+            issues.append(f"{rel_display(path)} schema_version must be {schema}")
+        if data.get("task_id") != task_id:
+            issues.append(f"{rel_display(path)} task_id must be {task_id}")
+        if not isinstance(data.get(field), list):
+            issues.append(f"{rel_display(path)} {field} must be a list")
+    return issues
+
+
+def validate_run_files(task_id: str, run_id: str) -> list[str]:
+    issues: list[str] = []
+    run_dir = task_run_dir(task_id, run_id)
+    run = read_json_file(run_dir / "run.json")
+    if run.get("schema_version") != RUN_SCHEMA:
+        issues.append(f"{rel_display(run_dir / 'run.json')} schema_version must be {RUN_SCHEMA}")
+    if run.get("task_id") != task_id:
+        issues.append(f"{rel_display(run_dir / 'run.json')} task_id must be {task_id}")
+    if run.get("run_id") != run_id:
+        issues.append(f"{rel_display(run_dir / 'run.json')} run_id must be {run_id}")
+    for path, schema in [
+        (run_dir / "observations.jsonl", OBSERVATION_SCHEMA),
+        (run_dir / "artifacts.jsonl", ARTIFACT_SCHEMA),
+    ]:
+        for idx, row in enumerate(read_jsonl(path), start=1):
+            if row.get("schema_version") != schema:
+                issues.append(f"{rel_display(path)} row {idx} schema_version must be {schema}")
+            if row.get("task_id") != task_id:
+                issues.append(f"{rel_display(path)} row {idx} task_id must be {task_id}")
+            if row.get("run_id") != run_id:
+                issues.append(f"{rel_display(path)} row {idx} run_id must be {run_id}")
+    return issues
+
+
 def cmd_task_validate(args: argparse.Namespace) -> None:
     targets = active_task_ids() if args.all else [safe_id(args.task_id, "task_id")]
     failed = False
@@ -367,6 +479,7 @@ def cmd_task_validate(args: argparse.Namespace) -> None:
             issues.append(f"missing loop spec: {loop_path.relative_to(ROOT)}")
         else:
             issues.extend(validate_loop_spec(task_id, load_yaml_file(loop_path)))
+        issues.extend(validate_task_memory(task_id))
         if issues:
             failed = True
             print(f"{task_id}: invalid")
@@ -431,6 +544,7 @@ def task_sources_text(manifest: dict[str, Any]) -> str:
 def task_dirs(task_id: str) -> list[str]:
     return [
         f"tasks/{task_id}/bin/",
+        f"tasks/{task_id}/memory/",
         f"tasks/{task_id}/code/",
         f"tasks/{task_id}/results/",
         f"tasks/{task_id}/plots/",
@@ -522,6 +636,160 @@ def read_events(run_dir: Path) -> list[dict[str, Any]]:
         if isinstance(event, dict):
             rows.append(event)
     return rows
+
+
+def source_snapshots(manifest: dict[str, Any]) -> list[dict[str, Any]]:
+    snapshots: list[dict[str, Any]] = []
+    sources = manifest.get("sources", [])
+    if not isinstance(sources, list):
+        return snapshots
+    for entry in sources:
+        if not isinstance(entry, dict) or not isinstance(entry.get("source_id"), str):
+            continue
+        source_id = str(entry["source_id"])
+        snapshot: dict[str, Any] = {
+            "source_id": source_id,
+            "purpose": entry.get("purpose"),
+            "status": "unknown",
+        }
+        try:
+            source = get_source(source_id)
+            path = source_path(source)
+            snapshot.update(
+                {
+                    "title": source.get("title"),
+                    "remote_url": source.get("remote_url"),
+                    "registered_ref": source.get("git_ref"),
+                    "materialized_path": str(path),
+                }
+            )
+            if path.exists():
+                head = run_git(path, "rev-parse", "HEAD", check=False)
+                status = run_git(path, "status", "--short", check=False)
+                snapshot.update(
+                    {
+                        "status": "present",
+                        "head": head.stdout.strip() if head.returncode == 0 else "unknown",
+                        "working_tree": "clean" if not status.stdout.strip() else "dirty",
+                    }
+                )
+            else:
+                snapshot["status"] = "missing"
+        except SystemExit as exc:
+            snapshot.update({"status": "error", "error": str(exc)})
+        snapshots.append(snapshot)
+    return snapshots
+
+
+def write_run_metadata(
+    run_dir: Path,
+    *,
+    task_id: str,
+    run_id: str,
+    status: str,
+    manifest: dict[str, Any],
+    spec: dict[str, Any],
+    wandb_url: str | None,
+) -> None:
+    existing = read_json_file(run_dir / "run.json")
+    now = now_iso()
+    loop_cfg = spec.get("loop", {}) if isinstance(spec.get("loop"), dict) else {}
+    data: dict[str, Any] = {
+        "schema_version": RUN_SCHEMA,
+        "task_id": task_id,
+        "run_id": run_id,
+        "status": status,
+        "started_at": existing.get("started_at") or now,
+        "updated_at": now,
+        "finished_at": now if status in {"completed", "failed"} else existing.get("finished_at"),
+        "wandb_url": wandb_url,
+        "metric": manifest.get("metric"),
+        "loop": {
+            "mode": loop_cfg.get("mode"),
+            "max_cycles": loop_cfg.get("max_cycles"),
+            "max_wall_minutes": loop_cfg.get("max_wall_minutes"),
+            "stop_file": loop_cfg.get("stop_file", "STOP"),
+        },
+        "source_refs": source_snapshots(manifest),
+        "files": {
+            "events": "events.jsonl",
+            "observations": "observations.jsonl",
+            "artifacts": "artifacts.jsonl",
+            "summary": "run-summary.md",
+            "loop_snapshot": "loop.snapshot.yaml",
+            "commands": "commands/",
+        },
+    }
+    write_json_file(run_dir / "run.json", data)
+
+
+def append_artifact_records(
+    run_dir: Path,
+    *,
+    task_id: str,
+    run_id: str,
+    group: str,
+    cycle: int,
+    command_id: str,
+    artifacts: list[dict[str, Any]],
+) -> None:
+    for idx, artifact in enumerate(artifacts):
+        matches = artifact.get("matches")
+        if not isinstance(matches, list):
+            matches = []
+        record = {
+            "schema_version": ARTIFACT_SCHEMA,
+            "artifact_id": f"cycle-{cycle}-{group}-{command_id}-{idx}",
+            "task_id": task_id,
+            "run_id": run_id,
+            "time": now_iso(),
+            "cycle": cycle,
+            "group": group,
+            "command_id": command_id,
+            "artifact_type": "declared_command_artifact",
+            "pattern": artifact.get("pattern"),
+            "present": bool(artifact.get("present")),
+            "matches": [rel_to_run(run_dir, str(item)) for item in matches],
+        }
+        append_jsonl(run_dir / "artifacts.jsonl", record)
+
+
+def markdown_section(text: str, heading: str) -> str:
+    pattern = re.compile(rf"^## {re.escape(heading)}\n(.*?)(?=^## |\Z)", re.MULTILINE | re.DOTALL)
+    match = pattern.search(text)
+    return match.group(1).strip() if match else ""
+
+
+def meaningful_summary_text(value: str) -> bool:
+    clean = value.strip().lower()
+    return bool(clean) and clean not in {"pending agent update.", "pending agent update", "not recorded yet."}
+
+
+def sync_observation_from_summary(run_dir: Path, task_id: str, run_id: str) -> dict[str, Any] | None:
+    summary = run_dir / "run-summary.md"
+    if not summary.exists():
+        return None
+    text = summary.read_text(encoding="utf-8")
+    observation = markdown_section(text, "Observation")
+    next_action = markdown_section(text, "Next Action")
+    if not meaningful_summary_text(observation):
+        return None
+    record = {
+        "schema_version": OBSERVATION_SCHEMA,
+        "observation_id": f"summary-{run_id}",
+        "task_id": task_id,
+        "run_id": run_id,
+        "created_at": now_iso(),
+        "source": "run_summary",
+        "claim": observation,
+        "evidence": [f"run:{run_id}/run-summary.md#observation"],
+        "confidence": "unrated",
+        "metric_impact": "not recorded",
+        "decision": "review",
+        "next_action": next_action if meaningful_summary_text(next_action) else "",
+    }
+    upsert_jsonl(run_dir / "observations.jsonl", "observation_id", record)
+    return record
 
 
 def untracked_allowed(path: str, patterns: list[str]) -> bool:
@@ -988,15 +1256,25 @@ def run_command(
         stderr = exc.stderr or f"timeout after {timeout}s"
         base.with_suffix(".stdout.log").write_text(stdout, encoding="utf-8")
         base.with_suffix(".stderr.log").write_text(stderr, encoding="utf-8")
+        artifacts = collect_declared_artifacts(rendered_obj)
         event = {
             "event": "command_finish",
             "group": group,
             "cycle": cycle,
             "command_id": command_id,
             "returncode": 124,
-            "artifacts": collect_declared_artifacts(rendered_obj),
+            "artifacts": artifacts,
         }
         append_event(run_dir, event)
+        append_artifact_records(
+            run_dir,
+            task_id=context["task_id"],
+            run_id=context["run_id"],
+            group=group,
+            cycle=cycle,
+            command_id=command_id,
+            artifacts=artifacts,
+        )
         update_run_summary(run_dir, "running")
         observability.log({**event, "stdout": stdout, "stderr": stderr})
         return 124
@@ -1004,6 +1282,7 @@ def run_command(
     stderr = result.stderr or ""
     base.with_suffix(".stdout.log").write_text(stdout, encoding="utf-8")
     base.with_suffix(".stderr.log").write_text(stderr, encoding="utf-8")
+    artifacts = collect_declared_artifacts(rendered_obj)
     event = {
         "event": "command_finish",
         "group": group,
@@ -1013,11 +1292,20 @@ def run_command(
         "duration_seconds": round(time.time() - started, 3),
         "stdout_path": str(base.with_suffix(".stdout.log").relative_to(run_dir)),
         "stderr_path": str(base.with_suffix(".stderr.log").relative_to(run_dir)),
-        "artifacts": collect_declared_artifacts(rendered_obj),
+        "artifacts": artifacts,
         "stdout": stdout[-20000:],
         "stderr": stderr[-20000:],
     }
     append_event(run_dir, {key: value for key, value in event.items() if key not in {"stdout", "stderr"}})
+    append_artifact_records(
+        run_dir,
+        task_id=context["task_id"],
+        run_id=context["run_id"],
+        group=group,
+        cycle=cycle,
+        command_id=command_id,
+        artifacts=artifacts,
+    )
     update_run_summary(run_dir, "running")
     observability.log(event)
     return int(result.returncode)
@@ -1061,7 +1349,10 @@ def cmd_task_run(args: argparse.Namespace) -> None:
     else:
         run_dir.mkdir(parents=True, exist_ok=True)
         (run_dir / "loop.snapshot.yaml").write_text(spec_path.read_text(encoding="utf-8"), encoding="utf-8")
+        for stream in ("observations.jsonl", "artifacts.jsonl"):
+            (run_dir / stream).touch(exist_ok=True)
         observability.start({"task_id": task_id, "run_id": run_id, "metric": manifest.get("metric")})
+        write_run_metadata(run_dir, task_id=task_id, run_id=run_id, status="running", manifest=manifest, spec=spec, wandb_url=observability.url)
         write_run_summary(run_dir, task_id, "running", observability.url)
         event = {"event": "run_start", "task_id": task_id, "run_id": run_id, "wandb_url": observability.url}
         append_event(run_dir, event)
@@ -1105,6 +1396,8 @@ def cmd_task_run(args: argparse.Namespace) -> None:
                 event["message"] = str(exc)
             append_event(run_dir, event)
             observability.log(event)
+            sync_observation_from_summary(run_dir, task_id, run_id)
+            write_run_metadata(run_dir, task_id=task_id, run_id=run_id, status="failed", manifest=manifest, spec=spec, wandb_url=observability.url)
             update_run_summary(run_dir, "failed", observability.url)
             observability.finish("failed")
         raise
@@ -1113,6 +1406,8 @@ def cmd_task_run(args: argparse.Namespace) -> None:
             event = {"event": "run_finish", "task_id": task_id, "run_id": run_id}
             append_event(run_dir, event)
             observability.log(event)
+            sync_observation_from_summary(run_dir, task_id, run_id)
+            write_run_metadata(run_dir, task_id=task_id, run_id=run_id, status="completed", manifest=manifest, spec=spec, wandb_url=observability.url)
             update_run_summary(run_dir, "completed", observability.url)
             observability.finish("completed")
     finally:
@@ -1123,11 +1418,212 @@ def cmd_task_run(args: argparse.Namespace) -> None:
         print(f"wandb: {observability.url}")
 
 
+def infer_run_status(run_dir: Path) -> str:
+    metadata = read_json_file(run_dir / "run.json")
+    if isinstance(metadata.get("status"), str):
+        return str(metadata["status"])
+    status = "running"
+    for event in read_events(run_dir):
+        if event.get("event") == "run_failed":
+            status = "failed"
+        elif event.get("event") == "run_finish":
+            status = "completed"
+    return status
+
+
+def rebuild_artifacts_from_events(run_dir: Path, task_id: str, run_id: str) -> None:
+    rows: list[dict[str, Any]] = []
+    for event in read_events(run_dir):
+        if event.get("event") != "command_finish":
+            continue
+        artifacts = event.get("artifacts")
+        if not isinstance(artifacts, list):
+            continue
+        for idx, artifact in enumerate(artifacts):
+            if not isinstance(artifact, dict):
+                continue
+            matches = artifact.get("matches")
+            if not isinstance(matches, list):
+                matches = []
+            cycle = int(event.get("cycle") or 0)
+            group = str(event.get("group") or "unknown")
+            command_id = str(event.get("command_id") or "unknown")
+            rows.append(
+                {
+                    "schema_version": ARTIFACT_SCHEMA,
+                    "artifact_id": f"cycle-{cycle}-{group}-{command_id}-{idx}",
+                    "task_id": task_id,
+                    "run_id": run_id,
+                    "time": str(event.get("time") or now_iso()),
+                    "cycle": cycle,
+                    "group": group,
+                    "command_id": command_id,
+                    "artifact_type": "declared_command_artifact",
+                    "pattern": artifact.get("pattern"),
+                    "present": bool(artifact.get("present")),
+                    "matches": [rel_to_run(run_dir, str(item)) for item in matches],
+                }
+            )
+    write_jsonl(run_dir / "artifacts.jsonl", rows)
+
+
+def cmd_task_summarize(args: argparse.Namespace) -> None:
+    task_id = safe_id(args.task_id, "task_id")
+    run_id = safe_id(args.run_id, "run_id")
+    run_dir = task_run_dir(task_id, run_id)
+    if not run_dir.exists():
+        raise SystemExit(f"Run not found: {rel_display(run_dir)}")
+    manifest = load_yaml_file(task_manifest_path(task_id))
+    spec = load_yaml_file(task_loop_path(task_id))
+    metadata = read_json_file(run_dir / "run.json")
+    wandb_url = str(metadata.get("wandb_url") or "") or None
+    if not (run_dir / "run-summary.md").exists():
+        write_run_summary(run_dir, task_id, infer_run_status(run_dir), wandb_url)
+    rebuild_artifacts_from_events(run_dir, task_id, run_id)
+    status = infer_run_status(run_dir)
+    update_run_summary(run_dir, status, wandb_url)
+    sync_observation_from_summary(run_dir, task_id, run_id)
+    write_run_metadata(run_dir, task_id=task_id, run_id=run_id, status=status, manifest=manifest, spec=spec, wandb_url=wandb_url)
+    issues = validate_run_files(task_id, run_id)
+    if issues:
+        for issue in issues:
+            print(f"- {issue}")
+        raise SystemExit(1)
+    print(f"summarized: {rel_display(run_dir)}")
+
+
 def cmd_agent_prompt(args: argparse.Namespace) -> None:
     print(ai_scientist_prompt(args.task_id, args.run_id, args.cycle))
 
 
+def task_memory_template(task_id: str, filename: str) -> dict[str, Any]:
+    schema, field = TASK_MEMORY_SCHEMAS[filename]
+    return {"schema_version": schema, "task_id": task_id, field: []}
+
+
+def write_yaml_file(path: Path, data: dict[str, Any]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(require_yaml().safe_dump(data, sort_keys=False), encoding="utf-8")
+
+
+def load_task_memory_file(task_id: str, filename: str) -> dict[str, Any]:
+    path = task_memory_dir(task_id) / filename
+    if not path.exists():
+        return task_memory_template(task_id, filename)
+    return load_yaml_file(path)
+
+
+def write_task_memory_file(task_id: str, filename: str, data: dict[str, Any]) -> None:
+    write_yaml_file(task_memory_dir(task_id) / filename, data)
+
+
+def ensure_task_memory_files(task_id: str) -> None:
+    for filename in TASK_MEMORY_SCHEMAS:
+        path = task_memory_dir(task_id) / filename
+        if not path.exists():
+            write_task_memory_file(task_id, filename, task_memory_template(task_id, filename))
+
+
+def collection_field(filename: str) -> str:
+    return TASK_MEMORY_SCHEMAS[filename][1]
+
+
+def existing_ids(items: list[Any], key: str) -> set[str]:
+    return {str(item.get(key)) for item in items if isinstance(item, dict) and item.get(key)}
+
+
+def upsert_list_item(items: list[Any], key: str, item: dict[str, Any]) -> list[Any]:
+    return [entry for entry in items if not (isinstance(entry, dict) and entry.get(key) == item.get(key))] + [item]
+
+
+def promote_observation(task_id: str, observation: dict[str, Any], status: str) -> str:
+    claim = str(observation.get("claim") or "").strip()
+    decision = str(observation.get("decision") or "").lower()
+    target = "negative-results.yaml" if any(token in decision for token in ("negative", "reject", "fail")) else "insights.yaml"
+    field = collection_field(target)
+    data = load_task_memory_file(task_id, target)
+    items = data.get(field, [])
+    if not isinstance(items, list):
+        items = []
+    run_id = str(observation.get("run_id") or "unknown")
+    item_id = f"{field.rstrip('s')}-{run_id}-{len(existing_ids(items, 'id')) + 1}"
+    source_id = str(observation.get("observation_id") or item_id)
+    if any(isinstance(item, dict) and item.get("source_observation_id") == source_id for item in items):
+        return target
+    item = {
+        "id": item_id,
+        "status": status,
+        "created_at": today(),
+        "source_run": run_id,
+        "source_observation_id": source_id,
+        "claim": claim,
+        "evidence": observation.get("evidence", []),
+        "confidence": observation.get("confidence", "unrated"),
+        "metric_impact": observation.get("metric_impact", "not recorded"),
+        "next_action": observation.get("next_action", ""),
+    }
+    data[field] = upsert_list_item(items, "id", item)
+    write_task_memory_file(task_id, target, data)
+    return target
+
+
+def update_run_memory(task_id: str, run_id: str, status: str) -> None:
+    run_dir = task_run_dir(task_id, run_id)
+    metadata = read_json_file(run_dir / "run.json")
+    observations = read_jsonl(run_dir / "observations.jsonl")
+    primary = observations[-1] if observations else {}
+    data = load_task_memory_file(task_id, "runs.yaml")
+    runs = data.get("runs", [])
+    if not isinstance(runs, list):
+        runs = []
+    data["runs"] = upsert_list_item(
+        runs,
+        "run_id",
+        {
+            "run_id": run_id,
+            "memory_status": status,
+            "run_status": metadata.get("status", infer_run_status(run_dir)),
+            "started_at": metadata.get("started_at"),
+            "finished_at": metadata.get("finished_at"),
+            "wandb_url": metadata.get("wandb_url"),
+            "summary": primary.get("claim", ""),
+            "next_action": primary.get("next_action", ""),
+            "updated_at": today(),
+        },
+    )
+    write_task_memory_file(task_id, "runs.yaml", data)
+
+
+def cmd_memory_promote(argv: list[str]) -> None:
+    parser = argparse.ArgumentParser(prog="ai-lab memory promote", description="Promote a run observation into tracked task memory.")
+    parser.add_argument("task_id")
+    parser.add_argument("--run-id", required=True)
+    parser.add_argument("--status", choices=["draft", "active"], default="draft")
+    args = parser.parse_args(argv)
+    task_id = safe_id(args.task_id, "task_id")
+    run_id = safe_id(args.run_id, "run_id")
+    run_dir = task_run_dir(task_id, run_id)
+    if not run_dir.exists():
+        raise SystemExit(f"Run not found: {rel_display(run_dir)}")
+    ensure_task_memory_files(task_id)
+    cmd_task_summarize(argparse.Namespace(task_id=task_id, run_id=run_id))
+    observations = read_jsonl(run_dir / "observations.jsonl")
+    if not observations:
+        raise SystemExit(f"No promotable observations found in {rel_display(run_dir / 'observations.jsonl')}")
+    touched: set[str] = set()
+    for observation in observations:
+        if str(observation.get("schema_version")) == OBSERVATION_SCHEMA and str(observation.get("claim") or "").strip():
+            touched.add(promote_observation(task_id, observation, str(args.status)))
+    update_run_memory(task_id, run_id, str(args.status))
+    print("promoted:")
+    for filename in sorted(touched | {"runs.yaml"}):
+        print(f"- {rel_display(task_memory_dir(task_id) / filename)}")
+
+
 def cmd_memory(args: argparse.Namespace) -> None:
+    if args.memory_args and args.memory_args[0] == "promote":
+        cmd_memory_promote(args.memory_args[1:])
+        return
     target = ROOT / "bin" / "agent-memory"
     os.execv(str(target), [str(target), *args.memory_args])
 
@@ -1181,6 +1677,57 @@ uv run python bin/ai-lab docs audit
 """
 
 
+def task_memory_items(task_id: str, filename: str) -> list[dict[str, Any]]:
+    data = load_task_memory_file(task_id, filename)
+    field = collection_field(filename)
+    items = data.get(field, [])
+    if not isinstance(items, list):
+        return []
+    return [item for item in items if isinstance(item, dict)]
+
+
+def render_memory_table(items: list[dict[str, Any]], columns: list[tuple[str, str]], empty: str) -> str:
+    if not items:
+        return empty
+    header = "| " + " | ".join(label for label, _ in columns) + " |"
+    sep = "| " + " | ".join("---" for _ in columns) + " |"
+    rows = [header, sep]
+    for item in items[:10]:
+        values = []
+        for _, key in columns:
+            value = item.get(key, "")
+            if isinstance(value, list):
+                value = ", ".join(str(entry) for entry in value)
+            values.append(str(value or "-").replace("\n", " "))
+        rows.append("| " + " | ".join(values) + " |")
+    return "\n".join(rows)
+
+
+def render_task_memory_doc(task_id: str) -> str:
+    insights = task_memory_items(task_id, "insights.yaml")
+    negative = task_memory_items(task_id, "negative-results.yaml")
+    candidates = task_memory_items(task_id, "candidates.yaml")
+    runs = list(reversed(task_memory_items(task_id, "runs.yaml")))
+    return f"""## Curated Memory
+
+### Insights
+
+{render_memory_table(insights, [("Status", "status"), ("Claim", "claim"), ("Evidence", "source_run"), ("Next Action", "next_action")], "No promoted insights yet.")}
+
+### Negative Results
+
+{render_memory_table(negative, [("Status", "status"), ("Claim", "claim"), ("Evidence", "source_run"), ("Next Action", "next_action")], "No promoted negative results yet.")}
+
+### Candidates
+
+{render_memory_table(candidates, [("Status", "status"), ("Candidate", "candidate_id"), ("Summary", "summary"), ("Evidence", "source_run")], "No promoted candidates yet.")}
+
+### Recent Curated Runs
+
+{render_memory_table(runs, [("Run", "run_id"), ("Memory", "memory_status"), ("Run Status", "run_status"), ("Summary", "summary"), ("Next Action", "next_action")], "No curated runs yet.")}
+"""
+
+
 def render_task_doc(task_id: str) -> str:
     manifest = load_yaml_file(task_manifest_path(task_id))
     loop = load_yaml_file(task_loop_path(task_id))
@@ -1230,6 +1777,8 @@ No experiment code, assets, reports, plots, results, or run logs are tracked as 
 
 """ + "\n".join(f"- `{item}`" for item in task_dirs(task_id)) + f"""
 
+{render_task_memory_doc(task_id)}
+
 ## Run
 
 ```bash
@@ -1252,6 +1801,7 @@ This task workspace tracks the task contract and the AI scientist operating stru
 - `task.yaml`: task contract, metric, constraints, source refs, and curated asset declarations.
 - `loop.yaml`: runnable AI scientist loop.
 - `scientist.md`: agent-facing instructions.
+- `memory/`: tracked curated run memory for future runs and generated docs.
 - `bin/`: maintained task-specific helper scripts.
 - `code/`: ignored local experiment code.
 - `results/`: ignored local experiment results.
@@ -1382,6 +1932,10 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--max-cycles", type=int)
     p.add_argument("--no-wandb", action="store_true", help="test-only opt-out for W&B observability")
     p.set_defaults(func=cmd_task_run)
+    p = task_sub.add_parser("summarize", help="regenerate structured files and summary for a run")
+    p.add_argument("task_id")
+    p.add_argument("--run-id", required=True)
+    p.set_defaults(func=cmd_task_summarize)
 
     agent = sub.add_parser("agent", help="inspect agent prompts")
     agent_sub = agent.add_subparsers(dest="cmd", required=True)

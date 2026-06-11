@@ -7,6 +7,7 @@ This task workspace tracks the task contract and the AI scientist operating stru
 - `task.yaml`: task contract, metric, constraints, source refs, and curated asset declarations.
 - `loop.yaml`: runnable AI scientist loop.
 - `scientist.md`: agent-facing instructions.
+- `memory/`: tracked curated run memory for future runs and generated docs.
 - `bin/`: maintained task-specific helper scripts.
 - `code/`: ignored local experiment code.
 - `results/`: ignored local experiment results.

@@ -43,4 +43,17 @@ uv run python bin/ai-lab docs audit
 tasks/btc_benchmark/bin/run-btc-extended
 ```
 
-5. Review `tasks/btc_benchmark/runs/<run_id>/run-summary.md`, `events.jsonl`, `launcher.log`, and W&B.
+5. Summarize and review the run:
+
+```bash
+uv run python bin/ai-lab task summarize btc_benchmark --run-id <run_id>
+```
+
+Review `tasks/btc_benchmark/runs/<run_id>/run-summary.md`, `run.json`, `events.jsonl`, `observations.jsonl`, `artifacts.jsonl`, `launcher.log`, and W&B.
+
+6. Promote durable findings only after review:
+
+```bash
+uv run python bin/ai-lab memory promote btc_benchmark --run-id <run_id>
+uv run python bin/ai-lab docs sync
+```

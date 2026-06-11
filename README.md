@@ -39,6 +39,8 @@ uv run python bin/ai-lab task status btc_benchmark
 uv run python bin/ai-lab task validate --all
 uv run python bin/ai-lab task run btc_benchmark --once --dry-run
 uv run python bin/ai-lab task run btc_benchmark --continuous
+uv run python bin/ai-lab task summarize btc_benchmark --run-id <run_id>
+uv run python bin/ai-lab memory promote btc_benchmark --run-id <run_id>
 uv run python bin/ai-lab source status btc_benchmark
 uv run python bin/ai-lab memory search btc
 uv run python bin/ai-lab docs sync
