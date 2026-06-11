@@ -39,6 +39,34 @@
   color: var(--md-code-hl-string-color);
 }
 
+.ai-lab-vega-fallback {
+  display: block;
+  height: auto;
+  max-width: 100%;
+}
+
+.ai-lab-vega-fallback text {
+  fill: var(--md-default-fg-color);
+  font-size: 12px;
+}
+
+.ai-lab-vega-fallback line {
+  stroke: var(--md-default-fg-color--lighter);
+}
+
+.ai-lab-vega-fallback polyline {
+  fill: none;
+  stroke: var(--ai-lab-accent);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 3;
+}
+
+.ai-lab-vega-fallback circle,
+.ai-lab-vega-fallback rect {
+  fill: var(--ai-lab-accent);
+}
+
 .ai-lab-run-detail {
   border: 1px solid var(--md-default-fg-color--lightest);
   border-radius: 6px;

@@ -17,10 +17,18 @@
 
       try {
         var spec = JSON.parse(node.textContent || "{}");
-        vegaEmbed(element, spec, { actions: false, renderer: "svg" });
-        node.dataset.rendered = "true";
+        var fallback = element.innerHTML;
+        vegaEmbed(element, spec, { actions: false, renderer: "svg" })
+          .then(function () {
+            node.dataset.rendered = "true";
+            element.classList.add("ai-lab-vega-rendered");
+          })
+          .catch(function (error) {
+            element.innerHTML = fallback;
+            element.classList.add("ai-lab-vega-error");
+            console.error("AI Lab Vega-Lite render failed", error);
+          });
       } catch (error) {
-        element.textContent = "Chart failed to render.";
         element.classList.add("ai-lab-vega-error");
         console.error("AI Lab Vega-Lite render failed", error);
       }

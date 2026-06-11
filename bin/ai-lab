@@ -1883,9 +1883,70 @@ def json_for_script(data: dict[str, Any]) -> str:
     return json.dumps(data, sort_keys=True).replace("</", "<\\/")
 
 
-def vega_container(chart_id: str, spec: dict[str, Any]) -> str:
+def static_svg_polyline(rows: list[dict[str, Any]], value_field: str, *, label: str, width: int = 720, height: int = 210) -> str:
+    values = [float(row[value_field]) if value_field in row and row[value_field] is not None else None for row in rows]
+    plot_left, plot_top, plot_right, plot_bottom = 46, 22, width - 18, height - 34
+    present = [value for value in values if value is not None]
+    escaped_label = html.escape(label)
+    if not present:
+        return f'<svg class="ai-lab-vega-fallback" viewBox="0 0 {width} {height}" role="img" aria-label="{escaped_label}"><text x="20" y="40">No numeric data yet.</text></svg>'
+    min_value, max_value = min(present), max(present)
+    if min_value == max_value:
+        min_value -= 1.0
+        max_value += 1.0
+    x_step = (plot_right - plot_left) / max(1, len(values) - 1)
+
+    def point(index: int, value: float) -> tuple[float, float]:
+        x = plot_left + index * x_step
+        y = plot_bottom - ((value - min_value) / (max_value - min_value)) * (plot_bottom - plot_top)
+        return x, y
+
+    points = []
+    circles = []
+    for index, value in enumerate(values):
+        if value is None:
+            continue
+        x, y = point(index, value)
+        title = html.escape(str(rows[index].get("run_id") or value))
+        points.append(f"{x:.1f},{y:.1f}")
+        circles.append(f'<circle cx="{x:.1f}" cy="{y:.1f}" r="4"><title>{title}: {value:.4g}</title></circle>')
+    polyline = f'<polyline points="{" ".join(points)}" />' if len(points) > 1 else ""
+    return f"""<svg class="ai-lab-vega-fallback" viewBox="0 0 {width} {height}" role="img" aria-label="{escaped_label}">
+  <text x="{plot_left}" y="15">{escaped_label}</text>
+  <line x1="{plot_left}" y1="{plot_bottom}" x2="{plot_right}" y2="{plot_bottom}" />
+  <line x1="{plot_left}" y1="{plot_top}" x2="{plot_left}" y2="{plot_bottom}" />
+  <text x="2" y="{plot_top + 4}">{max_value:.3g}</text>
+  <text x="2" y="{plot_bottom}">{min_value:.3g}</text>
+  {polyline}
+  {''.join(circles)}
+</svg>"""
+
+
+def static_svg_bars(rows: list[dict[str, Any]], value_field: str, *, label: str, width: int = 720, height: int = 190) -> str:
+    values = [float(row.get(value_field) or 0.0) for row in rows]
+    escaped_label = html.escape(label)
+    if not values:
+        return f'<svg class="ai-lab-vega-fallback" viewBox="0 0 {width} {height}" role="img" aria-label="{escaped_label}"><text x="20" y="40">No cycle data yet.</text></svg>'
+    plot_left, plot_right, plot_bottom, plot_top = 38, width - 14, height - 30, 22
+    max_value = max(values) or 1.0
+    gap = 2
+    bar_width = max(2.0, (plot_right - plot_left - gap * (len(values) - 1)) / len(values))
+    bars = []
+    for index, value in enumerate(values):
+        bar_height = (value / max_value) * (plot_bottom - plot_top)
+        x = plot_left + index * (bar_width + gap)
+        y = plot_bottom - bar_height
+        bars.append(f'<rect x="{x:.1f}" y="{y:.1f}" width="{bar_width:.1f}" height="{bar_height:.1f}"><title>cycle {index + 1}: {value:.1f} min</title></rect>')
+    return f"""<svg class="ai-lab-vega-fallback" viewBox="0 0 {width} {height}" role="img" aria-label="{escaped_label}">
+  <text x="{plot_left}" y="15">{escaped_label}</text>
+  <line x1="{plot_left}" y1="{plot_bottom}" x2="{plot_right}" y2="{plot_bottom}" />
+  {''.join(bars)}
+</svg>"""
+
+
+def vega_container(chart_id: str, spec: dict[str, Any], fallback: str) -> str:
     escaped_id = html.escape(chart_id)
-    return f"""<div class="ai-lab-vega" id="{escaped_id}"></div>
+    return f"""<div class="ai-lab-vega" id="{escaped_id}">{fallback}</div>
 <script type="application/json" class="ai-lab-vega-spec" data-target="{escaped_id}">
 {json_for_script(spec)}
 </script>"""
@@ -1914,11 +1975,10 @@ def vega_line_spec(title: str, rows: list[dict[str, Any]], y_field: str, y_title
             "mark": {"type": "line", "point": True, "tooltip": True},
             "encoding": {
                 "x": {
-                    "field": "run_label",
-                    "type": "ordinal",
-                    "sort": {"field": "run_order", "order": "ascending"},
-                    "title": "Run ID",
-                    "axis": {"labelAngle": -35},
+                    "field": "run_order",
+                    "type": "quantitative",
+                    "title": "Run order",
+                    "axis": {"format": "d", "tickMinStep": 1},
                 },
                 "y": {"field": y_field, "type": "quantitative", "title": y_title},
                 "color": {"value": "#14765c"},
@@ -1928,7 +1988,6 @@ def vega_line_spec(title: str, rows: list[dict[str, Any]], y_field: str, y_title
                     {"field": y_field, "type": "quantitative", "title": y_title},
                     {"field": "started_at", "type": "nominal", "title": "Started"},
                 ],
-                "href": {"field": "href", "type": "nominal"},
             },
         }
     )
@@ -1941,7 +2000,7 @@ def vega_bar_spec(title: str, rows: list[dict[str, Any]], y_field: str, y_title:
         {
             "mark": {"type": "bar", "tooltip": True},
             "encoding": {
-                "x": {"field": "cycle", "type": "ordinal", "title": "Cycle", "axis": {"labelAngle": 0}},
+                "x": {"field": "cycle", "type": "quantitative", "title": "Cycle", "axis": {"format": "d", "tickMinStep": 1}},
                 "y": {"field": y_field, "type": "quantitative", "title": y_title},
                 "color": {"value": "#14765c"},
                 "tooltip": [
@@ -2013,6 +2072,7 @@ def render_run_explorer(task_id: str) -> str:
         cycle_chart = vega_container(
             f"{run['anchor']}-cycle-duration",
             vega_bar_spec("Agent cycle duration", cycle_rows, "duration_minutes", "Minutes"),
+            static_svg_bars(cycle_rows, "duration_minutes", label="Agent cycle duration"),
         )
         details = f"""<details class="ai-lab-run-detail" id="{html.escape(str(run['anchor']))}">
 <summary><span>{html.escape(str(run['run_id']))}</span><small>{html.escape(str(run['status']))} · {int(run.get('agent_cycles') or 0)} cycles · {float(run.get('duration_seconds') or 0) / 60:.1f} min</small></summary>
@@ -2045,11 +2105,11 @@ def render_run_explorer(task_id: str) -> str:
 
 ### Progress
 
-{vega_container(f"{task_id}-candidate-net", vega_line_spec("Promoted candidate net by run", [row for row in progress_rows if "candidate_net" in row], "candidate_net", "Net"))}
+{vega_container(f"{task_id}-candidate-net", vega_line_spec("Promoted candidate net by run", [row for row in progress_rows if "candidate_net" in row], "candidate_net", "Net"), static_svg_polyline([row for row in progress_rows if "candidate_net" in row], "candidate_net", label="Promoted candidate net by run"))}
 
-{vega_container(f"{task_id}-agent-cycles", vega_line_spec("Completed agent cycles by run", progress_rows, "agent_cycles", "Cycles"))}
+{vega_container(f"{task_id}-agent-cycles", vega_line_spec("Completed agent cycles by run", progress_rows, "agent_cycles", "Cycles"), static_svg_polyline(progress_rows, "agent_cycles", label="Completed agent cycles by run"))}
 
-{vega_container(f"{task_id}-memory-entries", vega_line_spec("Curated memory entries by run", progress_rows, "memory_entries", "Entries"))}
+{vega_container(f"{task_id}-memory-entries", vega_line_spec("Curated memory entries by run", progress_rows, "memory_entries", "Entries"), static_svg_polyline(progress_rows, "memory_entries", label="Curated memory entries by run"))}
 
 ### Run Index
 
