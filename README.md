@@ -54,7 +54,7 @@ uv run python bin/ai-lab cell run-all --continuous --dry-run
 bin/ai-lab work-unit status <cell_id> <work_unit_id>
 bin/ai-lab source status btc_benchmark
 bin/ai-lab docs audit
-bin/run-btc-overnight
+bin/run-btc-extended
 bin/ai-lab memory index
 bin/ai-lab memory search btc
 bin/ai-lab memory audit
@@ -98,9 +98,9 @@ Deployment uses `.github/workflows/pages.yml`. Push to `main`, then enable GitHu
 
 To add or update public documentation, edit the relevant system guide, task page, scheme page, evaluation cell brief, work-unit brief, or meta page under `docs/`. Exact LLM prompts live under evaluation-cell run directories, not under `docs/`.
 
-## Overnight And Runtime Automation
+## Extended Run Automation
 
-For overnight-scale evaluation work, start from `research/templates/overnight-goal.md` and keep run-specific details in the cell `runs/` directory. Authorized long runs may install missing Python dependencies through local `uv` workflows and may use allowlisted runtime profiles such as `btc-benchmark-python`.
+For extended evaluation work, start from `research/templates/extended-run-goal.md` and keep run-specific details in the cell `runs/` directory. Authorized long runs may install missing Python dependencies through local `uv` workflows and may use allowlisted runtime profiles such as `btc-benchmark-python`.
 
 For rigid unattended operation, every active evaluation cell should define `run-spec.yaml`. The run spec is the machine-readable contract for source gates, fixed preflight commands, fixed cycle commands, synthesis commands, timeouts, artifacts, and exit conditions. Validate and dry-run specs before running them:
 
@@ -109,13 +109,13 @@ uv run python bin/ai-lab cell run-spec validate --all
 uv run python bin/ai-lab cell run-all --dry-run --once
 ```
 
-The BTC benchmark AutoResearch overnight run has a fixed launcher bounded by a 180-minute run spec with up to five synthesis cycles:
+The BTC benchmark AutoResearch extended run has a fixed launcher bounded by a 180-minute run spec with up to five synthesis cycles:
 
 ```sh
-bin/run-btc-overnight
+bin/run-btc-extended
 ```
 
-The full runbook is `docs/evaluations/btc-benchmark-overnight-runbook.md`.
+The full runbook is `docs/evaluations/btc-benchmark-extended-runbook.md`.
 
 Runtime profiles are checked or installed with:
 

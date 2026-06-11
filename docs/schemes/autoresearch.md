@@ -65,7 +65,7 @@ An AutoResearch cell should make these fields easy to inspect:
 
 ## Active BTC Cell
 
-- [BTC Benchmark AutoResearch Overnight v1](../evaluations/btc-benchmark--autoresearch--overnight-v1.md)
+- [BTC Benchmark AutoResearch Extended](../evaluations/btc-benchmark--autoresearch--extended.md)
 
 ## Approval Boundaries
 

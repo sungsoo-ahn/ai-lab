@@ -1,0 +1,11 @@
+assets:
+  - asset_id: btc_benchmark_checkout
+    source_id: btc_benchmark
+    path: /Users/sungs/ai-lab/sources/checkouts/btc_benchmark
+    role: frozen_referee_checkout
+  - asset_id: extended_launcher
+    path: /Users/sungs/ai-lab/bin/run-btc-extended
+    role: autoresearch_three_hour_launcher
+  - asset_id: readiness_helper
+    path: /Users/sungs/ai-lab/bin/btc-benchmark-readiness
+    role: data_load_and_baseline_reproduction_gate

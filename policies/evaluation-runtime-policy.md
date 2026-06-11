@@ -6,9 +6,9 @@ This policy covers runtime support packages that are not Python dependencies but
 
 Runtime changes follow `policies/update-policy.md`. Do not silently install OS packages during ordinary interactive work.
 
-## Overnight Runtime Exception
+## Long-Running Runtime Exception
 
-When the user explicitly authorizes an overnight or long-running evaluation-cell run with automatic dependency setup, agents may install allowlisted runtime support packages without pausing, subject to all of these limits:
+When the user explicitly authorizes an long-running evaluation-cell run with automatic dependency setup, agents may install allowlisted runtime support packages without pausing, subject to all of these limits:
 
 - the package must be listed in `Brewfile`;
 - the package must be required by a concrete evaluation cell or work unit;
@@ -27,7 +27,7 @@ Check the runtime state:
 bin/ai-lab runtime check btc-benchmark-python --repo sources/checkouts/btc_benchmark
 ```
 
-Ensure the runtime state inside an approved overnight run:
+Ensure the runtime state inside an approved extended run:
 
 ```sh
 bin/ai-lab runtime ensure btc-benchmark-python --repo sources/checkouts/btc_benchmark

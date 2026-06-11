@@ -67,7 +67,7 @@ Shared state should be concise. If it grows into a transcript dump, the scheme b
 
 ## Active BTC Cell
 
-- [BTC Benchmark AutoScientist Overnight v1](../evaluations/btc-benchmark--autoscientist--overnight-v1.md)
+- [BTC Benchmark AutoScientist Extended](../evaluations/btc-benchmark--autoscientist--extended.md)
 
 ## Approval Boundaries
 

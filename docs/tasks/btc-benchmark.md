@@ -55,13 +55,13 @@ If a cell lacks these artifacts, treat its result as incomplete even if a comman
 
 ## Evaluation Cells
 
-- [BTC Benchmark AutoResearch Overnight v1](../evaluations/btc-benchmark--autoresearch--overnight-v1.md)
-- [BTC Benchmark AutoScientist Overnight v1](../evaluations/btc-benchmark--autoscientist--overnight-v1.md)
+- [BTC Benchmark AutoResearch Extended](../evaluations/btc-benchmark--autoresearch--extended.md)
+- [BTC Benchmark AutoScientist Extended](../evaluations/btc-benchmark--autoscientist--extended.md)
 - [BTC Benchmark AutoResearch Smoke](../evaluations/btc-benchmark--autoresearch--smoke.md)
 
 ## Latest Evidence
 
-The latest AutoResearch overnight run, `btc-autoresearch-cycle2-20260610T223228Z-autoresearch`, completed on 2026-06-10 UTC. It ran five synthesis cycles and promoted `cycle4_funding3bp_exit6_min24` as the reviewed current-best development asset.
+The latest AutoResearch extended run, `btc-autoresearch-cycle2-20260610T223228Z-autoresearch`, completed on 2026-06-10 UTC. It ran five synthesis cycles and promoted `cycle4_funding3bp_exit6_min24` as the reviewed current-best development asset.
 
 The default-gated report scored net `2.8828`, delta versus always-long `+1.3823`, max drawdown `-0.3364`, turnover `257.0`, funding-aware net `2.3155`, next-open net `2.8781`, random percentile `1.0`, and passed all 14 fold gates. Cycle 5 verified exact fold-position parity between the saved participant-style asset and the Cycle 4 run-local implementation.
 

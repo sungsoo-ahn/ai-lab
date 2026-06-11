@@ -61,9 +61,9 @@ nav:
       - AutoScientist: schemes/autoscientist.md
   - Evaluation Matrix:
       - Overview: evaluations/index.md
-      - BTC Benchmark Overnight Runbook: evaluations/btc-benchmark-overnight-runbook.md
-      - BTC Benchmark AutoResearch Overnight v1: evaluations/btc-benchmark--autoresearch--overnight-v1.md
-      - BTC Benchmark AutoScientist Overnight v1: evaluations/btc-benchmark--autoscientist--overnight-v1.md
+      - BTC Benchmark Extended Runbook: evaluations/btc-benchmark-extended-runbook.md
+      - BTC Benchmark AutoResearch Extended: evaluations/btc-benchmark--autoresearch--extended.md
+      - BTC Benchmark AutoScientist Extended: evaluations/btc-benchmark--autoscientist--extended.md
       - BTC Benchmark AutoResearch Smoke: evaluations/btc-benchmark--autoresearch--smoke.md
   - Meta Scientist:
       - AI Lab Meta v1: meta/ai-lab-meta-v1.md

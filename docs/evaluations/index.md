@@ -6,8 +6,8 @@ Evaluation cells bind one task to one scientist scheme. The matrix is the main p
 
 | Cell | Task | Scheme | Status | Latest evidence |
 | --- | --- | --- | --- | --- |
-| [BTC Benchmark AutoResearch Overnight v1](btc-benchmark--autoresearch--overnight-v1.md) | BTC Benchmark | AutoResearch | active, cycle 5 synthesized | `btc-autoresearch-cycle2-20260610T223228Z-autoresearch`: participant-style Cycle 4 asset reviewed, parity-checked, and default-gated. |
-| [BTC Benchmark AutoScientist Overnight v1](btc-benchmark--autoscientist--overnight-v1.md) | BTC Benchmark | AutoScientist | active | Ready for direct cell run. |
+| [BTC Benchmark AutoResearch Extended](btc-benchmark--autoresearch--extended.md) | BTC Benchmark | AutoResearch | active, cycle 5 synthesized | `btc-autoresearch-cycle2-20260610T223228Z-autoresearch`: participant-style Cycle 4 asset reviewed, parity-checked, and default-gated. |
+| [BTC Benchmark AutoScientist Extended](btc-benchmark--autoscientist--extended.md) | BTC Benchmark | AutoScientist | active | Ready for direct cell run. |
 | [BTC Benchmark AutoResearch Smoke](btc-benchmark--autoresearch--smoke.md) | BTC Benchmark | AutoResearch | complete | `smoke-20260610` passed. |
 
 ## Latest Matrix Evidence
@@ -20,7 +20,7 @@ The latest AutoResearch run completed five synthesis cycles successfully and is 
 - Funding-aware net `2.3155`, next-open net `2.8781`, random percentile `1.0`; all 14 fold gates passed with cutoff minimum `433`.
 - Cycle 5 verified exact fold-position parity between the saved participant-style asset and the Cycle 4 run-local implementation.
 - Remaining warnings: cost5x remains weaker than passive always-long, returns are concentrated in 2023-2024, and participant-repo packaging is not yet verified.
-- Follow-up proposal: `evaluations/active/btc_benchmark__autoresearch__overnight_v1/proposals/btc_autoresearch_cycle6_participant_repo_packaging.md`.
+- Follow-up proposal: `evaluations/active/btc_benchmark__autoresearch__extended/proposals/btc_autoresearch_cycle6_participant_repo_packaging.md`.
 
 ## What A Cell Should Prove
 

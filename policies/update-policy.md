@@ -4,9 +4,9 @@
 
 No package, runtime, connector, or account configuration mutation should happen without a written proposal first, unless the user explicitly asks for a specific change and the risk is low.
 
-## Overnight Package And Runtime Exception
+## Long-Running Package And Runtime Exception
 
-When the user explicitly authorizes an overnight or long-running evaluation-cell run with automatic dependency setup, agents may install missing cell dependencies without pausing for approval, subject to all of these limits:
+When the user explicitly authorizes an long-running evaluation-cell run with automatic dependency setup, agents may install missing cell dependencies without pausing for approval, subject to all of these limits:
 
 - use cell-local or inherited repository-local `uv` workflows only (`uv sync`, `uv add`, `uv run`, or equivalent local environment setup);
 - keep dependency changes manifest-backed in the relevant `pyproject.toml` and `uv.lock` when the dependency is needed beyond a one-off command;
@@ -16,7 +16,7 @@ When the user explicitly authorizes an overnight or long-running evaluation-cell
 - do not install Node, Docker, browser drivers, kernels, credentials, connector/account integrations, shell startup changes, or unlisted OS packages silently;
 - log installed packages, commands, and verification result in the relevant cell or work-unit report.
 
-This exception applies only to the authorized overnight run scope. It does not authorize connector writes, shell startup changes, account configuration changes, or broad filesystem writes.
+This exception applies only to the authorized extended run scope. It does not authorize connector writes, shell startup changes, account configuration changes, or broad filesystem writes.
 
 ## Proposal Contents
 

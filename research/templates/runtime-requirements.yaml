@@ -7,4 +7,4 @@ runtime_requirements:
     common_python_overlays: []
     verification:
       - "uv run python -c 'import numpy, pandas, scipy; print(\"ok\")'"
-    approval_scope: overnight_or_long_running_cell_run_only
+    approval_scope: long_running_cell_run_only

@@ -32,8 +32,8 @@ Date: 2026-06-10
 
 ## Active Evaluation Cells
 
-- `btc_benchmark__autoresearch__overnight_v1`: ready for a three-hour BTC Benchmark AutoResearch run.
-- `btc_benchmark__autoscientist__overnight_v1`: ready for a three-hour BTC Benchmark AutoScientist run.
+- `btc_benchmark__autoresearch__extended`: ready for a three-hour BTC Benchmark AutoResearch run.
+- `btc_benchmark__autoscientist__extended`: ready for a three-hour BTC Benchmark AutoScientist run.
 
 ## Completed Reference Cells
 
@@ -60,7 +60,7 @@ Date: 2026-06-10
 ## Operational Notes
 
 - Package/runtime changes follow `policies/update-policy.md` and `policies/evaluation-runtime-policy.md`.
-- Long-running cells may use `research/templates/overnight-goal.md`, validated `run-spec.yaml` files, allowlisted runtime profiles, and fixed launchers such as `bin/run-btc-overnight`.
+- Long-running cells may use `research/templates/extended-run-goal.md`, validated `run-spec.yaml` files, allowlisted runtime profiles, and fixed launchers such as `bin/run-btc-extended`.
 - Current allowlisted runtime profile: `btc-benchmark-python`, which checks benchmark Python imports in the source checkout.
 - Connector writes still require explicit approval.
 - Generated indexes can be rebuilt with `bin/ai-lab memory index`.
