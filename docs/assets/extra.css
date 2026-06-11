@@ -29,14 +29,22 @@
   background: var(--md-code-bg-color);
   border: 1px solid var(--md-default-fg-color--lightest);
   border-radius: 6px;
+  box-sizing: border-box;
   margin: 1rem 0;
   max-width: 100%;
   min-height: 230px;
+  overflow-x: auto;
   padding: 0.75rem;
 }
 
 .ai-lab-vega-error {
   color: var(--md-code-hl-string-color);
+}
+
+.ai-lab-vega svg,
+.ai-lab-vega canvas {
+  height: auto;
+  max-width: 100%;
 }
 
 .ai-lab-vega-fallback {
@@ -92,4 +100,13 @@
 
 .ai-lab-run-kpi {
   margin-top: 0.75rem;
+}
+
+.ai-lab-run-fields {
+  margin: 1rem 0;
+}
+
+.ai-lab-run-fields th {
+  white-space: nowrap;
+  width: 9rem;
 }

@@ -1961,7 +1961,7 @@ def vega_base_spec(title: str, data: list[dict[str, Any]], *, height: int = 220)
     return {
         "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
         "title": title,
-        "width": "container",
+        "width": 680,
         "height": height,
         "data": {"values": data},
         "params": [{"name": "zoom", "select": {"type": "interval", "encodings": ["x"], "bind": "scales"}}],
@@ -2112,6 +2112,17 @@ def render_run_explorer(task_id: str) -> str:
             vega_bar_spec("Agent cycle duration", cycle_rows, "duration_minutes", "Minutes"),
             static_svg_bars(cycle_rows, "duration_minutes", label="Agent cycle duration"),
         )
+        detail_rows = [
+            ("Started", run.get("started_at") or "-"),
+            ("Finished", run.get("finished_at") or "-"),
+            ("Commands", run.get("command_count", 0)),
+            ("Artifacts", run.get("artifact_count", 0)),
+            ("Observations", run.get("observation_count", 0)),
+            ("Failure", short_text(run.get("failure") or "-", 160)),
+        ]
+        detail_table = "\n".join(
+            f"<tr><th>{html.escape(str(label))}</th><td>{html.escape(str(value))}</td></tr>" for label, value in detail_rows
+        )
         details = f"""<details class="ai-lab-run-detail" id="{html.escape(str(run['anchor']))}">
 <summary><span>{html.escape(str(run['run_id']))}</span><small>{html.escape(str(run['status']))} · {int(run.get('agent_cycles') or 0)} cycles · {float(run.get('duration_seconds') or 0) / 60:.1f} min</small></summary>
 
@@ -2123,18 +2134,13 @@ def render_run_explorer(task_id: str) -> str:
 
 {cycle_chart}
 
-| Field | Value |
-| --- | --- |
-| Started | {run.get('started_at') or '-'} |
-| Finished | {run.get('finished_at') or '-'} |
-| Commands | {run.get('command_count', 0)} |
-| Artifacts | {run.get('artifact_count', 0)} |
-| Observations | {run.get('observation_count', 0)} |
-| Failure | {short_text(run.get('failure') or '-', 160)} |
+<table class="ai-lab-run-fields"><tbody>
+{detail_table}
+</tbody></table>
 
-**Summary:** {html.escape(short_text(run.get('summary'), 500))}
+<p><strong>Summary:</strong> {html.escape(short_text(run.get('summary'), 500))}</p>
 
-**Next Action:** {html.escape(short_text(run.get('next_action'), 500))}
+<p><strong>Next Action:</strong> {html.escape(short_text(run.get('next_action'), 500))}</p>
 
 </details>"""
         detail_blocks.append(details)

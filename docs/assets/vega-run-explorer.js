@@ -44,4 +44,12 @@
   if (typeof document$ !== "undefined" && document$.subscribe) {
     document$.subscribe(renderVegaSpecs);
   }
+
+  window.addEventListener("load", renderVegaSpecs);
+  window.addEventListener("resize", renderVegaSpecs);
+  document.addEventListener("toggle", function (event) {
+    if (event.target && event.target.matches && event.target.matches(".ai-lab-run-detail")) {
+      renderVegaSpecs();
+    }
+  }, true);
 })();
