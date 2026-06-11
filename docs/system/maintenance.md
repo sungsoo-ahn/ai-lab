@@ -20,3 +20,27 @@ uv run --with-requirements requirements.txt mkdocs build --strict
 - Do not store W&B API keys or connector secrets in repo files.
 - Connector writes, external submissions, Docker, Node, and unlisted OS packages still require explicit approval.
 - Preserve user changes; do not reset the worktree to clean up unrelated files.
+
+## First Run Checklist
+
+1. Confirm the source checkout is present and pinned:
+
+```bash
+uv run python bin/ai-lab source status btc_benchmark
+```
+
+2. Confirm W&B credentials are available outside Git through `wandb login`, netrc, or `WANDB_API_KEY`.
+3. Run the dry run and docs audit:
+
+```bash
+uv run python bin/ai-lab task run btc_benchmark --once --dry-run
+uv run python bin/ai-lab docs audit
+```
+
+4. Launch the task-local runner:
+
+```bash
+tasks/btc_benchmark/bin/run-btc-extended
+```
+
+5. Review `tasks/btc_benchmark/runs/<run_id>/run-summary.md`, `events.jsonl`, `launcher.log`, and W&B.

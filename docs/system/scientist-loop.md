@@ -7,7 +7,8 @@ AI Lab uses one reusable loop:
 3. Execute local commands under the task constraints.
 4. Evaluate the result against the task metric and robustness checks.
 5. Preserve raw evidence locally in ignored task artifact directories.
-6. Update canonical task metadata only when the task contract or operating structure changes.
+6. Update `run-summary.md` with the observation and next action.
+7. Update canonical task metadata only when the task contract or operating structure changes.
 
 The loop is intentionally minimal. There are no scheme comparisons, work-unit manifests, or meta-scientist layers.
 
@@ -23,4 +24,4 @@ Each task should contain:
 
 ## Artifact Policy
 
-Experiment products are useful but noisy. They stay local by default. Promote durable learning by updating task metadata or generated public docs, not by committing local experiment logs.
+Experiment products are useful but noisy. They stay local by default. A run directory should be understandable from `run-summary.md`, `events.jsonl`, command logs, and declared artifacts. Promote durable learning by updating task metadata or generated public docs, not by committing local experiment logs.

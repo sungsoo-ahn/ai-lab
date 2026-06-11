@@ -507,6 +507,23 @@ def append_event(run_dir: Path, event: dict[str, Any]) -> None:
         f.write(json.dumps(event, sort_keys=True) + "\n")
 
 
+def read_events(run_dir: Path) -> list[dict[str, Any]]:
+    events = run_dir / "events.jsonl"
+    if not events.exists():
+        return []
+    rows: list[dict[str, Any]] = []
+    for line in events.read_text(encoding="utf-8").splitlines():
+        if not line.strip():
+            continue
+        try:
+            event = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if isinstance(event, dict):
+            rows.append(event)
+    return rows
+
+
 def untracked_allowed(path: str, patterns: list[str]) -> bool:
     clean = path.rstrip("/")
     for pattern in patterns:
@@ -540,6 +557,8 @@ def check_source_gate(gate: dict[str, Any], *, strict: bool, run_dir: Path | Non
         tracked = run_git(path, "status", "--short", "--untracked-files=no", check=False).stdout.strip()
         if tracked:
             raise SystemExit(f"Source gate failed for {source_id}: tracked files are dirty:\n{tracked}")
+    else:
+        tracked = ""
     patterns = [str(item) for item in gate.get("allow_untracked", []) if isinstance(item, str)]
     full_status = run_git(path, "status", "--short", check=False).stdout.splitlines()
     disallowed = [line[3:] for line in full_status if line.startswith("?? ") and not untracked_allowed(line[3:], patterns)]
@@ -551,6 +570,21 @@ def check_source_gate(gate: dict[str, Any], *, strict: bool, run_dir: Path | Non
         print(message)
         if run_dir is not None:
             append_event(run_dir, {"event": "source_gate_warning", "source_id": source_id, "message": message})
+    if run_dir is not None:
+        append_event(
+            run_dir,
+            {
+                "event": "source_gate_pass",
+                "source_id": source_id,
+                "path": str(path),
+                "head": current or "unknown",
+                "registered_ref": expected,
+                "head_policy": head_policy,
+                "tracked_clean_required": bool(gate.get("tracked_clean", False)),
+                "tracked_dirty": bool(tracked),
+                "allow_untracked": patterns,
+            },
+        )
 
 
 def command_display(command: dict[str, Any], context: dict[str, str]) -> str:
@@ -564,6 +598,19 @@ def command_display(command: dict[str, Any], context: dict[str, str]) -> str:
         arg_text = " ".join(str(item) for item in args) if isinstance(args, list) else ""
         return f"builtin:{rendered['builtin']} {arg_text}".strip()
     return "<invalid command>"
+
+
+def collect_declared_artifacts(command: dict[str, Any]) -> list[dict[str, Any]]:
+    artifact_patterns = command.get("artifacts", [])
+    if not isinstance(artifact_patterns, list):
+        return []
+    artifacts: list[dict[str, Any]] = []
+    for pattern in artifact_patterns:
+        if not isinstance(pattern, str) or not pattern:
+            continue
+        matches = sorted(glob.glob(pattern))
+        artifacts.append({"pattern": pattern, "present": bool(matches), "matches": matches})
+    return artifacts
 
 
 def run_source_status_builtin(args: list[str]) -> tuple[int, str, str]:
@@ -685,6 +732,106 @@ class Observability:
             self.wandb_run.finish(exit_code=0 if status == "completed" else 1)
 
 
+def rel_to_run(run_dir: Path, path: str) -> str:
+    try:
+        return str(Path(path).resolve().relative_to(run_dir.resolve()))
+    except (OSError, ValueError):
+        return path
+
+
+def event_key(event: dict[str, Any]) -> tuple[str, str, str]:
+    return (str(event.get("cycle") or ""), str(event.get("group") or ""), str(event.get("command_id") or ""))
+
+
+def render_source_snapshot(events: list[dict[str, Any]]) -> str:
+    source_events = [event for event in events if event.get("event") in {"source_gate_pass", "source_gate_warning"}]
+    if not source_events:
+        return "Not recorded yet."
+    rows = ["| Source | State | HEAD | Registered ref | Notes |", "| --- | --- | --- | --- | --- |"]
+    for event in source_events:
+        state = "warning" if event.get("event") == "source_gate_warning" else "pass"
+        source_id = str(event.get("source_id") or "unknown")
+        head = str(event.get("head") or "")
+        registered = str(event.get("registered_ref") or "")
+        notes = str(event.get("message") or "")
+        if not notes and event.get("tracked_clean_required"):
+            notes = "tracked files clean"
+        rows.append(f"| `{source_id}` | {state} | `{head}` | `{registered}` | {notes or '-'} |")
+    return "\n".join(rows)
+
+
+def command_events(events: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    starts = {event_key(event): event for event in events if event.get("event") == "command_start"}
+    rows: list[dict[str, Any]] = []
+    for event in events:
+        if event.get("event") != "command_finish":
+            continue
+        start = starts.get(event_key(event), {})
+        rows.append({**start, **event})
+    return rows
+
+
+def render_command_table(events: list[dict[str, Any]], *, group: str | None = None) -> str:
+    commands = command_events(events)
+    if group is not None:
+        commands = [event for event in commands if event.get("group") == group]
+    if not commands:
+        return "No commands finished yet."
+    rows = ["| Cycle | Group | Command | Code | Duration | Logs |", "| --- | --- | --- | --- | --- | --- |"]
+    for event in commands:
+        stdout = str(event.get("stdout_path") or "")
+        stderr = str(event.get("stderr_path") or "")
+        logs = ", ".join(f"`{item}`" for item in [stdout, stderr] if item) or "-"
+        duration = event.get("duration_seconds")
+        duration_text = f"{duration}s" if duration is not None else "-"
+        rows.append(
+            "| {cycle} | {group} | `{command_id}` | {returncode} | {duration} | {logs} |".format(
+                cycle=event.get("cycle", "-"),
+                group=event.get("group", "-"),
+                command_id=event.get("command_id", "-"),
+                returncode=event.get("returncode", "-"),
+                duration=duration_text,
+                logs=logs,
+            )
+        )
+    return "\n".join(rows)
+
+
+def render_artifact_table(run_dir: Path, events: list[dict[str, Any]]) -> str:
+    artifact_rows: list[str] = []
+    for event in events:
+        if event.get("event") != "command_finish":
+            continue
+        artifacts = event.get("artifacts")
+        if not isinstance(artifacts, list):
+            continue
+        for artifact in artifacts:
+            if not isinstance(artifact, dict):
+                continue
+            matches = artifact.get("matches")
+            if not isinstance(matches, list):
+                matches = []
+            artifact_rows.append(
+                "| `{command_id}` | `{pattern}` | {present} | {matches} |".format(
+                    command_id=event.get("command_id", "-"),
+                    pattern=artifact.get("pattern", "-"),
+                    present="yes" if artifact.get("present") else "no",
+                    matches=", ".join(f"`{rel_to_run(run_dir, str(item))}`" for item in matches) or "-",
+                )
+            )
+    if not artifact_rows:
+        return "No declared artifacts recorded yet."
+    return "\n".join(["| Command | Pattern | Present | Matches |", "| --- | --- | --- | --- |", *artifact_rows])
+
+
+def replace_section(text: str, heading: str, body: str) -> str:
+    pattern = re.compile(rf"(^## {re.escape(heading)}\n)(.*?)(?=^## |\Z)", re.MULTILINE | re.DOTALL)
+    replacement = f"## {heading}\n\n{body.rstrip()}\n\n"
+    if pattern.search(text):
+        return pattern.sub(replacement, text, count=1)
+    return text.rstrip() + "\n\n" + replacement
+
+
 def write_run_summary(run_dir: Path, task_id: str, status: str, wandb_url: str | None) -> None:
     if run_dir.joinpath("run-summary.md").exists():
         return
@@ -694,11 +841,42 @@ def write_run_summary(run_dir: Path, task_id: str, status: str, wandb_url: str |
 Run ID: {run_dir.name}
 Status: {status}
 Started: {now_iso()}
+Finished: pending
 W&B: {wandb_url or "not started"}
 
-Events: `events.jsonl`
-Command logs: `commands/`
-Loop snapshot: `loop.snapshot.yaml`
+## Source Snapshot
+
+Not recorded yet.
+
+## Preflight
+
+No preflight commands finished yet.
+
+## Command Log
+
+No commands finished yet.
+
+## Declared Artifacts
+
+No declared artifacts recorded yet.
+
+## Agent Output
+
+No agent command finished yet.
+
+## Observation
+
+Pending agent update.
+
+## Next Action
+
+Pending agent update.
+
+## Files
+
+- Events: `events.jsonl`
+- Command logs: `commands/`
+- Loop snapshot: `loop.snapshot.yaml`
 """,
         encoding="utf-8",
     )
@@ -708,14 +886,21 @@ def update_run_summary(run_dir: Path, status: str, wandb_url: str | None = None)
     summary = run_dir / "run-summary.md"
     if not summary.exists():
         return
+    events = read_events(run_dir)
     text = summary.read_text(encoding="utf-8")
     text = re.sub(r"^Status:\s*.*$", f"Status: {status}", text, count=1, flags=re.MULTILINE)
     if wandb_url:
         text = re.sub(r"^W&B:\s*.*$", f"W&B: {wandb_url}", text, count=1, flags=re.MULTILINE)
+    finished = "pending" if status == "running" else now_iso()
     if re.search(r"^Finished:\s*.*$", text, flags=re.MULTILINE):
-        text = re.sub(r"^Finished:\s*.*$", f"Finished: {now_iso()}", text, count=1, flags=re.MULTILINE)
+        text = re.sub(r"^Finished:\s*.*$", f"Finished: {finished}", text, count=1, flags=re.MULTILINE)
     else:
-        text += f"Finished: {now_iso()}\n"
+        text = re.sub(r"^(Started:\s*.*)$", rf"\1{chr(10)}Finished: {finished}", text, count=1, flags=re.MULTILINE)
+    text = replace_section(text, "Source Snapshot", render_source_snapshot(events))
+    text = replace_section(text, "Preflight", render_command_table(events, group="preflight"))
+    text = replace_section(text, "Command Log", render_command_table(events))
+    text = replace_section(text, "Declared Artifacts", render_artifact_table(run_dir, events))
+    text = replace_section(text, "Agent Output", render_command_table(events, group="agent"))
     summary.write_text(text, encoding="utf-8")
 
 
@@ -803,8 +988,16 @@ def run_command(
         stderr = exc.stderr or f"timeout after {timeout}s"
         base.with_suffix(".stdout.log").write_text(stdout, encoding="utf-8")
         base.with_suffix(".stderr.log").write_text(stderr, encoding="utf-8")
-        event = {"event": "command_finish", "group": group, "cycle": cycle, "command_id": command_id, "returncode": 124}
+        event = {
+            "event": "command_finish",
+            "group": group,
+            "cycle": cycle,
+            "command_id": command_id,
+            "returncode": 124,
+            "artifacts": collect_declared_artifacts(rendered_obj),
+        }
         append_event(run_dir, event)
+        update_run_summary(run_dir, "running")
         observability.log({**event, "stdout": stdout, "stderr": stderr})
         return 124
     stdout = result.stdout or ""
@@ -820,10 +1013,12 @@ def run_command(
         "duration_seconds": round(time.time() - started, 3),
         "stdout_path": str(base.with_suffix(".stdout.log").relative_to(run_dir)),
         "stderr_path": str(base.with_suffix(".stderr.log").relative_to(run_dir)),
+        "artifacts": collect_declared_artifacts(rendered_obj),
         "stdout": stdout[-20000:],
         "stderr": stderr[-20000:],
     }
     append_event(run_dir, {key: value for key, value in event.items() if key not in {"stdout", "stderr"}})
+    update_run_summary(run_dir, "running")
     observability.log(event)
     return int(result.returncode)
 

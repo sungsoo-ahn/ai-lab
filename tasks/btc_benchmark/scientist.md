@@ -41,6 +41,11 @@ Prefer robust observations over narrow local overfit:
 
 ## Final Outputs
 
-Before stopping, update the relevant local run summary. If the observation changes the task contract or operating structure, update canonical task metadata and rerun docs sync.
+Before stopping, update the relevant local run summary. Keep the runner-owned sections intact and fill in:
+
+- `Observation`: the most important evidence-backed result from the cycle, including weak or failed results when they affect the next decision.
+- `Next Action`: the next bounded experiment, audit, or stop condition.
+
+Every generated experiment file should live under ignored task artifact directories such as `code/`, `results/`, `plots/`, `reports/`, `runs/`, or `assets/`. If the observation changes the task contract or operating structure, update canonical task metadata, loop specs, scientist instructions, maintained helper scripts, memory, or generated docs.
 
 Run `uv run python bin/ai-lab docs sync`, `uv run python bin/ai-lab docs audit`, and targeted tests when time allows.

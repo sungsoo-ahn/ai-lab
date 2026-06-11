@@ -19,7 +19,8 @@ wandb login
 export WANDB_API_KEY=...
 ```
 
-The runner logs run starts, prompts, command metadata, command outputs, metric artifacts, failures, and finish status. Secret-like environment values are redacted before logging.
+The runner logs run starts, source gate state, prompts, command metadata, command outputs, declared artifacts, failures, and finish status. Secret-like environment values are redacted before logging.
+
+Each local run directory also contains `run-summary.md`, `events.jsonl`, command logs, the loop snapshot, and task-local launcher output when launched through `tasks/<task_id>/bin/`.
 
 Dry-runs and tests may opt out explicitly with `--dry-run`, `--no-wandb`, or `AI_LAB_DISABLE_WANDB=1`.
-

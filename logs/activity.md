@@ -2,6 +2,7 @@
 
 | Date | Action | Notes |
 | --- | --- | --- |
-| 2026-06-10 | Initialized matrix-based AI Lab | Refactored active storage into tasks, reusable scientist schemes, evaluation cells, and meta-scientist analysis. |
-| 2026-06-10 | Simplified to BTC Benchmark | Removed old non-benchmark material, old run history, optional integrations, and legacy plot assets; kept one benchmark task and one short smoke evaluation cell. |
-| 2026-06-10 | Prepared BTC extended comparison | Added paired AutoResearch and AutoScientist three-hour cells, fixed preflight gates, a parallel launcher, and public docs for the active comparison. |
+| 2026-06-10 | Initialized AI Lab | Created a local-first workspace for AI scientist task loops. |
+| 2026-06-11 | Simplified to one active task | Removed old comparison scaffolding and kept `btc_benchmark` as the first executable AutoResearch task. |
+| 2026-06-11 | Cleaned task artifact policy | Kept task contracts, loop specs, scientist instructions, helper scripts, and generated docs in Git; moved experiment products to ignored task artifact directories. |
+| 2026-06-11 | Hardened first-run logging | Made BTC launcher logs task-local and expanded run summaries around source state, preflight, commands, declared artifacts, agent output, observations, and next actions. |

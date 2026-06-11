@@ -215,11 +215,12 @@ def test_observability_logs_to_mocked_wandb_and_weave(tmp_path: Path, monkeypatc
     obs.finish("completed")
 
     assert obs.url.endswith("/runs/test")
-    assert any(
-        item.get("event_payload", {}).get("event") == "command_start"
-        for item in logged
-        if isinstance(item.get("event_payload"), dict)
-    )
+    event_payloads = []
+    for item in logged:
+        payload = item.get("event_payload")
+        if isinstance(payload, dict):
+            event_payloads.append(payload)
+    assert any(payload.get("event") == "command_start" for payload in event_payloads)
     assert any(item.get("event") == "command_start" for item in weave_calls)
     assert {"finish": 0} in logged
 
@@ -250,6 +251,8 @@ def test_source_gate_rejects_disallowed_untracked_path(tmp_path: Path, monkeypat
     )
     monkeypatch.setattr(cli, "SOURCE_REGISTRY", registry)
 
+    run_dir = tmp_path / "run"
+    run_dir.mkdir()
     cli.check_source_gate(
         {
             "source_id": "demo_source",
@@ -258,7 +261,9 @@ def test_source_gate_rejects_disallowed_untracked_path(tmp_path: Path, monkeypat
             "allow_untracked": ["results/"],
         },
         strict=True,
+        run_dir=run_dir,
     )
+    assert "source_gate_pass" in (run_dir / "events.jsonl").read_text(encoding="utf-8")
     (repo / "scratch.txt").write_text("not allowed\n", encoding="utf-8")
     with pytest.raises(SystemExit):
         cli.check_source_gate(
@@ -270,6 +275,39 @@ def test_source_gate_rejects_disallowed_untracked_path(tmp_path: Path, monkeypat
             },
             strict=True,
         )
+
+
+def test_run_command_records_declared_artifacts_in_summary(tmp_path: Path) -> None:
+    cli = load_cli()
+    run_dir = tmp_path / "run"
+    run_dir.mkdir()
+    cli.write_run_summary(run_dir, "demo", "running", None)
+    artifact = run_dir / "result.json"
+    context = {
+        "task_id": "demo",
+        "run_id": "artifact-test",
+        "cycle": "1",
+        "run_dir": str(run_dir),
+        "task_dir": str(tmp_path),
+        "root": str(ROOT),
+    }
+    obs = cli.Observability("demo", "artifact-test", dry_run=True)
+    code = cli.run_command(
+        {
+            "id": "write_artifact",
+            "argv": [sys.executable, "-c", f"from pathlib import Path; Path({str(artifact)!r}).write_text('{{}}')"],
+            "artifacts": [str(artifact)],
+        },
+        group="cycle",
+        context=context,
+        run_dir=run_dir,
+        dry_run=False,
+        observability=obs,
+    )
+    assert code == 0
+    summary = (run_dir / "run-summary.md").read_text(encoding="utf-8")
+    assert "| `write_artifact` |" in summary
+    assert "| `write_artifact` | `{}` | yes | `result.json` |".format(artifact) in summary
 
 
 def test_run_command_respects_elapsed_wall_deadline(tmp_path: Path) -> None:
@@ -393,3 +431,9 @@ def test_codex_lab_wrapper_uses_exec_for_noninteractive_synthesis() -> None:
     text = (ROOT / "bin" / "codex-lab").read_text(encoding="utf-8")
     assert "codex --cd \"$HOME\" --ask-for-approval never" in text
     assert "codex exec -c approval_policy='never'" in text
+
+
+def test_btc_extended_launcher_writes_task_local_launcher_log() -> None:
+    text = (ROOT / "tasks" / "btc_benchmark" / "bin" / "run-btc-extended").read_text(encoding="utf-8")
+    assert 'launcher_log="${run_dir}/launcher.log"' in text
+    assert "logs/extended" not in text
