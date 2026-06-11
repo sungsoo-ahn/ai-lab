@@ -1,3 +1,61 @@
 schema_version: ai_lab_task_negative_results_v1
 task_id: btc_benchmark
-negative_results: []
+negative_results:
+  - id: negative-result-btc_benchmark-20260611T112311Z-1
+    status: active
+    created_at: 2026-06-12
+    source_run: btc_benchmark-20260611T112311Z
+    source_observation_id: cycle3-vol90-overlay
+    claim: >
+      A 168-hour realized-volatility 90th-percentile cash overlay is not a good
+      adverse-regime fix for the train-selected EMA strategy.
+    evidence:
+      - runs/btc_benchmark-20260611T112311Z/reports/cycle3_adverse_regime_vol_overlay_summary.md
+      - runs/btc_benchmark-20260611T112311Z/results/cycle3_adverse_regime_vol_overlay_summary.json
+    confidence: medium
+    metric_impact: >
+      Versus EMA control: net -0.2616, funding-aware -0.1990, cost5x -0.3687,
+      turnover +18.0, max drawdown unchanged.
+    next_action: >
+      Do not retry simple high-volatility cash filters without a train-only
+      justification that targets the specific 2024/2025 damage.
+  - id: negative-result-btc_benchmark-20260611T112311Z-2
+    status: active
+    created_at: 2026-06-12
+    source_run: btc_benchmark-20260611T112311Z
+    source_observation_id: cycle5-static-long-floor
+    claim: >
+      Static passive long floors reduce turnover and can help stressed-cost net,
+      but they are not sufficient because they materially worsen drawdown and
+      funding-aware robustness.
+    evidence:
+      - runs/btc_benchmark-20260611T112311Z/reports/cycle5_soft_long_floor_summary.md
+      - runs/btc_benchmark-20260611T112311Z/results/cycle5_soft_long_floor_summary.json
+    confidence: medium
+    metric_impact: >
+      The 25% static floor had net +0.0432 and cost5x +0.1422 versus control,
+      but funding-aware net -0.0067 and max drawdown -0.0699; higher floors
+      worsened drawdown further.
+    next_action: >
+      Prefer conditional floors that avoid early adverse folds; do not promote
+      unconditional floor variants on public-dev score alone.
+  - id: negative-result-btc_benchmark-20260611T112311Z-3
+    status: active
+    created_at: 2026-06-12
+    source_run: btc_benchmark-20260611T112311Z
+    source_observation_id: cycle16-fold9-threshold-margin
+    claim: >
+      The promoted 0.025 threshold depends on a narrow fold-9 train-tail margin,
+      so the fold-9 activation should be treated as a concentration caveat
+      rather than broad evidence of threshold stability.
+    evidence:
+      - runs/btc_benchmark-20260611T112311Z/reports/cycle16_fold9_threshold_margin_audit_summary.md
+      - runs/btc_benchmark-20260611T112311Z/results/cycle16_fold9_threshold_margin_audit_summary.json
+    confidence: high
+    metric_impact: >
+      Fold 9 switches between thresholds 0.0318 and 0.032; the promoted 0.025
+      variant keeps net +0.1012 versus the non-fold-9 variant but lowers random
+      percentile from 0.96 to 0.92.
+    next_action: >
+      Recheck nearby threshold stability and per-fold contribution before
+      generalizing the 0.025 setting beyond this benchmark snapshot.

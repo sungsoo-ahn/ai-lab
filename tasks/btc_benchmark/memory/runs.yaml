@@ -1,3 +1,18 @@
 schema_version: ai_lab_task_runs_v1
 task_id: btc_benchmark
-runs: []
+runs:
+  - run_id: btc_benchmark-20260611T112311Z
+    memory_status: active
+    run_status: failed
+    started_at: 2026-06-11T11:23:17.166524+00:00
+    finished_at: 2026-06-11T14:23:17.166076+00:00
+    wandb_url: https://wandb.ai/sungsoo-ahn/ai-lab/runs/g8s9vh3m
+    summary: >
+      Promoted a train-only conditional 25% passive-floor EMA candidate and
+      found a submission-readiness issue where the strategy existed in the
+      working tree but was absent from git HEAD.
+    next_action: >
+      Keep the curated candidate and memory entries; future submission work
+      must verify the exact git snapshot and revisit fold-9 threshold
+      concentration.
+    updated_at: 2026-06-12

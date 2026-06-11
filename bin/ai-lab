@@ -7,6 +7,7 @@ import datetime as dt
 import fnmatch
 import glob
 import hashlib
+import html
 import io
 import json
 import netrc
@@ -1736,6 +1737,287 @@ def render_task_memory_doc(task_id: str) -> str:
 """
 
 
+def parse_iso_datetime(value: Any) -> dt.datetime | None:
+    if not value:
+        return None
+    try:
+        return dt.datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+    except ValueError:
+        return None
+
+
+def seconds_between(start: Any, finish: Any) -> float | None:
+    start_dt = parse_iso_datetime(start)
+    finish_dt = parse_iso_datetime(finish)
+    if not start_dt or not finish_dt:
+        return None
+    return max(0.0, (finish_dt - start_dt).total_seconds())
+
+
+def short_text(value: Any, limit: int = 220) -> str:
+    text = re.sub(r"\s+", " ", str(value or "")).strip()
+    if len(text) <= limit:
+        return text
+    return text[: limit - 1].rstrip() + "..."
+
+
+def run_anchor(run_id: str) -> str:
+    return "run-" + re.sub(r"[^a-zA-Z0-9_-]+", "-", run_id).strip("-")
+
+
+def candidate_metric_by_run(task_id: str) -> dict[str, dict[str, Any]]:
+    metrics: dict[str, dict[str, Any]] = {}
+    for candidate in task_memory_items(task_id, "candidates.yaml"):
+        run_id = str(candidate.get("promoted_from_run") or candidate.get("source_run") or "")
+        if not run_id:
+            continue
+        evidence = next((value for key, value in candidate.items() if key.endswith("_evidence") and isinstance(value, dict)), {})
+        current = metrics.setdefault(run_id, {})
+        for key in ("net", "net_funding_aware", "net_next_open", "net_cost5x", "max_drawdown", "random_pctile", "turnover"):
+            if key in evidence:
+                current[key] = evidence[key]
+        current["candidate_id"] = candidate.get("candidate_id", "")
+    return metrics
+
+
+def task_run_summaries(task_id: str) -> list[dict[str, Any]]:
+    runs_dir = task_dir(task_id) / "runs"
+    curated = {str(item.get("run_id")): item for item in task_memory_items(task_id, "runs.yaml")}
+    metrics = candidate_metric_by_run(task_id)
+    insight_counts: dict[str, int] = {}
+    negative_counts: dict[str, int] = {}
+    for item in task_memory_items(task_id, "insights.yaml"):
+        run_id = str(item.get("source_run") or "")
+        insight_counts[run_id] = insight_counts.get(run_id, 0) + 1
+    for item in task_memory_items(task_id, "negative-results.yaml"):
+        run_id = str(item.get("source_run") or "")
+        negative_counts[run_id] = negative_counts.get(run_id, 0) + 1
+    summaries: list[dict[str, Any]] = []
+    for run_json in sorted(runs_dir.glob("*/run.json")):
+        run_dir = run_json.parent
+        metadata = read_json_file(run_json)
+        run_id = str(metadata.get("run_id") or run_dir.name)
+        events = read_jsonl(run_dir / "events.jsonl")
+        observations = read_jsonl(run_dir / "observations.jsonl")
+        command_finishes = [event for event in events if event.get("event") == "command_finish"]
+        agent_finishes = [event for event in command_finishes if event.get("group") == "agent"]
+        failed = next((event for event in reversed(events) if event.get("event") == "run_failed"), {})
+        cycles = [int(event.get("cycle", 0)) for event in agent_finishes if isinstance(event.get("cycle"), int)]
+        all_cycles = [int(event.get("cycle", 0)) for event in events if isinstance(event.get("cycle"), int)]
+        duration = seconds_between(metadata.get("started_at"), metadata.get("finished_at"))
+        if duration is None:
+            duration = sum(float(event.get("duration_seconds") or 0.0) for event in command_finishes)
+        primary_observation = observations[-1] if observations else {}
+        curated_run = curated.get(run_id, {})
+        summaries.append(
+            {
+                "run_id": run_id,
+                "anchor": run_anchor(run_id),
+                "status": metadata.get("status") or curated_run.get("run_status") or infer_run_status(run_dir),
+                "started_at": metadata.get("started_at"),
+                "finished_at": metadata.get("finished_at"),
+                "duration_seconds": duration,
+                "wandb_url": metadata.get("wandb_url") or curated_run.get("wandb_url"),
+                "agent_cycles": len(agent_finishes),
+                "last_cycle": max(all_cycles) if all_cycles else 0,
+                "command_count": len(command_finishes),
+                "artifact_count": len(read_jsonl(run_dir / "artifacts.jsonl")),
+                "observation_count": len(observations),
+                "insight_count": insight_counts.get(run_id, 0),
+                "negative_count": negative_counts.get(run_id, 0),
+                "memory_status": curated_run.get("memory_status", "-"),
+                "summary": curated_run.get("summary") or primary_observation.get("claim") or failed.get("message", ""),
+                "next_action": curated_run.get("next_action") or primary_observation.get("next_action", ""),
+                "failure": failed.get("message", ""),
+                "metrics": metrics.get(run_id, {}),
+                "agent_durations": [float(event.get("duration_seconds") or 0.0) for event in agent_finishes],
+            }
+        )
+    return summaries
+
+
+def json_for_script(data: dict[str, Any]) -> str:
+    return json.dumps(data, sort_keys=True).replace("</", "<\\/")
+
+
+def vega_container(chart_id: str, spec: dict[str, Any]) -> str:
+    escaped_id = html.escape(chart_id)
+    return f"""<div class="ai-lab-vega" id="{escaped_id}"></div>
+<script type="application/json" class="ai-lab-vega-spec" data-target="{escaped_id}">
+{json_for_script(spec)}
+</script>"""
+
+
+def vega_base_spec(title: str, data: list[dict[str, Any]], *, height: int = 220) -> dict[str, Any]:
+    return {
+        "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+        "title": title,
+        "width": "container",
+        "height": height,
+        "data": {"values": data},
+        "params": [{"name": "zoom", "select": {"type": "interval", "encodings": ["x"], "bind": "scales"}}],
+        "config": {
+            "axis": {"labelFontSize": 12, "titleFontSize": 12},
+            "title": {"fontSize": 14, "anchor": "start"},
+            "view": {"stroke": "transparent"},
+        },
+    }
+
+
+def vega_line_spec(title: str, rows: list[dict[str, Any]], y_field: str, y_title: str) -> dict[str, Any]:
+    spec = vega_base_spec(title, rows)
+    spec.update(
+        {
+            "mark": {"type": "line", "point": True, "tooltip": True},
+            "encoding": {
+                "x": {
+                    "field": "run_label",
+                    "type": "ordinal",
+                    "sort": {"field": "run_order", "order": "ascending"},
+                    "title": "Run ID",
+                    "axis": {"labelAngle": -35},
+                },
+                "y": {"field": y_field, "type": "quantitative", "title": y_title},
+                "color": {"value": "#14765c"},
+                "tooltip": [
+                    {"field": "run_id", "type": "nominal", "title": "Run"},
+                    {"field": "status", "type": "nominal", "title": "Status"},
+                    {"field": y_field, "type": "quantitative", "title": y_title},
+                    {"field": "started_at", "type": "nominal", "title": "Started"},
+                ],
+                "href": {"field": "href", "type": "nominal"},
+            },
+        }
+    )
+    return spec
+
+
+def vega_bar_spec(title: str, rows: list[dict[str, Any]], y_field: str, y_title: str) -> dict[str, Any]:
+    spec = vega_base_spec(title, rows, height=190)
+    spec.update(
+        {
+            "mark": {"type": "bar", "tooltip": True},
+            "encoding": {
+                "x": {"field": "cycle", "type": "ordinal", "title": "Cycle", "axis": {"labelAngle": 0}},
+                "y": {"field": y_field, "type": "quantitative", "title": y_title},
+                "color": {"value": "#14765c"},
+                "tooltip": [
+                    {"field": "cycle", "type": "ordinal", "title": "Cycle"},
+                    {"field": "duration_minutes", "type": "quantitative", "title": "Minutes", "format": ".1f"},
+                ],
+            },
+        }
+    )
+    return spec
+
+
+def render_run_explorer(task_id: str) -> str:
+    runs = task_run_summaries(task_id)
+    if not runs:
+        return "## Run Explorer\n\nNo run artifacts found yet."
+    progress_rows = []
+    for index, run in enumerate(runs, start=1):
+        metrics = run.get("metrics", {}) if isinstance(run.get("metrics"), dict) else {}
+        run_id = str(run.get("run_id") or "")
+        row = {
+            "run_order": index,
+            "run_id": run_id,
+            "run_label": run_id.replace("btc_benchmark-", ""),
+            "href": f"#{run.get('anchor')}",
+            "status": run.get("status", ""),
+            "started_at": run.get("started_at", ""),
+            "agent_cycles": int(run.get("agent_cycles") or 0),
+            "memory_entries": int(run.get("insight_count") or 0) + int(run.get("negative_count") or 0),
+            "runtime_minutes": round(float(run.get("duration_seconds") or 0.0) / 60.0, 3),
+        }
+        if "net" in metrics:
+            row["candidate_net"] = metrics["net"]
+        progress_rows.append(row)
+    rows = [
+        "| Run | Status | Cycles | Runtime | Memory | Candidate Net | W&B |",
+        "| --- | --- | --- | --- | --- | --- | --- |",
+    ]
+    for run in runs:
+        metrics = run.get("metrics", {}) if isinstance(run.get("metrics"), dict) else {}
+        runtime = f"{float(run.get('duration_seconds') or 0) / 60:.1f} min"
+        memory = f"{run.get('insight_count', 0)} insight / {run.get('negative_count', 0)} negative"
+        net = f"{float(metrics['net']):.4f}" if "net" in metrics else "-"
+        wandb = f"[trace]({run['wandb_url']})" if run.get("wandb_url") else "-"
+        rows.append(f"| [{run['run_id']}](#{run['anchor']}) | {run['status']} | {run['agent_cycles']} | {runtime} | {memory} | {net} | {wandb} |")
+
+    detail_blocks = []
+    for run in runs:
+        metrics = run.get("metrics", {}) if isinstance(run.get("metrics"), dict) else {}
+        metric_items = []
+        for key, label in (
+            ("net", "Net"),
+            ("net_funding_aware", "Funding-aware"),
+            ("net_next_open", "Next-open"),
+            ("net_cost5x", "Cost5x"),
+            ("max_drawdown", "Max drawdown"),
+            ("random_pctile", "Random pctile"),
+            ("turnover", "Turnover"),
+        ):
+            if key in metrics:
+                value = metrics[key]
+                metric_items.append(f"<div><strong>{html.escape(str(value))}</strong>{html.escape(label)}</div>")
+        if not metric_items:
+            metric_items.append("<div><strong>-</strong>No promoted candidate metric</div>")
+        cycle_rows = [
+            {"cycle": index, "duration_seconds": value, "duration_minutes": value / 60.0}
+            for index, value in enumerate(run.get("agent_durations", []), start=1)
+        ]
+        cycle_chart = vega_container(
+            f"{run['anchor']}-cycle-duration",
+            vega_bar_spec("Agent cycle duration", cycle_rows, "duration_minutes", "Minutes"),
+        )
+        details = f"""<details class="ai-lab-run-detail" id="{html.escape(str(run['anchor']))}">
+<summary><span>{html.escape(str(run['run_id']))}</span><small>{html.escape(str(run['status']))} · {int(run.get('agent_cycles') or 0)} cycles · {float(run.get('duration_seconds') or 0) / 60:.1f} min</small></summary>
+
+<div class="ai-lab-kpi ai-lab-run-kpi">
+{''.join(metric_items)}
+<div><strong>{int(run.get('insight_count') or 0)}</strong>insights</div>
+<div><strong>{int(run.get('negative_count') or 0)}</strong>negative results</div>
+</div>
+
+{cycle_chart}
+
+| Field | Value |
+| --- | --- |
+| Started | {run.get('started_at') or '-'} |
+| Finished | {run.get('finished_at') or '-'} |
+| Commands | {run.get('command_count', 0)} |
+| Artifacts | {run.get('artifact_count', 0)} |
+| Observations | {run.get('observation_count', 0)} |
+| Failure | {short_text(run.get('failure') or '-', 160)} |
+
+**Summary:** {html.escape(short_text(run.get('summary'), 500))}
+
+**Next Action:** {html.escape(short_text(run.get('next_action'), 500))}
+
+</details>"""
+        detail_blocks.append(details)
+
+    return f"""## Run Explorer
+
+### Progress
+
+{vega_container(f"{task_id}-candidate-net", vega_line_spec("Promoted candidate net by run", [row for row in progress_rows if "candidate_net" in row], "candidate_net", "Net"))}
+
+{vega_container(f"{task_id}-agent-cycles", vega_line_spec("Completed agent cycles by run", progress_rows, "agent_cycles", "Cycles"))}
+
+{vega_container(f"{task_id}-memory-entries", vega_line_spec("Curated memory entries by run", progress_rows, "memory_entries", "Entries"))}
+
+### Run Index
+
+{chr(10).join(rows)}
+
+### Run Detail
+
+{chr(10).join(detail_blocks)}
+"""
+
+
 def render_task_doc(task_id: str) -> str:
     manifest = load_yaml_file(task_manifest_path(task_id))
     loop = load_yaml_file(task_loop_path(task_id))
@@ -1786,6 +2068,8 @@ No experiment code, assets, reports, plots, results, or run logs are tracked as 
 """ + "\n".join(f"- `{item}`" for item in task_dirs(task_id)) + f"""
 
 {render_task_memory_doc(task_id)}
+
+{render_run_explorer(task_id)}
 
 ## Run
 

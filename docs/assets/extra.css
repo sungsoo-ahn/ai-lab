@@ -25,3 +25,43 @@
   font-size: 1.2rem;
 }
 
+.ai-lab-vega {
+  background: var(--md-code-bg-color);
+  border: 1px solid var(--md-default-fg-color--lightest);
+  border-radius: 6px;
+  margin: 1rem 0;
+  max-width: 100%;
+  min-height: 230px;
+  padding: 0.75rem;
+}
+
+.ai-lab-vega-error {
+  color: var(--md-code-hl-string-color);
+}
+
+.ai-lab-run-detail {
+  border: 1px solid var(--md-default-fg-color--lightest);
+  border-radius: 6px;
+  margin: 0.75rem 0;
+  padding: 0.75rem;
+}
+
+.ai-lab-run-detail summary {
+  cursor: pointer;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  justify-content: space-between;
+}
+
+.ai-lab-run-detail summary span {
+  font-weight: 700;
+}
+
+.ai-lab-run-detail summary small {
+  color: var(--md-default-fg-color--light);
+}
+
+.ai-lab-run-kpi {
+  margin-top: 0.75rem;
+}

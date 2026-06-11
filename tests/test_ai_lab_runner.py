@@ -412,6 +412,20 @@ def test_memory_promote_creates_task_memory_and_docs(tmp_path: Path, monkeypatch
     run_dir = task / "runs" / "run2"
     run_dir.mkdir(parents=True)
     cli.append_event(run_dir, {"event": "run_finish", "task_id": "demo", "run_id": "run2"})
+    (run_dir / "run.json").write_text(
+        json.dumps(
+            {
+                "schema_version": "ai_lab_run_v1",
+                "task_id": "demo",
+                "run_id": "run2",
+                "status": "completed",
+                "started_at": "2026-06-11T00:00:00+00:00",
+                "finished_at": "2026-06-11T00:01:00+00:00",
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
     (run_dir / "run-summary.md").write_text(
         """# AI Scientist Run: demo
 
@@ -442,6 +456,10 @@ Test a weekly turnover cap.
     task_doc = (docs / "task" / "demo.md").read_text(encoding="utf-8")
     assert "Funding-aware filters need a lower-turnover variant." in task_doc
     assert "Recent Curated Runs" in task_doc
+    assert "Run Explorer" in task_doc
+    assert "[run2](#run-run2)" in task_doc
+    assert "ai-lab-vega-spec" in task_doc
+    assert "Completed agent cycles by run" in task_doc
 
 
 def test_run_command_respects_elapsed_wall_deadline(tmp_path: Path) -> None:

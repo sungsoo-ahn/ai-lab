@@ -50,11 +50,19 @@ No experiment code, assets, reports, plots, results, or run logs are tracked as 
 
 ### Insights
 
-No promoted insights yet.
+| Status | Claim | Evidence | Next Action |
+| --- | --- | --- | --- |
+| active | A 25% passive long floor is useful only when activated conditionally from train-tail evidence; the 3-month passive-edge trigger improved net, funding-aware net, cost5x net, turnover, and max drawdown versus the train-selected EMA control.  | btc_benchmark-20260611T112311Z | Use train-only conditional activation as the default floor pattern; avoid unconditional passive floors unless a separate drawdown control is added.  |
+| active | The promoted 0.025 passive-edge threshold passed strict public-dev gates and beat the maintained 0.050 threshold across net, funding-aware, next-open, and cost stress surfaces without worsening max drawdown.  | btc_benchmark-20260611T112311Z | Keep the 0.025 threshold as the promoted public-dev candidate, but audit fold-9 concentration before treating it as a general discovery.  |
+| active | Submission readiness must be checked from git HEAD, not only from the working tree, because the promoted strategy was importable locally while absent from `git archive HEAD`.  | btc_benchmark-20260611T112311Z | Before any external submission or fork push, verify the exact git snapshot includes the promoted strategy and rerun the adapter from that snapshot.  |
 
 ### Negative Results
 
-No promoted negative results yet.
+| Status | Claim | Evidence | Next Action |
+| --- | --- | --- | --- |
+| active | A 168-hour realized-volatility 90th-percentile cash overlay is not a good adverse-regime fix for the train-selected EMA strategy.  | btc_benchmark-20260611T112311Z | Do not retry simple high-volatility cash filters without a train-only justification that targets the specific 2024/2025 damage.  |
+| active | Static passive long floors reduce turnover and can help stressed-cost net, but they are not sufficient because they materially worsen drawdown and funding-aware robustness.  | btc_benchmark-20260611T112311Z | Prefer conditional floors that avoid early adverse folds; do not promote unconditional floor variants on public-dev score alone.  |
+| active | The promoted 0.025 threshold depends on a narrow fold-9 train-tail margin, so the fold-9 activation should be treated as a concentration caveat rather than broad evidence of threshold stability.  | btc_benchmark-20260611T112311Z | Recheck nearby threshold stability and per-fold contribution before generalizing the 0.025 setting beyond this benchmark snapshot.  |
 
 ### Candidates
 
@@ -64,7 +72,66 @@ No promoted negative results yet.
 
 ### Recent Curated Runs
 
-No curated runs yet.
+| Run | Memory | Run Status | Summary | Next Action |
+| --- | --- | --- | --- | --- |
+| btc_benchmark-20260611T112311Z | active | failed | Promoted a train-only conditional 25% passive-floor EMA candidate and found a submission-readiness issue where the strategy existed in the working tree but was absent from git HEAD.  | Keep the curated candidate and memory entries; future submission work must verify the exact git snapshot and revisit fold-9 threshold concentration.  |
+
+
+## Run Explorer
+
+### Progress
+
+<div class="ai-lab-vega" id="btc_benchmark-candidate-net"></div>
+<script type="application/json" class="ai-lab-vega-spec" data-target="btc_benchmark-candidate-net">
+{"$schema": "https://vega.github.io/schema/vega-lite/v5.json", "config": {"axis": {"labelFontSize": 12, "titleFontSize": 12}, "title": {"anchor": "start", "fontSize": 14}, "view": {"stroke": "transparent"}}, "data": {"values": [{"agent_cycles": 31, "candidate_net": 2.1765, "href": "#run-btc_benchmark-20260611T112311Z", "memory_entries": 6, "run_id": "btc_benchmark-20260611T112311Z", "run_label": "20260611T112311Z", "run_order": 1, "runtime_minutes": 180.0, "started_at": "2026-06-11T11:23:17.121591+00:00", "status": "failed"}]}, "encoding": {"color": {"value": "#14765c"}, "href": {"field": "href", "type": "nominal"}, "tooltip": [{"field": "run_id", "title": "Run", "type": "nominal"}, {"field": "status", "title": "Status", "type": "nominal"}, {"field": "candidate_net", "title": "Net", "type": "quantitative"}, {"field": "started_at", "title": "Started", "type": "nominal"}], "x": {"axis": {"labelAngle": -35}, "field": "run_label", "sort": {"field": "run_order", "order": "ascending"}, "title": "Run ID", "type": "ordinal"}, "y": {"field": "candidate_net", "title": "Net", "type": "quantitative"}}, "height": 220, "mark": {"point": true, "tooltip": true, "type": "line"}, "params": [{"name": "zoom", "select": {"bind": "scales", "encodings": ["x"], "type": "interval"}}], "title": "Promoted candidate net by run", "width": "container"}
+</script>
+
+<div class="ai-lab-vega" id="btc_benchmark-agent-cycles"></div>
+<script type="application/json" class="ai-lab-vega-spec" data-target="btc_benchmark-agent-cycles">
+{"$schema": "https://vega.github.io/schema/vega-lite/v5.json", "config": {"axis": {"labelFontSize": 12, "titleFontSize": 12}, "title": {"anchor": "start", "fontSize": 14}, "view": {"stroke": "transparent"}}, "data": {"values": [{"agent_cycles": 31, "candidate_net": 2.1765, "href": "#run-btc_benchmark-20260611T112311Z", "memory_entries": 6, "run_id": "btc_benchmark-20260611T112311Z", "run_label": "20260611T112311Z", "run_order": 1, "runtime_minutes": 180.0, "started_at": "2026-06-11T11:23:17.121591+00:00", "status": "failed"}]}, "encoding": {"color": {"value": "#14765c"}, "href": {"field": "href", "type": "nominal"}, "tooltip": [{"field": "run_id", "title": "Run", "type": "nominal"}, {"field": "status", "title": "Status", "type": "nominal"}, {"field": "agent_cycles", "title": "Cycles", "type": "quantitative"}, {"field": "started_at", "title": "Started", "type": "nominal"}], "x": {"axis": {"labelAngle": -35}, "field": "run_label", "sort": {"field": "run_order", "order": "ascending"}, "title": "Run ID", "type": "ordinal"}, "y": {"field": "agent_cycles", "title": "Cycles", "type": "quantitative"}}, "height": 220, "mark": {"point": true, "tooltip": true, "type": "line"}, "params": [{"name": "zoom", "select": {"bind": "scales", "encodings": ["x"], "type": "interval"}}], "title": "Completed agent cycles by run", "width": "container"}
+</script>
+
+<div class="ai-lab-vega" id="btc_benchmark-memory-entries"></div>
+<script type="application/json" class="ai-lab-vega-spec" data-target="btc_benchmark-memory-entries">
+{"$schema": "https://vega.github.io/schema/vega-lite/v5.json", "config": {"axis": {"labelFontSize": 12, "titleFontSize": 12}, "title": {"anchor": "start", "fontSize": 14}, "view": {"stroke": "transparent"}}, "data": {"values": [{"agent_cycles": 31, "candidate_net": 2.1765, "href": "#run-btc_benchmark-20260611T112311Z", "memory_entries": 6, "run_id": "btc_benchmark-20260611T112311Z", "run_label": "20260611T112311Z", "run_order": 1, "runtime_minutes": 180.0, "started_at": "2026-06-11T11:23:17.121591+00:00", "status": "failed"}]}, "encoding": {"color": {"value": "#14765c"}, "href": {"field": "href", "type": "nominal"}, "tooltip": [{"field": "run_id", "title": "Run", "type": "nominal"}, {"field": "status", "title": "Status", "type": "nominal"}, {"field": "memory_entries", "title": "Entries", "type": "quantitative"}, {"field": "started_at", "title": "Started", "type": "nominal"}], "x": {"axis": {"labelAngle": -35}, "field": "run_label", "sort": {"field": "run_order", "order": "ascending"}, "title": "Run ID", "type": "ordinal"}, "y": {"field": "memory_entries", "title": "Entries", "type": "quantitative"}}, "height": 220, "mark": {"point": true, "tooltip": true, "type": "line"}, "params": [{"name": "zoom", "select": {"bind": "scales", "encodings": ["x"], "type": "interval"}}], "title": "Curated memory entries by run", "width": "container"}
+</script>
+
+### Run Index
+
+| Run | Status | Cycles | Runtime | Memory | Candidate Net | W&B |
+| --- | --- | --- | --- | --- | --- | --- |
+| [btc_benchmark-20260611T112311Z](#run-btc_benchmark-20260611T112311Z) | failed | 31 | 180.0 min | 3 insight / 3 negative | 2.1765 | [trace](https://wandb.ai/sungsoo-ahn/ai-lab/runs/g8s9vh3m) |
+
+### Run Detail
+
+<details class="ai-lab-run-detail" id="run-btc_benchmark-20260611T112311Z">
+<summary><span>btc_benchmark-20260611T112311Z</span><small>failed · 31 cycles · 180.0 min</small></summary>
+
+<div class="ai-lab-kpi ai-lab-run-kpi">
+<div><strong>2.1765</strong>Net</div><div><strong>1.5854</strong>Funding-aware</div><div><strong>2.1765</strong>Next-open</div><div><strong>1.7327</strong>Cost5x</div><div><strong>-0.3699</strong>Max drawdown</div><div><strong>0.92</strong>Random pctile</div><div><strong>37.5</strong>Turnover</div>
+<div><strong>3</strong>insights</div>
+<div><strong>3</strong>negative results</div>
+</div>
+
+<div class="ai-lab-vega" id="run-btc_benchmark-20260611T112311Z-cycle-duration"></div>
+<script type="application/json" class="ai-lab-vega-spec" data-target="run-btc_benchmark-20260611T112311Z-cycle-duration">
+{"$schema": "https://vega.github.io/schema/vega-lite/v5.json", "config": {"axis": {"labelFontSize": 12, "titleFontSize": 12}, "title": {"anchor": "start", "fontSize": 14}, "view": {"stroke": "transparent"}}, "data": {"values": [{"cycle": 1, "duration_minutes": 11.437766666666667, "duration_seconds": 686.266}, {"cycle": 2, "duration_minutes": 4.512933333333334, "duration_seconds": 270.776}, {"cycle": 3, "duration_minutes": 5.900283333333333, "duration_seconds": 354.017}, {"cycle": 4, "duration_minutes": 3.9190666666666667, "duration_seconds": 235.144}, {"cycle": 5, "duration_minutes": 4.412400000000001, "duration_seconds": 264.744}, {"cycle": 6, "duration_minutes": 6.1989, "duration_seconds": 371.934}, {"cycle": 7, "duration_minutes": 12.6525, "duration_seconds": 759.15}, {"cycle": 8, "duration_minutes": 5.944983333333334, "duration_seconds": 356.699}, {"cycle": 9, "duration_minutes": 6.000133333333333, "duration_seconds": 360.008}, {"cycle": 10, "duration_minutes": 4.9687, "duration_seconds": 298.122}, {"cycle": 11, "duration_minutes": 4.69085, "duration_seconds": 281.451}, {"cycle": 12, "duration_minutes": 9.016116666666667, "duration_seconds": 540.967}, {"cycle": 13, "duration_minutes": 4.972716666666667, "duration_seconds": 298.363}, {"cycle": 14, "duration_minutes": 5.762933333333334, "duration_seconds": 345.776}, {"cycle": 15, "duration_minutes": 4.452299999999999, "duration_seconds": 267.138}, {"cycle": 16, "duration_minutes": 11.3683, "duration_seconds": 682.098}, {"cycle": 17, "duration_minutes": 4.825083333333334, "duration_seconds": 289.505}, {"cycle": 18, "duration_minutes": 4.658933333333334, "duration_seconds": 279.536}, {"cycle": 19, "duration_minutes": 3.5797833333333333, "duration_seconds": 214.787}, {"cycle": 20, "duration_minutes": 4.103383333333333, "duration_seconds": 246.203}, {"cycle": 21, "duration_minutes": 8.724316666666665, "duration_seconds": 523.459}, {"cycle": 22, "duration_minutes": 3.3983, "duration_seconds": 203.898}, {"cycle": 23, "duration_minutes": 5.5097499999999995, "duration_seconds": 330.585}, {"cycle": 24, "duration_minutes": 3.474483333333333, "duration_seconds": 208.469}, {"cycle": 25, "duration_minutes": 5.283483333333334, "duration_seconds": 317.009}, {"cycle": 26, "duration_minutes": 9.326699999999999, "duration_seconds": 559.602}, {"cycle": 27, "duration_minutes": 3.9019333333333335, "duration_seconds": 234.116}, {"cycle": 28, "duration_minutes": 5.521733333333333, "duration_seconds": 331.304}, {"cycle": 29, "duration_minutes": 3.47445, "duration_seconds": 208.467}, {"cycle": 30, "duration_minutes": 4.42375, "duration_seconds": 265.425}, {"cycle": 31, "duration_minutes": 3.3547333333333333, "duration_seconds": 201.284}]}, "encoding": {"color": {"value": "#14765c"}, "tooltip": [{"field": "cycle", "title": "Cycle", "type": "ordinal"}, {"field": "duration_minutes", "format": ".1f", "title": "Minutes", "type": "quantitative"}], "x": {"axis": {"labelAngle": 0}, "field": "cycle", "title": "Cycle", "type": "ordinal"}, "y": {"field": "duration_minutes", "title": "Minutes", "type": "quantitative"}}, "height": 190, "mark": {"tooltip": true, "type": "bar"}, "params": [{"name": "zoom", "select": {"bind": "scales", "encodings": ["x"], "type": "interval"}}], "title": "Agent cycle duration", "width": "container"}
+</script>
+
+| Field | Value |
+| --- | --- |
+| Started | 2026-06-11T11:23:17.121591+00:00 |
+| Finished | 2026-06-11T14:23:17.129967+00:00 |
+| Commands | 35 |
+| Artifacts | 2 |
+| Observations | 1 |
+| Failure | data must be str, not bytes |
+
+**Summary:** Promoted a train-only conditional 25% passive-floor EMA candidate and found a submission-readiness issue where the strategy existed in the working tree but was absent from git HEAD.
+
+**Next Action:** Keep the curated candidate and memory entries; future submission work must verify the exact git snapshot and revisit fold-9 threshold concentration.
+
+</details>
 
 
 ## Run

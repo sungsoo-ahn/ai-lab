@@ -1,3 +1,59 @@
 schema_version: ai_lab_task_insights_v1
 task_id: btc_benchmark
-insights: []
+insights:
+  - id: insight-btc_benchmark-20260611T112311Z-1
+    status: active
+    created_at: 2026-06-12
+    source_run: btc_benchmark-20260611T112311Z
+    source_observation_id: cycle6-conditional-floor
+    claim: >
+      A 25% passive long floor is useful only when activated conditionally from
+      train-tail evidence; the 3-month passive-edge trigger improved net,
+      funding-aware net, cost5x net, turnover, and max drawdown versus the
+      train-selected EMA control.
+    evidence:
+      - runs/btc_benchmark-20260611T112311Z/reports/cycle6_conditional_long_floor_summary.md
+      - runs/btc_benchmark-20260611T112311Z/results/cycle6_conditional_long_floor_summary.json
+    confidence: medium
+    metric_impact: >
+      Versus EMA control: net +0.3546, funding-aware +0.2619, cost5x +0.3677,
+      max drawdown +0.0235, turnover -6.5.
+    next_action: >
+      Use train-only conditional activation as the default floor pattern; avoid
+      unconditional passive floors unless a separate drawdown control is added.
+  - id: insight-btc_benchmark-20260611T112311Z-2
+    status: active
+    created_at: 2026-06-12
+    source_run: btc_benchmark-20260611T112311Z
+    source_observation_id: cycle13-threshold-025
+    claim: >
+      The promoted 0.025 passive-edge threshold passed strict public-dev gates
+      and beat the maintained 0.050 threshold across net, funding-aware,
+      next-open, and cost stress surfaces without worsening max drawdown.
+    evidence:
+      - runs/btc_benchmark-20260611T112311Z/reports/cycle13_threshold_025_final_audit_summary.md
+      - runs/btc_benchmark-20260611T112311Z/results/cycle13_threshold_025_final_audit_summary.json
+    confidence: medium
+    metric_impact: >
+      Versus 0.050 threshold: net +0.1012, funding-aware +0.0804, cost5x
+      +0.1030, max drawdown unchanged; gates passed with min cutoff 721.
+    next_action: >
+      Keep the 0.025 threshold as the promoted public-dev candidate, but audit
+      fold-9 concentration before treating it as a general discovery.
+  - id: insight-btc_benchmark-20260611T112311Z-3
+    status: active
+    created_at: 2026-06-12
+    source_run: btc_benchmark-20260611T112311Z
+    source_observation_id: cycle31-git-submission-surface
+    claim: >
+      Submission readiness must be checked from git HEAD, not only from the
+      working tree, because the promoted strategy was importable locally while
+      absent from `git archive HEAD`.
+    evidence:
+      - runs/btc_benchmark-20260611T112311Z/reports/cycle31_git_submission_surface_audit_summary.md
+      - runs/btc_benchmark-20260611T112311Z/results/cycle31_git_submission_surface_audit_summary.json
+    confidence: high
+    metric_impact: packaging risk; no score change
+    next_action: >
+      Before any external submission or fork push, verify the exact git snapshot
+      includes the promoted strategy and rerun the adapter from that snapshot.

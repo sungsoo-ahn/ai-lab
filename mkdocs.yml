@@ -31,6 +31,12 @@ markdown_extensions:
 extra_css:
   - assets/extra.css
 
+extra_javascript:
+  - https://cdn.jsdelivr.net/npm/vega@5
+  - https://cdn.jsdelivr.net/npm/vega-lite@5
+  - https://cdn.jsdelivr.net/npm/vega-embed@6
+  - assets/vega-run-explorer.js
+
 nav:
   - Dashboard: index.md
   - BTC Benchmark: task/btc-benchmark.md
@@ -38,4 +44,3 @@ nav:
   - W&B Observability: system/observability.md
   - Memory And Sources: system/memory-and-sources.md
   - Maintenance: system/maintenance.md
-
