@@ -58,7 +58,9 @@ No promoted negative results yet.
 
 ### Candidates
 
-No promoted candidates yet.
+| Status | Candidate | Summary | Evidence |
+| --- | --- | --- | --- |
+| promoted_candidate | ema_selected_cond_floor25_tail3m_passive_edge_025pct_promoted | Train-fold EMA long/cash grid selector with a 25% long floor only when the trailing 91-day training tail shows always-long beating the selected EMA by more than 2.5 percentage points and the floored blend beating the selected EMA on that same tail.  | - |
 
 ### Recent Curated Runs
 

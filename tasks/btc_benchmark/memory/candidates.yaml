@@ -1,3 +1,65 @@
 schema_version: ai_lab_task_candidates_v1
 task_id: btc_benchmark
-candidates: []
+candidates:
+  - candidate_id: ema_selected_cond_floor25_tail3m_passive_edge_025pct_promoted
+    status: promoted_candidate
+    promoted_from_run: btc_benchmark-20260611T112311Z
+    promoted_from_cycle: 13
+    implementation: tasks/btc_benchmark/strategies/conditional_floor.py
+    class_name: PromotableConditionalFloorStrategy
+    benchmark_version: 1.0.0
+    summary: >
+      Train-fold EMA long/cash grid selector with a 25% long floor only when
+      the trailing 91-day training tail shows always-long beating the selected
+      EMA by more than 2.5 percentage points and the floored blend beating the
+      selected EMA on that same tail.
+    contract:
+      horizon: 1
+      uses_auxiliary_data: false
+      uses_sub_bars: false
+      sealed_holdout_used: false
+      runner_owned_splits_costs_and_gates: true
+    parameters:
+      ema_grid:
+        - [96, 384]
+        - [120, 480]
+        - [144, 576]
+        - [168, 504]
+        - [168, 672]
+        - [168, 840]
+        - [192, 768]
+        - [216, 864]
+        - [240, 960]
+      long_floor: 0.25
+      tail_bars: 2184
+      passive_edge_threshold: 0.025
+      all_in_bps_for_train_selection: 10.0
+    cycle13_evidence:
+      net: 2.1765
+      net_next_open: 2.1765
+      net_funding_aware: 1.5854
+      net_cost2x: 2.0594
+      net_cost3x: 1.9465
+      net_cost5x: 1.7327
+      max_drawdown: -0.3699
+      sharpe: 1.115
+      turnover: 37.5
+      random_pctile: 0.92
+      gates_passed: true
+      disqualified: false
+      gate_cutoffs_min: 721
+      activated_folds: [1, 3, 4, 5, 6, 8, 9, 11]
+      fold0_active: false
+      deltas_vs_05pct_candidate:
+        net: 0.1012
+        net_next_open: 0.1012
+        net_funding_aware: 0.0804
+        net_cost2x: 0.1020
+        net_cost3x: 0.1025
+        net_cost5x: 0.1030
+        max_drawdown: 0.0
+        random_pctile: -0.04
+      caveats:
+        - Random percentile is lower than the 5 percentage point threshold candidate, 0.92 versus 0.96.
+        - 2025 remains weak and unchanged at 0.1333 net with -0.1472 drawdown.
+        - The only behavioral difference versus the 5 percentage point threshold candidate is fold 9 activation.

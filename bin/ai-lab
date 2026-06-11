@@ -922,6 +922,14 @@ def run_ai_scientist_builtin(task_id: str, run_id: str, cycle: int, timeout: int
     )
 
 
+def subprocess_text(data: str | bytes | None) -> str:
+    if data is None:
+        return ""
+    if isinstance(data, bytes):
+        return data.decode("utf-8", errors="replace")
+    return data
+
+
 class Observability:
     def __init__(self, task_id: str, run_id: str, dry_run: bool, disabled: bool = False):
         self.task_id = task_id
@@ -1252,8 +1260,8 @@ def run_command(
         else:
             raise SystemExit(f"Command has no executable body: {command_id}")
     except subprocess.TimeoutExpired as exc:
-        stdout = exc.stdout or ""
-        stderr = exc.stderr or f"timeout after {timeout}s"
+        stdout = subprocess_text(exc.stdout)
+        stderr = subprocess_text(exc.stderr) or f"timeout after {timeout}s"
         base.with_suffix(".stdout.log").write_text(stdout, encoding="utf-8")
         base.with_suffix(".stderr.log").write_text(stderr, encoding="utf-8")
         artifacts = collect_declared_artifacts(rendered_obj)

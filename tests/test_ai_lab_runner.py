@@ -313,6 +313,38 @@ def test_run_command_records_declared_artifacts_in_summary(tmp_path: Path) -> No
     assert '"schema_version": "ai_lab_artifact_v1"' in artifact_rows
 
 
+def test_run_command_timeout_logs_bytes_output(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    cli = load_cli()
+    run_dir = tmp_path / "run"
+    run_dir.mkdir()
+    cli.write_run_summary(run_dir, "demo", "running", None)
+    context = {
+        "task_id": "demo",
+        "run_id": "timeout-test",
+        "cycle": "1",
+        "run_dir": str(run_dir),
+        "task_dir": str(tmp_path),
+        "root": str(ROOT),
+    }
+
+    def fake_run(*_args: object, **_kwargs: object) -> subprocess.CompletedProcess[str]:
+        raise subprocess.TimeoutExpired(["demo"], 1, output=b"out-bytes", stderr=b"err-bytes")
+
+    monkeypatch.setattr(cli.subprocess, "run", fake_run)
+    code = cli.run_command(
+        {"id": "timeout", "argv": ["demo"], "timeout_seconds": 1},
+        group="cycle",
+        context=context,
+        run_dir=run_dir,
+        dry_run=False,
+        observability=cli.Observability("demo", "timeout-test", dry_run=True),
+    )
+
+    assert code == 124
+    assert (run_dir / "commands" / "cycle-1-cycle-timeout.stdout.log").read_text(encoding="utf-8") == "out-bytes"
+    assert (run_dir / "commands" / "cycle-1-cycle-timeout.stderr.log").read_text(encoding="utf-8") == "err-bytes"
+
+
 def test_task_summarize_writes_run_metadata_and_observation(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     cli = load_cli()
     tasks = tmp_path / "tasks"
