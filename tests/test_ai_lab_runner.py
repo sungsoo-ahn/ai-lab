@@ -551,6 +551,57 @@ def test_memory_promote_allows_telemetry_without_observation(tmp_path: Path, mon
     assert runs["runs"][0]["agent_durations_seconds"] == [9.0]
 
 
+def test_task_run_publish_orchestrates_run_memory_docs_and_push(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    cli = load_cli()
+    tasks = tmp_path / "tasks"
+    write_task(tasks)
+    monkeypatch.setattr(cli, "TASKS", tasks)
+    calls: list[tuple[str, object]] = []
+
+    def fake_run(args: SimpleNamespace) -> None:
+        calls.append(("run", args.run_id))
+        (tasks / "demo" / "runs" / str(args.run_id)).mkdir(parents=True)
+
+    monkeypatch.setattr(cli, "cmd_task_run", fake_run)
+    monkeypatch.setattr(cli, "cmd_task_summarize", lambda args: calls.append(("summarize", args.run_id)))
+    monkeypatch.setattr(cli, "cmd_memory_promote", lambda argv: calls.append(("promote", tuple(argv))))
+    monkeypatch.setattr(cli, "cmd_docs_sync", lambda args: calls.append(("docs_sync", args.check)))
+    monkeypatch.setattr(cli, "cmd_docs_audit", lambda args: calls.append(("docs_audit", None)))
+    monkeypatch.setattr(
+        cli,
+        "commit_and_push_published_run",
+        lambda task_id, run_id, message, *, push, remote, branch: calls.append(("publish", (task_id, run_id, message, push, remote, branch))),
+    )
+
+    cli.cmd_task_run_publish(
+        SimpleNamespace(
+            task_id="demo",
+            once=True,
+            continuous=False,
+            dry_run=False,
+            run_id="run4",
+            max_cycles=None,
+            no_wandb=True,
+            status="active",
+            message="Publish demo run",
+            no_commit=False,
+            no_push=False,
+            remote="origin",
+            branch="main",
+            fail_on_run_failure=False,
+        )
+    )
+
+    assert calls == [
+        ("run", "run4"),
+        ("summarize", "run4"),
+        ("promote", ("demo", "--run-id", "run4", "--status", "active")),
+        ("docs_sync", False),
+        ("docs_audit", None),
+        ("publish", ("demo", "run4", "Publish demo run", True, "origin", "main")),
+    ]
+
+
 def test_run_command_respects_elapsed_wall_deadline(tmp_path: Path) -> None:
     cli = load_cli()
     run_dir = tmp_path / "run"

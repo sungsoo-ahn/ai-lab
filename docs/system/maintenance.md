@@ -8,6 +8,7 @@ UV_CACHE_DIR=$PWD/.uv-cache uv run ruff check .
 UV_CACHE_DIR=$PWD/.uv-cache uv run mypy .
 uv run python bin/ai-lab task validate --all
 uv run python bin/ai-lab task run btc_benchmark --once --dry-run
+uv run python bin/ai-lab task run-publish btc_benchmark --continuous
 uv run python bin/ai-lab docs sync --check
 uv run python bin/ai-lab docs audit
 uv run --with-requirements requirements.txt mkdocs build --strict
@@ -37,13 +38,13 @@ uv run python bin/ai-lab task run btc_benchmark --once --dry-run
 uv run python bin/ai-lab docs audit
 ```
 
-4. Launch the task-local runner:
+4. Launch, promote, sync, commit, and push a full run:
 
 ```bash
-tasks/btc_benchmark/bin/run-btc-extended
+uv run python bin/ai-lab task run-publish btc_benchmark --continuous
 ```
 
-5. Summarize and review the run:
+5. For manual recovery or older runs, summarize and review the run:
 
 ```bash
 uv run python bin/ai-lab task summarize btc_benchmark --run-id <run_id>
