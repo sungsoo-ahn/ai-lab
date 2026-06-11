@@ -7,6 +7,45 @@ runs:
     started_at: 2026-06-11T11:23:17.166524+00:00
     finished_at: 2026-06-11T14:23:17.166076+00:00
     wandb_url: https://wandb.ai/sungsoo-ahn/ai-lab/runs/g8s9vh3m
+    duration_seconds: 10799.999552
+    agent_cycles: 31
+    last_cycle: 32
+    command_count: 35
+    artifact_count: 2
+    observation_count: 1
+    failure: data must be str, not bytes
+    agent_durations_seconds:
+      - 686.266
+      - 270.776
+      - 354.017
+      - 235.144
+      - 264.744
+      - 371.934
+      - 759.15
+      - 356.699
+      - 360.008
+      - 298.122
+      - 281.451
+      - 540.967
+      - 298.363
+      - 345.776
+      - 267.138
+      - 682.098
+      - 289.505
+      - 279.536
+      - 214.787
+      - 246.203
+      - 523.459
+      - 203.898
+      - 330.585
+      - 208.469
+      - 317.009
+      - 559.602
+      - 234.116
+      - 331.304
+      - 208.467
+      - 265.425
+      - 201.284
     summary: >
       Promoted a train-only conditional 25% passive-floor EMA candidate and
       found a submission-readiness issue where the strategy existed in the
