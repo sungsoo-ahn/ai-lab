@@ -1810,6 +1810,9 @@ def task_run_summaries(task_id: str) -> list[dict[str, Any]]:
         cycle_durations = item.get("agent_durations_seconds", [])
         if not isinstance(cycle_durations, list):
             cycle_durations = []
+        cycle_metrics = item.get("cycle_metrics", [])
+        if not isinstance(cycle_metrics, list):
+            cycle_metrics = []
         summaries.append(
             {
                 "run_id": run_id,
@@ -1832,6 +1835,7 @@ def task_run_summaries(task_id: str) -> list[dict[str, Any]]:
                 "failure": item.get("failure", ""),
                 "metrics": metrics.get(run_id, {}),
                 "agent_durations": [float(value or 0.0) for value in cycle_durations],
+                "cycle_metrics": [entry for entry in cycle_metrics if isinstance(entry, dict)],
             }
         )
     for run_json in sorted(runs_dir.glob("*/run.json")):
@@ -1874,6 +1878,7 @@ def task_run_summaries(task_id: str) -> list[dict[str, Any]]:
                 "failure": failed.get("message", ""),
                 "metrics": metrics.get(run_id, {}),
                 "agent_durations": [float(event.get("duration_seconds") or 0.0) for event in agent_finishes],
+                "cycle_metrics": [],
             }
         )
     return summaries
@@ -1994,6 +1999,27 @@ def vega_line_spec(title: str, rows: list[dict[str, Any]], y_field: str, y_title
     return spec
 
 
+def vega_cycle_line_spec(title: str, rows: list[dict[str, Any]], y_field: str, y_title: str) -> dict[str, Any]:
+    spec = vega_base_spec(title, rows)
+    spec.update(
+        {
+            "mark": {"type": "line", "point": True, "tooltip": True},
+            "encoding": {
+                "x": {"field": "cycle", "type": "quantitative", "title": "Cycle", "axis": {"format": "d", "tickMinStep": 1}},
+                "y": {"field": y_field, "type": "quantitative", "title": y_title},
+                "color": {"field": "run_label", "type": "nominal", "title": "Run"},
+                "tooltip": [
+                    {"field": "run_id", "type": "nominal", "title": "Run"},
+                    {"field": "cycle", "type": "quantitative", "title": "Cycle"},
+                    {"field": "label", "type": "nominal", "title": "Candidate"},
+                    {"field": y_field, "type": "quantitative", "title": y_title},
+                ],
+            },
+        }
+    )
+    return spec
+
+
 def vega_bar_spec(title: str, rows: list[dict[str, Any]], y_field: str, y_title: str) -> dict[str, Any]:
     spec = vega_base_spec(title, rows, height=190)
     spec.update(
@@ -2035,6 +2061,18 @@ def render_run_explorer(task_id: str) -> str:
         if "net" in metrics:
             row["candidate_net"] = metrics["net"]
         progress_rows.append(row)
+    cycle_progress_rows = []
+    for run in runs:
+        run_id = str(run.get("run_id") or "")
+        run_label = run_id.replace("btc_benchmark-", "")
+        for entry in run.get("cycle_metrics", []):
+            if not isinstance(entry, dict) or entry.get("cycle") is None:
+                continue
+            row = {"run_id": run_id, "run_label": run_label}
+            for key in ("cycle", "label", "net", "net_funding_aware", "net_cost5x", "max_drawdown", "random_pctile", "turnover"):
+                if key in entry:
+                    row[key] = entry[key]
+            cycle_progress_rows.append(row)
     rows = [
         "| Run | Status | Cycles | Runtime | Memory | Candidate Net | W&B |",
         "| --- | --- | --- | --- | --- | --- | --- |",
@@ -2104,6 +2142,8 @@ def render_run_explorer(task_id: str) -> str:
     return f"""## Run Explorer
 
 ### Progress
+
+{vega_container(f"{task_id}-cycle-net", vega_cycle_line_spec("Best candidate net by cycle", [row for row in cycle_progress_rows if "net" in row], "net", "Net"), static_svg_polyline([row for row in cycle_progress_rows if "net" in row], "net", label="Best candidate net by cycle"))}
 
 {vega_container(f"{task_id}-candidate-net", vega_line_spec("Promoted candidate net by run", [row for row in progress_rows if "candidate_net" in row], "candidate_net", "Net"), static_svg_polyline([row for row in progress_rows if "candidate_net" in row], "candidate_net", label="Promoted candidate net by run"))}
 

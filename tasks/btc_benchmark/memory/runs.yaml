@@ -46,6 +46,270 @@ runs:
       - 208.467
       - 265.425
       - 201.284
+    cycle_metrics:
+      - cycle: 1
+        label: ema_168_672_long_cash
+        net: 1.6737
+        net_funding_aware: 1.196
+        net_next_open: 1.6735
+        net_cost5x: 1.1877
+        max_drawdown: -0.4271
+        random_pctile: 0.95
+        turnover: 50.0
+      - cycle: 2
+        label: ema_train_selected_grid_long_cash
+        net: 1.8219
+        net_funding_aware: 1.3235
+        net_next_open: 1.8219
+        net_cost5x: 1.365
+        max_drawdown: -0.3934
+        random_pctile: 0.97
+        turnover: 44.0
+      - cycle: 3
+        label: ema_train_selected_grid_long_cash_cycle3_control
+        net: 1.8219
+        net_funding_aware: 1.3235
+        net_next_open: 1.8219
+        net_cost5x: 1.365
+        max_drawdown: -0.3934
+        random_pctile: 0.97
+        turnover: 44.0
+      - cycle: 4
+        label: ema_train_selected_grid_long_cash_cycle4_control
+        net: 1.8219
+        net_funding_aware: 1.3235
+        net_next_open: 1.8219
+        net_cost5x: 1.365
+        max_drawdown: -0.3934
+        random_pctile: 0.97
+        turnover: 44.0
+      - cycle: 5
+        label: ema_train_selected_grid_long_floor_25
+        net: 1.8651
+        net_funding_aware: 1.3168
+        net_next_open: 1.8644
+        net_cost5x: 1.5072
+        max_drawdown: -0.4633
+        random_pctile: 0.97
+        turnover: 33.25
+      - cycle: 6
+        label: ema_selected_cond_floor25_tail3m_passive_edge
+        net: 2.1765
+        net_funding_aware: 1.5854
+        net_next_open: 2.1765
+        net_cost5x: 1.7327
+        max_drawdown: -0.3699
+        random_pctile: 0.92
+        turnover: 37.5
+      - cycle: 7
+        label: ema_selected_cond_floor25_tail3m_passive_edge_00pct
+        net: 2.1765
+        net_funding_aware: 1.5854
+        net_cost5x: 1.7327
+        max_drawdown: -0.3699
+        random_pctile: 0.92
+        turnover: 37.5
+      - cycle: 8
+        label: ema_selected_cond_floor25_tail3m_passive_edge_05pct
+        net: 2.0753
+        net_funding_aware: 1.505
+        net_next_open: 2.0753
+        net_cost5x: 1.6297
+        max_drawdown: -0.3699
+        random_pctile: 0.96
+        turnover: 39.0
+      - cycle: 9
+        label: ema_selected_cond_floor25_tail3m_passive_edge_05pct_cycle9_helper
+        net: 2.0753
+        net_funding_aware: 1.505
+        net_next_open: 2.0753
+        net_cost5x: 1.6297
+        max_drawdown: -0.3699
+        random_pctile: 0.96
+        turnover: 39.0
+      - cycle: 10
+        label: ema_selected_cond_floor25_tail3m_passive_edge_05pct_promoted
+        net: 2.0753
+        net_funding_aware: 1.505
+        net_next_open: 2.0753
+        net_cost5x: 1.6297
+        max_drawdown: -0.3699
+        random_pctile: 0.96
+        turnover: 39.0
+      - cycle: 11
+        label: ema_selected_cond_floor25_tail3m_passive_edge_0.000_cycle11
+        net: 2.1765
+        net_funding_aware: 1.5854
+        net_next_open: 2.1765
+        net_cost5x: 1.7327
+        max_drawdown: -0.3699
+        random_pctile: 0.92
+        turnover: 37.5
+      - cycle: 12
+        label: ema_selected_cond_floor25_tail3m_passive_edge_000_cycle12
+        net: 2.1765
+        net_funding_aware: 1.5854
+        net_next_open: 2.1765
+        net_cost5x: 1.7327
+        max_drawdown: -0.3699
+        random_pctile: 0.92
+        turnover: 37.5
+      - cycle: 13
+        label: threshold_0.025
+        net: 2.1765
+        net_funding_aware: 1.5854
+        net_next_open: 2.1765
+        net_cost5x: 1.7327
+        max_drawdown: -0.3699
+        random_pctile: 0.92
+        turnover: 37.5
+      - cycle: 14
+        label: expected
+        net: 2.1765
+        net_funding_aware: 1.5854
+        net_next_open: 2.1765
+        net_cost5x: 1.7327
+        max_drawdown: -0.3699
+        random_pctile: 0.92
+        turnover: 37.5
+      - cycle: 15
+        label: expected
+        net: 2.1765
+        net_funding_aware: 1.5854
+        net_next_open: 2.1765
+        net_cost5x: 1.7327
+        max_drawdown: -0.3699
+        random_pctile: 0.92
+        turnover: 37.5
+      - cycle: 16
+        label: promoted_025
+        net: 2.1765
+        random_pctile: 0.92
+        turnover: 37.5
+      - cycle: 17
+        label: candidate_rows_0
+        net: 2.1765
+        random_pctile: 0.92
+        turnover: 37.5
+      - cycle: 18
+        label: expected
+        net: 2.1765
+        net_funding_aware: 1.5854
+        net_next_open: 2.1765
+        net_cost5x: 1.7327
+        max_drawdown: -0.3699
+        random_pctile: 0.92
+        turnover: 37.5
+      - cycle: 19
+        label: ema_selected_cond_floor25_tail3m_passive_edge_025pct_promoted
+        net: 2.1765
+        random_pctile: 0.92
+        turnover: 37.5
+      - cycle: 20
+        label: inherited_strict_gated_evidence
+        net: 2.1765
+        net_funding_aware: 1.5854
+        net_next_open: 2.1765
+        net_cost5x: 1.7327
+        max_drawdown: -0.3699
+        random_pctile: 0.92
+        turnover: 37.5
+      - cycle: 21
+        label: inherited_strict_gated_evidence
+        net: 2.1765
+        net_funding_aware: 1.5854
+        net_cost5x: 1.7327
+        max_drawdown: -0.3699
+        random_pctile: 0.92
+        turnover: 37.5
+      - cycle: 22
+        label: inherited_strict_gated_evidence
+        net: 2.1765
+        net_funding_aware: 1.5854
+        net_cost5x: 1.7327
+        max_drawdown: -0.3699
+        random_pctile: 0.92
+        turnover: 37.5
+      - cycle: 23
+        label: ema_selected_cond_floor25_tail3m_passive_edge_025pct_promoted
+        net: 2.1765
+        net_funding_aware: 1.5854
+        net_next_open: 2.1765
+        net_cost5x: 1.7327
+        max_drawdown: -0.3699
+        random_pctile: 0.92
+        turnover: 37.5
+      - cycle: 24
+        label: ema_selected_cond_floor25_tail3m_passive_edge_025pct_promoted
+        net: 2.1765
+        net_funding_aware: 1.5854
+        net_next_open: 2.1765
+        net_cost5x: 1.7327
+        max_drawdown: -0.3699
+        random_pctile: 0.92
+        turnover: 37.5
+      - cycle: 25
+        label: ema_selected_cond_floor25_tail3m_passive_edge_025pct_promoted
+        net: 2.1765
+        net_funding_aware: 1.5854
+        net_next_open: 2.1765
+        net_cost5x: 1.7327
+        max_drawdown: -0.3699
+        random_pctile: 0.92
+        turnover: 37.5
+      - cycle: 26
+        label: ema_selected_cond_floor25_tail3m_passive_edge_025pct_promoted
+        net: 2.1765
+        net_funding_aware: 1.5854
+        net_next_open: 2.1765
+        net_cost5x: 1.7327
+        max_drawdown: -0.3699
+        random_pctile: 0.92
+        turnover: 37.5
+      - cycle: 27
+        label: ema_selected_cond_floor25_tail3m_passive_edge_025pct_promoted
+        net: 2.1765
+        net_next_open: 2.1765
+        net_cost5x: 1.7327
+        max_drawdown: -0.3699
+        random_pctile: 0.92
+        turnover: 37.5
+      - cycle: 28
+        label: ema_selected_cond_floor25_tail3m_passive_edge_025pct_promoted
+        net: 2.1765
+        net_funding_aware: 1.5854
+        net_next_open: 2.1765
+        net_cost5x: 1.7327
+        max_drawdown: -0.3699
+        random_pctile: 0.92
+        turnover: 37.5
+      - cycle: 29
+        label: ema_selected_cond_floor25_tail3m_passive_edge_025pct_promoted
+        net: 2.1765
+        net_funding_aware: 1.5854
+        net_next_open: 2.1765
+        net_cost5x: 1.7327
+        max_drawdown: -0.3699
+        random_pctile: 0.92
+        turnover: 37.5
+      - cycle: 30
+        label: ema_selected_cond_floor25_tail3m_passive_edge_025pct_promoted
+        net: 2.1765
+        net_funding_aware: 1.5854
+        net_next_open: 2.1765
+        net_cost5x: 1.7327
+        max_drawdown: -0.3699
+        random_pctile: 0.92
+        turnover: 37.5
+      - cycle: 31
+        label: score_reference
+        net: 2.1765
+        net_funding_aware: 1.5854
+        net_next_open: 2.1765
+        net_cost5x: 1.7327
+        max_drawdown: -0.3699
+        random_pctile: 0.92
+        turnover: 37.5
     summary: >
       Promoted a train-only conditional 25% passive-floor EMA candidate and
       found a submission-readiness issue where the strategy existed in the

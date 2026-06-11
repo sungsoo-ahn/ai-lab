@@ -459,6 +459,7 @@ Test a weekly turnover cap.
     assert "Run Explorer" in task_doc
     assert "[run2](#run-run2)" in task_doc
     assert "ai-lab-vega-spec" in task_doc
+    assert "Best candidate net by cycle" in task_doc
     assert "Completed agent cycles by run" in task_doc
 
 
