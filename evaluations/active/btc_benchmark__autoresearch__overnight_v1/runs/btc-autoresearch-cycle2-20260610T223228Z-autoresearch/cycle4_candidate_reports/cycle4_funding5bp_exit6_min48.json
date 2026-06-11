@@ -1,0 +1,252 @@
+{
+  "benchmark_version": "1.0.0",
+  "team": "ai_lab_autoresearch_cycle4_223228",
+  "strategy": "cycle4_funding5bp_exit6_min48",
+  "declared_horizon": 1,
+  "n_folds": 14,
+  "oos_start": "2022-04-01 00:00:00+00:00",
+  "oos_end": "2025-09-30 23:00:00+00:00",
+  "gates": {
+    "scope": "all_folds",
+    "n_folds_gated": 14,
+    "passed": true,
+    "failed_folds": [],
+    "determinism": true,
+    "future_perturbation": true,
+    "future_perturbation_exhaustive": false,
+    "future_perturbation_cutoffs_min": 64,
+    "prefix_invariance": true,
+    "per_fold": [
+      {
+        "fold": 0,
+        "determinism": true,
+        "future_perturbation": true,
+        "future_perturbation_exhaustive": false,
+        "future_perturbation_cutoffs": 64,
+        "prefix_invariance": true,
+        "passed": true,
+        "gate_window": [
+          19704,
+          21888
+        ]
+      },
+      {
+        "fold": 1,
+        "determinism": true,
+        "future_perturbation": true,
+        "future_perturbation_exhaustive": false,
+        "future_perturbation_cutoffs": 65,
+        "prefix_invariance": true,
+        "passed": true,
+        "gate_window": [
+          21888,
+          24096
+        ]
+      },
+      {
+        "fold": 2,
+        "determinism": true,
+        "future_perturbation": true,
+        "future_perturbation_exhaustive": false,
+        "future_perturbation_cutoffs": 65,
+        "prefix_invariance": true,
+        "passed": true,
+        "gate_window": [
+          24096,
+          26304
+        ]
+      },
+      {
+        "fold": 3,
+        "determinism": true,
+        "future_perturbation": true,
+        "future_perturbation_exhaustive": false,
+        "future_perturbation_cutoffs": 65,
+        "prefix_invariance": true,
+        "passed": true,
+        "gate_window": [
+          26304,
+          28464
+        ]
+      },
+      {
+        "fold": 4,
+        "determinism": true,
+        "future_perturbation": true,
+        "future_perturbation_exhaustive": false,
+        "future_perturbation_cutoffs": 64,
+        "prefix_invariance": true,
+        "passed": true,
+        "gate_window": [
+          28464,
+          30648
+        ]
+      },
+      {
+        "fold": 5,
+        "determinism": true,
+        "future_perturbation": true,
+        "future_perturbation_exhaustive": false,
+        "future_perturbation_cutoffs": 65,
+        "prefix_invariance": true,
+        "passed": true,
+        "gate_window": [
+          30648,
+          32856
+        ]
+      },
+      {
+        "fold": 6,
+        "determinism": true,
+        "future_perturbation": true,
+        "future_perturbation_exhaustive": false,
+        "future_perturbation_cutoffs": 65,
+        "prefix_invariance": true,
+        "passed": true,
+        "gate_window": [
+          32856,
+          35064
+        ]
+      },
+      {
+        "fold": 7,
+        "determinism": true,
+        "future_perturbation": true,
+        "future_perturbation_exhaustive": false,
+        "future_perturbation_cutoffs": 64,
+        "prefix_invariance": true,
+        "passed": true,
+        "gate_window": [
+          35064,
+          37248
+        ]
+      },
+      {
+        "fold": 8,
+        "determinism": true,
+        "future_perturbation": true,
+        "future_perturbation_exhaustive": false,
+        "future_perturbation_cutoffs": 64,
+        "prefix_invariance": true,
+        "passed": true,
+        "gate_window": [
+          37248,
+          39432
+        ]
+      },
+      {
+        "fold": 9,
+        "determinism": true,
+        "future_perturbation": true,
+        "future_perturbation_exhaustive": false,
+        "future_perturbation_cutoffs": 65,
+        "prefix_invariance": true,
+        "passed": true,
+        "gate_window": [
+          39432,
+          41640
+        ]
+      },
+      {
+        "fold": 10,
+        "determinism": true,
+        "future_perturbation": true,
+        "future_perturbation_exhaustive": false,
+        "future_perturbation_cutoffs": 65,
+        "prefix_invariance": true,
+        "passed": true,
+        "gate_window": [
+          41640,
+          43848
+        ]
+      },
+      {
+        "fold": 11,
+        "determinism": true,
+        "future_perturbation": true,
+        "future_perturbation_exhaustive": false,
+        "future_perturbation_cutoffs": 65,
+        "prefix_invariance": true,
+        "passed": true,
+        "gate_window": [
+          43848,
+          46008
+        ]
+      },
+      {
+        "fold": 12,
+        "determinism": true,
+        "future_perturbation": true,
+        "future_perturbation_exhaustive": false,
+        "future_perturbation_cutoffs": 64,
+        "prefix_invariance": true,
+        "passed": true,
+        "gate_window": [
+          46008,
+          48192
+        ]
+      },
+      {
+        "fold": 13,
+        "determinism": true,
+        "future_perturbation": true,
+        "future_perturbation_exhaustive": false,
+        "future_perturbation_cutoffs": 65,
+        "prefix_invariance": true,
+        "passed": true,
+        "gate_window": [
+          48192,
+          50400
+        ]
+      }
+    ]
+  },
+  "disqualified": false,
+  "net": 2.7832,
+  "sharpe": 1.277,
+  "sortino": 1.255,
+  "max_drawdown": -0.3144,
+  "profit_factor": 2.144,
+  "n_trades": 102,
+  "turnover": 203.0,
+  "n_trades_runs": 102,
+  "exposure": 0.5757101902528017,
+  "hold_mean": 173.2549019607843,
+  "hold_median": 79.5,
+  "net_cost0x": 3.6349,
+  "net_cost1x": 2.7832,
+  "net_cost2x": 2.0874,
+  "net_cost3x": 1.5191,
+  "net_cost5x": 0.676,
+  "net_next_open": 2.7787,
+  "net_funding_aware": 2.1544,
+  "random_pctile": 1.0,
+  "per_year": {
+    "2022": {
+      "net": -0.2872,
+      "sharpe": -1.199,
+      "dd": -0.3086
+    },
+    "2023": {
+      "net": 1.1192,
+      "sharpe": 2.175,
+      "dd": -0.2281
+    },
+    "2024": {
+      "net": 1.1322,
+      "sharpe": 2.221,
+      "dd": -0.2153
+    },
+    "2025": {
+      "net": 0.1746,
+      "sharpe": 0.956,
+      "dd": -0.1344
+    }
+  },
+  "buy_hold_net": 1.5031,
+  "sealed_holdout_used": false,
+  "delta_vs_always_long": 1.2827,
+  "delta_vs_preflight_ema": 3.65,
+  "drawdown_improvement_vs_always_long": 0.3526,
+  "per_year_abs_net_concentration": 0.4173
+}

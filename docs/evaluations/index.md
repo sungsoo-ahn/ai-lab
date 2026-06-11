@@ -6,20 +6,21 @@ Evaluation cells bind one task to one scientist scheme. The matrix is the main p
 
 | Cell | Task | Scheme | Status | Latest evidence |
 | --- | --- | --- | --- | --- |
-| [BTC Benchmark AutoResearch Overnight v1](btc-benchmark--autoresearch--overnight-v1.md) | BTC Benchmark | AutoResearch | active, cycle 1 synthesized | `btc-overnight-20260610T151519Z-autoresearch`: always-long confirmed as dev-score floor, not a novel alpha. |
+| [BTC Benchmark AutoResearch Overnight v1](btc-benchmark--autoresearch--overnight-v1.md) | BTC Benchmark | AutoResearch | active, cycle 5 synthesized | `btc-autoresearch-cycle2-20260610T223228Z-autoresearch`: participant-style Cycle 4 asset reviewed, parity-checked, and default-gated. |
 | [BTC Benchmark AutoScientist Overnight v1](btc-benchmark--autoscientist--overnight-v1.md) | BTC Benchmark | AutoScientist | active | Ready for direct cell run. |
 | [BTC Benchmark AutoResearch Smoke](btc-benchmark--autoresearch--smoke.md) | BTC Benchmark | AutoResearch | complete | `smoke-20260610` passed. |
 
 ## Latest Matrix Evidence
 
-The latest AutoResearch run completed successfully and is now the strongest BTC Benchmark evidence in the matrix:
+The latest AutoResearch run completed five synthesis cycles successfully and is now the strongest BTC Benchmark evidence in the matrix:
 
-- Run ID: `btc-overnight-20260610T151519Z-autoresearch`.
-- Best confirmed candidate: `candidate_always_long_default_gates`.
-- Confirmed net `1.5005`, Sharpe `0.770`, max drawdown `-0.6670`, turnover `1.0`.
-- The result mostly matches buy-and-hold after one opening cost, so it is a development-score floor rather than an accepted adaptive strategy.
-- Best adaptive follow-up: `candidate_ema_48_192_funding_le_5bp`, with net `0.9021`, max drawdown `-0.4316`, funding-aware net `0.6106`, but weak 5x cost robustness at `-0.2286`.
-- Follow-up proposal: `evaluations/active/btc_benchmark__autoresearch__overnight_v1/proposals/btc_autoresearch_cycle2_buy_hold_relative.md`.
+- Run ID: `btc-autoresearch-cycle2-20260610T223228Z-autoresearch`.
+- Current reviewed raw-net candidate: `cycle4_funding3bp_exit6_min24`.
+- Default-gated net `2.8828`, delta versus always-long `+1.3823`, max drawdown `-0.3364`, turnover `257.0`.
+- Funding-aware net `2.3155`, next-open net `2.8781`, random percentile `1.0`; all 14 fold gates passed with cutoff minimum `433`.
+- Cycle 5 verified exact fold-position parity between the saved participant-style asset and the Cycle 4 run-local implementation.
+- Remaining warnings: cost5x remains weaker than passive always-long, returns are concentrated in 2023-2024, and participant-repo packaging is not yet verified.
+- Follow-up proposal: `evaluations/active/btc_benchmark__autoresearch__overnight_v1/proposals/btc_autoresearch_cycle6_participant_repo_packaging.md`.
 
 ## What A Cell Should Prove
 

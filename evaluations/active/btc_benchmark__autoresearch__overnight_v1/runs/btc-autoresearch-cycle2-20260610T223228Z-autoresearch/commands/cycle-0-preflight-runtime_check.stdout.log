@@ -1,0 +1,12 @@
+profile: btc-benchmark-python
+description: Python imports needed by the BTC Benchmark checkout.
+homebrew: none required by profile
+python_import:numpy:
++ uv run python -c import numpy; print(numpy.__version__ if hasattr(numpy, '__version__') else 'ok')
+2.4.6
+python_import:pandas:
++ uv run python -c import pandas; print(pandas.__version__ if hasattr(pandas, '__version__') else 'ok')
+3.0.3
+python_import:scipy:
++ uv run python -c import scipy; print(scipy.__version__ if hasattr(scipy, '__version__') else 'ok')
+1.17.1

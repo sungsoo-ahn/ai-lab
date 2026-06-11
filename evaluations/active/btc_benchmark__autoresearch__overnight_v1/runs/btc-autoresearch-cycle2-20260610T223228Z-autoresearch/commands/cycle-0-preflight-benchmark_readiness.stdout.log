@@ -1,0 +1,2 @@
+2026-06-11 07:32:36,948 | INFO    | btc_benchmark.benchmark.runner | benchmark ema_baseline_12_48_long_short: sharpe=-0.879 net=-86.7% dq=False
+{"aux_sources": ["funding"], "benchmark_version": "1.0.0", "disqualified": false, "n_candles": 56232, "n_folds": 14, "net": -0.8668, "ok": true, "sharpe": -0.879, "strategy": "ema_baseline_12_48_long_short"}

@@ -1,0 +1,24 @@
+Executed the synthesis run and updated the required outputs.
+
+Cycle 3 found and confirmed `cycle3_ema384_lowvol168_q80_funding5bp_exit6` as the new best development candidate:
+
+- Net `2.6451`, delta vs always-long `+1.1446`
+- Max drawdown `-0.3364`, improvement `+0.3306`
+- Turnover `237.0`, down from Cycle 2 best `567.0`
+- Cost3x `1.2672`, cost5x `0.4089`
+- Funding-aware net `2.0707`, next-open net `2.6407`
+- Passed default gates on all 14 folds
+
+Updated:
+
+- [report.md](/Users/sungs/ai-lab/evaluations/active/btc_benchmark__autoresearch__overnight_v1/report.md)
+- [public brief](/Users/sungs/ai-lab/docs/evaluations/btc-benchmark--autoresearch--overnight-v1.md)
+- [run-summary.md](/Users/sungs/ai-lab/evaluations/active/btc_benchmark__autoresearch__overnight_v1/runs/btc-autoresearch-cycle2-20260610T223228Z-autoresearch/run-summary.md)
+- [Cycle 4 proposal](/Users/sungs/ai-lab/evaluations/active/btc_benchmark__autoresearch__overnight_v1/proposals/btc_autoresearch_cycle4_validate_funding_persistence_overlay.md)
+
+Verification passed:
+
+- `uv run python bin/ai-lab docs audit`
+- `uv run python -m pytest tests/test_metrics.py tests/test_benchmark_contract.py -q` with `21 passed`
+
+The benchmark checkout tracked files were not modified; it still only shows the pre-existing untracked `uv.lock`.

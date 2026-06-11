@@ -1,0 +1,21 @@
+Executed Cycle 5 synthesis and stopped.
+
+Updated:
+- `evaluations/active/btc_benchmark__autoresearch__overnight_v1/report.md`
+- `docs/evaluations/btc-benchmark--autoresearch--overnight-v1.md`
+- `evaluations/active/btc_benchmark__autoresearch__overnight_v1/runs/btc-autoresearch-cycle2-20260610T223228Z-autoresearch/run-summary.md`
+
+Created/preserved:
+- `run_cycle5_participant_asset_review.py`
+- `cycle5_position_parity.json`
+- `cycle5_candidate_reports/*.json`
+- `cycle5_candidate_leaderboard.jsonl`
+- `cycle5_candidate_summary.json`
+- `proposals/btc_autoresearch_cycle6_participant_repo_packaging.md`
+
+Key result: the Cycle 4 participant asset matched the run-local implementation exactly across all 14 folds, `max_abs_diff=0.0`, and reproduced the default-gated report: net `2.8828`, funding-aware net `2.3155`, next-open net `2.8781`, random percentile `1.0`, gates passed.
+
+Verification passed:
+- `uv run python bin/ai-lab docs audit`
+- `uv run python -m pytest tests/test_metrics.py tests/test_benchmark_contract.py -q` with `21 passed`
+- `py_compile` for the participant asset and Cycle 5 script.

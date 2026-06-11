@@ -1,6 +1,6 @@
 # BTC Benchmark
 
-Date: 2026-06-10
+Date: 2026-06-11
 Status: active
 
 ## Summary
@@ -61,9 +61,11 @@ If a cell lacks these artifacts, treat its result as incomplete even if a comman
 
 ## Latest Evidence
 
-The latest AutoResearch overnight run, `btc-overnight-20260610T151519Z-autoresearch`, completed on 2026-06-10 UTC. It confirmed `candidate_always_long_default_gates` at net `1.5005`, Sharpe `0.770`, max drawdown `-0.6670`, and turnover `1.0`.
+The latest AutoResearch overnight run, `btc-autoresearch-cycle2-20260610T223228Z-autoresearch`, completed on 2026-06-10 UTC. It ran five synthesis cycles and promoted `cycle4_funding3bp_exit6_min24` as the reviewed current-best development asset.
 
-Interpret this as the BTC development-score floor rather than a novel strategy: it nearly matches the benchmark buy-and-hold reference after one opening cost and still has severe drawdown and funding drag. The follow-up proposal is to rank Cycle 2 candidates against buy-and-hold-relative evidence such as drawdown reduction, funding-aware net, cost stress, next-open execution, per-year concentration, and random percentile.
+The default-gated report scored net `2.8828`, delta versus always-long `+1.3823`, max drawdown `-0.3364`, turnover `257.0`, funding-aware net `2.3155`, next-open net `2.8781`, random percentile `1.0`, and passed all 14 fold gates. Cycle 5 verified exact fold-position parity between the saved participant-style asset and the Cycle 4 run-local implementation.
+
+Do not treat this as submission-final yet. Passive always-long remains stronger under cost5x, positive returns are concentrated in 2023-2024, and participant-repo packaging is unverified. The next proposal is `btc_autoresearch_cycle6_participant_repo_packaging`.
 
 ## Scientist Components
 

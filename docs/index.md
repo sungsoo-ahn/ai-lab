@@ -32,7 +32,7 @@ The current active task is BTC Benchmark. It is deliberately narrow because the 
 
 ## Current State
 
-The active workspace keeps one benchmark task, reusable scientist schemes, component catalogs, and evaluation cells. BTC Benchmark has paired AutoResearch and AutoScientist cells plus a completed smoke reference cell. Old non-benchmark material, optional integrations, and legacy plot assets were removed from the tracked tree so the repo can act as a cleaner platform baseline.
+The active workspace keeps one benchmark task, reusable scientist schemes, component catalogs, and evaluation cells. BTC Benchmark has an AutoResearch cell with five completed synthesis cycles, an active AutoScientist cell, and a completed smoke reference cell. Old non-benchmark material, optional integrations, and legacy plot assets were removed from the tracked tree so the repo can act as a cleaner platform baseline.
 
 Important current boundaries:
 
