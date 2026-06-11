@@ -1,23 +1,19 @@
 # Research Policy
 
-## Default Output
+AI Lab uses one task-local AI scientist loop.
 
-Research tasks should produce a concise brief with findings, a source map, confidence, open questions, and reusable local notes when appropriate.
+## Evidence
 
-## Source Handling
+Every durable claim should point to canonical task metadata, a source reference, W&B run, or local run directory. Experiment products under `tasks/<task_id>/` are ignored by Git by default.
 
-Prefer primary sources, official documentation, source documents, academic papers, filings, standards, or direct data providers. Use secondary sources for context, discovery, or when primary sources are unavailable.
+## Task Workspaces
 
-When information may have changed recently, verify it against current sources before answering. Record source links or connector references clearly enough that the finding can be checked later.
+Use `tasks/<task_id>/` for task contracts and AI-scientist operating structure. A task workspace owns the task contract, metric, constraints, loop spec, agent instructions, maintained helper scripts, and ignored local experiment workspaces.
 
-## Evidence Quality
+## Changes
 
-Separate facts from inference. Note weak evidence, conflicts between sources, missing dates, or unclear provenance. Avoid turning a single weak source into a strong conclusion.
+Do not weaken task metrics, referee rules, source gates, privacy policy, or approval boundaries silently. If a task definition changes after evidence exists, update the task report and observation log so old evidence remains interpretable.
 
-## Rigid Evaluation Operation
+## External Actions
 
-Unattended or recurring evaluation-cell work should run through a validated `run-spec.yaml`. The run spec must declare source gates, fixed commands, timeouts, artifacts, synthesis behavior, and exit conditions before the loop is started.
-
-## Local Files
-
-Use `tasks/active/` for current task definitions, `schemes/` for reusable schemes, `evaluations/active/` for current task-by-scheme cells, and `meta/active/` for meta-scientist analyses. Add durable, reusable facts to `memory/` only when they are likely to matter again and do not contain secrets.
+External submissions, connector writes, account configuration changes, Docker, Node, credentials, and unlisted OS packages require explicit user approval.

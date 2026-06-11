@@ -1,66 +1,29 @@
 # AI Lab Status
 
-Date: 2026-06-10
+Date: 2026-06-11
 
 ## Current Shape
 
 - Workspace: `/Users/sungs/ai-lab`
+- Operating model: one W&B-observed AI scientist loop per task workspace.
+- Active task: `btc_benchmark`
 - Source registry: `/Users/sungs/ai-lab/sources/sources.yaml`
-- Canonical storage: Markdown and YAML
-- Prompt provenance: exact prompts are local run artifacts under evaluation-cell `runs/<run_id>/prompts/`
-- Generated search index: `memory/index.sqlite`
-- Memory hierarchy: lab -> task -> scheme -> evaluation cell -> work unit -> meta scientist
-- Scientist composition: scheme + skill bundle + research taste + hypotheses + memory
-- Self-evolution policy: work-unit proposals are gated into new evaluation-cell versions
-- Public docs: system guides, task pages, scheme pages, evaluation matrix, and meta page
-- Rigid runner: active evaluation cells define `run-spec.yaml`
+- Repo config: `/Users/sungs/ai-lab/lab.yaml`
+- Public dashboard: `docs/`
+- Memory: `memory/`
+- Raw run output: `tasks/<task_id>/runs/`, ignored by Git.
 
-## Active Tasks
+## Observability
 
-- `btc_benchmark`: frozen BTC 1h benchmark task.
+Normal runs require W&B/Weave and log to `sungsoo-ahn/ai-lab`. Credentials must stay outside Git through `wandb login` or `WANDB_API_KEY`.
 
-## Active Scientist Components
+## Main Commands
 
-- Skill bundle: `btc_benchmark_core_skills_v1`
-- Research taste: `btc_robust_alpha_taste_v1`
-- Seed hypotheses: BTC trend baseline ladder, cost robustness filter, and funding auxiliary signal.
+```bash
+uv run python bin/ai-lab task status btc_benchmark
+uv run python bin/ai-lab task validate --all
+uv run python bin/ai-lab task run btc_benchmark --once --dry-run
+uv run python bin/ai-lab task run btc_benchmark --continuous
+uv run python bin/ai-lab docs audit
+```
 
-## Active Schemes
-
-- `autoresearch`: fixed metric-driven experiment loop.
-- `autoscientist`: parallel research-team scheme with critique and synthesis.
-
-## Active Evaluation Cells
-
-- `btc_benchmark__autoresearch__extended`: ready for a three-hour BTC Benchmark AutoResearch run.
-- `btc_benchmark__autoscientist__extended`: ready for a three-hour BTC Benchmark AutoScientist run.
-
-## Completed Reference Cells
-
-- `btc_benchmark__autoresearch__smoke`: passed run `smoke-20260610`.
-
-## Meta Scientist
-
-- `ai_lab_meta_v1`: analyze-and-propose layer for system improvements.
-
-## User-Facing Entry Points
-
-- `README.md`
-- `docs/index.md`
-- `docs/system/index.md`
-- `docs/tasks/index.md`
-- `docs/schemes/index.md`
-- `docs/evaluations/index.md`
-- `docs/meta/ai-lab-meta-v1.md`
-- `reports/system-status.md`
-- `sources/sources.yaml`
-- `catalog/tasks.yaml`
-- `catalog/scientist-schemes.yaml`
-
-## Operational Notes
-
-- Package/runtime changes follow `policies/update-policy.md` and `policies/evaluation-runtime-policy.md`.
-- Long-running cells may use `research/templates/extended-run-goal.md`, validated `run-spec.yaml` files, allowlisted runtime profiles, and fixed launchers such as `bin/run-btc-extended`.
-- Current allowlisted runtime profile: `btc-benchmark-python`, which checks benchmark Python imports in the source checkout.
-- Connector writes still require explicit approval.
-- Generated indexes can be rebuilt with `bin/ai-lab memory index`.

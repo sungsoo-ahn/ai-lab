@@ -3,8 +3,9 @@ from __future__ import annotations
 import importlib.machinery
 import importlib.util
 import subprocess
-from types import SimpleNamespace
+import sys
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -22,109 +23,205 @@ def load_cli():
     return module
 
 
-def valid_spec() -> dict[str, object]:
+def valid_manifest() -> dict[str, object]:
     return {
-        "schema_version": "ai_lab_cell_run_v1",
-        "cell_id": "demo__autoresearch__v1",
+        "schema_version": "ai_lab_task_v1",
         "task_id": "demo",
-        "scheme_id": "autoresearch",
-        "profile_id": "demo_fixed_loop",
-        "loop": {
-            "mode": "continuous",
-            "sleep_seconds": 0,
-            "max_cycles": 1,
-            "max_wall_minutes": 10,
-            "stop_file": "STOP",
-            "stop_on_no_artifact_change": False,
-        },
-        "source_gates": [
-            {
-                "source_id": "demo_source",
-                "head_policy": "require_registered_ref",
-                "tracked_clean": True,
-                "allow_untracked": ["results/"],
-            }
-        ],
+        "title": "Demo",
+        "status": "active",
+        "goal": "Find a useful observation.",
+        "metric": {"name": "score", "direction": "maximize"},
+        "observability": {"provider": "wandb_weave", "required": True},
+    }
+
+
+def valid_loop() -> dict[str, object]:
+    return {
+        "schema_version": "ai_lab_loop_v1",
+        "task_id": "demo",
+        "loop": {"mode": "continuous", "sleep_seconds": 0, "max_cycles": 1, "max_wall_minutes": 10},
+        "source_gates": [],
         "commands": {
-            "preflight": [{"id": "status", "builtin": "source_status", "args": ["demo_source"]}],
-            "cycle": [
-                {
-                    "id": "echo",
-                    "cwd": "{root}",
-                    "argv": ["python", "-c", "print('{run_id}', '{cycle}', '{cell_id}', '{scheme_id}')"],
-                    "timeout_seconds": 30,
-                    "artifacts": ["results/**"],
-                }
-            ],
-            "synthesis": [{"id": "synthesis", "builtin": "synthesize", "timeout_seconds": 30}],
+            "preflight": [{"id": "echo", "argv": ["python", "-c", "print('{run_id}', '{cycle}', '{task_id}')"]}],
+            "cycle": [],
+            "agent": [{"id": "agent", "builtin": "ai_scientist", "timeout_seconds": 30}],
         },
     }
 
 
-def cell_spec_path(tmp_path: Path) -> Path:
-    path = tmp_path / "evaluations" / "active" / "demo__autoresearch__v1" / "run-spec.yaml"
-    path.parent.mkdir(parents=True)
-    (path.parent / "evaluation-cell.yaml").write_text(
-        """cell_id: demo__autoresearch__v1
+def write_task(root: Path, task_id: str = "demo") -> Path:
+    task = root / task_id
+    task.mkdir(parents=True)
+    (task / "README.md").write_text("# Demo\n", encoding="utf-8")
+    (task / "task.yaml").write_text(
+        """schema_version: ai_lab_task_v1
 task_id: demo
-scheme_id: autoresearch
+title: Demo
 status: active
+goal: Find a useful observation.
+metric:
+  name: score
+  direction: maximize
+observability:
+  provider: wandb_weave
+  required: true
 """,
         encoding="utf-8",
     )
-    return path
+    (task / "loop.yaml").write_text(
+        """schema_version: ai_lab_loop_v1
+task_id: demo
+loop:
+  mode: continuous
+  sleep_seconds: 0
+  max_cycles: 1
+  max_wall_minutes: 10
+source_gates: []
+commands:
+  preflight:
+    - id: echo
+      argv:
+        - python
+        - -c
+        - print('ok')
+  cycle: []
+  agent: []
+""",
+        encoding="utf-8",
+    )
+    (task / "scientist.md").write_text("# Scientist\n", encoding="utf-8")
+    reports = task / "reports"
+    reports.mkdir()
+    (reports / "current.md").write_text("# Current\n", encoding="utf-8")
+    (reports / "observations.md").write_text("# Observations\n", encoding="utf-8")
+    return task
 
 
-def test_run_spec_validation_accepts_valid_cell_shape(tmp_path: Path) -> None:
+def write_lab_config(path: Path) -> None:
+    path.write_text(
+        """schema_version: ai_lab_config_v1
+observability:
+  provider: wandb_weave
+  entity: sungsoo-ahn
+  project: ai-lab
+  required: true
+  payload: full_trace
+""",
+        encoding="utf-8",
+    )
+
+
+def test_task_manifest_validation_accepts_current_shape() -> None:
     cli = load_cli()
-    assert cli.validate_run_spec(valid_spec(), path=cell_spec_path(tmp_path)) == []
+    assert cli.validate_task_manifest("demo", valid_manifest()) == []
 
 
-def test_run_spec_validation_rejects_old_scientist_shape(tmp_path: Path) -> None:
+def test_loop_validation_rejects_unknown_placeholder() -> None:
     cli = load_cli()
-    spec = {
-        "schema_version": "ai_lab_scientist_run_v1",
-        "task_id": "demo",
-        "scientist_id": "demo_scientist",
-        "profile_id": "demo_fixed_loop",
-        "loop": {"mode": "continuous"},
-        "source_gates": [],
-        "commands": {"preflight": [], "cycle": [], "synthesis": []},
-    }
-    issues = cli.validate_run_spec(spec, path=cell_spec_path(tmp_path))
-    assert any("ai_lab_cell_run_v1" in issue for issue in issues)
-    assert any("scientist_id is obsolete" in issue for issue in issues)
-    assert any("cell_id must be a non-empty string" in issue for issue in issues)
-
-
-def test_run_spec_validation_rejects_ambiguous_command_and_unknown_placeholder(tmp_path: Path) -> None:
-    cli = load_cli()
-    spec = valid_spec()
+    spec = valid_loop()
     commands = spec["commands"]
     assert isinstance(commands, dict)
-    commands["cycle"] = [
-        {
-            "id": "bad",
-            "argv": ["echo", "{unsupported}"],
-            "builtin": "source_status",
-        }
-    ]
-    issues = cli.validate_run_spec(spec, path=cell_spec_path(tmp_path))
-    assert any("exactly one of argv, script, or builtin" in issue for issue in issues)
-    assert any("{unsupported}" in issue for issue in issues)
+    commands["preflight"] = [{"id": "bad", "argv": ["echo", "{cell_id}"]}]
+    issues = cli.validate_loop_spec("demo", spec)
+    assert any("{cell_id}" in issue for issue in issues)
 
 
-def test_active_cell_ids_discovers_active_cells(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_active_task_ids_discovers_active_tasks(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     cli = load_cli()
-    root = tmp_path / "evaluations" / "active"
-    active = root / "demo__autoresearch__v1"
-    inactive = root / "demo__autoscientist__v1"
-    active.mkdir(parents=True)
+    root = tmp_path / "tasks"
+    write_task(root)
+    inactive = root / "inactive"
     inactive.mkdir()
-    (active / "evaluation-cell.yaml").write_text("status: active\n", encoding="utf-8")
-    (inactive / "evaluation-cell.yaml").write_text("status: inactive\n", encoding="utf-8")
-    monkeypatch.setattr(cli, "EVALUATIONS", root)
-    assert cli.active_cell_ids() == ["demo__autoresearch__v1"]
+    (inactive / "task.yaml").write_text("status: inactive\n", encoding="utf-8")
+    monkeypatch.setattr(cli, "TASKS", root)
+    assert cli.active_task_ids() == ["demo"]
+
+
+def test_task_run_dry_run_skips_wandb_and_commands(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
+    cli = load_cli()
+    tasks = tmp_path / "tasks"
+    write_task(tasks)
+    config = tmp_path / "lab.yaml"
+    write_lab_config(config)
+    monkeypatch.setattr(cli, "TASKS", tasks)
+    monkeypatch.setattr(cli, "CONFIG", config)
+    cli.cmd_task_run(
+        SimpleNamespace(
+            task_id="demo",
+            once=True,
+            continuous=False,
+            dry_run=True,
+            run_id="dry",
+            max_cycles=None,
+            no_wandb=False,
+        )
+    )
+    out = capsys.readouterr().out
+    assert "dry_run: demo run_id=dry" in out
+    assert "[preflight] echo" in out
+    assert not (tasks / "demo" / "runs" / "dry").exists()
+
+
+def test_observability_requires_credentials_for_normal_runs(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    cli = load_cli()
+    config = tmp_path / "lab.yaml"
+    write_lab_config(config)
+    monkeypatch.setattr(cli, "CONFIG", config)
+    monkeypatch.delenv("WANDB_API_KEY", raising=False)
+    obs = cli.Observability("demo", "run", dry_run=False)
+    monkeypatch.setattr(obs, "_has_credentials", lambda: False)
+    with pytest.raises(SystemExit) as exc:
+        obs.start({"task_id": "demo"})
+    assert "W&B observability is required" in str(exc.value)
+
+
+def test_observability_logs_to_mocked_wandb_and_weave(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    cli = load_cli()
+    config = tmp_path / "lab.yaml"
+    write_lab_config(config)
+    monkeypatch.setattr(cli, "CONFIG", config)
+    monkeypatch.setenv("WANDB_API_KEY", "test-key")
+    logged: list[dict[str, object]] = []
+    weave_calls: list[dict[str, object]] = []
+
+    class FakeRun:
+        url = "https://wandb.ai/sungsoo-ahn/ai-lab/runs/test"
+
+        def log(self, payload: dict[str, object]) -> None:
+            logged.append(payload)
+
+        def finish(self, exit_code: int = 0) -> None:
+            logged.append({"finish": exit_code})
+
+    fake_wandb = SimpleNamespace(init=lambda **_kwargs: FakeRun())
+
+    def fake_op(name: str):
+        def decorator(fn):
+            def wrapped(event):
+                weave_calls.append(event)
+                return fn(event)
+
+            return wrapped
+
+        return decorator
+
+    fake_weave = SimpleNamespace(init=lambda _project: None, op=fake_op)
+    monkeypatch.setitem(sys.modules, "wandb", fake_wandb)
+    monkeypatch.setitem(sys.modules, "weave", fake_weave)
+
+    obs = cli.Observability("demo", "run", dry_run=False)
+    obs.start({"task_id": "demo"})
+    obs.log({"event": "command_start", "command_id": "x"})
+    obs.finish("completed")
+
+    assert obs.url.endswith("/runs/test")
+    assert any(
+        item.get("event_payload", {}).get("event") == "command_start"
+        for item in logged
+        if isinstance(item.get("event_payload"), dict)
+    )
+    assert any(item.get("event") == "command_start" for item in weave_calls)
+    assert {"finish": 0} in logged
 
 
 def test_source_gate_rejects_disallowed_untracked_path(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -180,86 +277,119 @@ def test_run_command_respects_elapsed_wall_deadline(tmp_path: Path) -> None:
     run_dir = tmp_path / "run"
     run_dir.mkdir()
     context = {
-        "cell_id": "demo__autoresearch__v1",
         "task_id": "demo",
-        "scheme_id": "autoresearch",
         "run_id": "deadline-test",
         "cycle": "1",
         "run_dir": str(run_dir),
-        "cell_dir": str(tmp_path),
+        "task_dir": str(tmp_path),
         "root": str(ROOT),
     }
+    obs = cli.Observability("demo", "deadline-test", dry_run=True)
     code = cli.run_command(
         {"id": "late", "argv": ["python", "-c", "print('should not run')"]},
         group="cycle",
         context=context,
         run_dir=run_dir,
         dry_run=False,
+        observability=obs,
         deadline_epoch=0,
     )
     assert code == 124
     assert "command_skipped" in (run_dir / "events.jsonl").read_text(encoding="utf-8")
 
 
+def test_docs_audit_accepts_minimal_task_dashboard(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    cli = load_cli()
+    docs = tmp_path / "docs"
+    (docs / "task").mkdir(parents=True)
+    (docs / "index.md").write_text("[Task](task/demo.md)\n", encoding="utf-8")
+    (docs / "task" / "demo.md").write_text("# Demo\n", encoding="utf-8")
+    tasks = tmp_path / "tasks"
+    write_task(tasks)
+    config = tmp_path / "lab.yaml"
+    write_lab_config(config)
+    monkeypatch.setattr(cli, "DOCS", docs)
+    monkeypatch.setattr(cli, "TASKS", tasks)
+    monkeypatch.setattr(cli, "CONFIG", config)
+    issues: list[str] = []
+    cli.check_docs_links(issues)
+    cli.check_task_docs(issues)
+    assert issues == []
+
+
+def test_docs_sync_generates_task_interfaces(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    cli = load_cli()
+    docs = tmp_path / "docs"
+    tasks = tmp_path / "tasks"
+    write_task(tasks)
+    config = tmp_path / "lab.yaml"
+    write_lab_config(config)
+    monkeypatch.setattr(cli, "DOCS", docs)
+    monkeypatch.setattr(cli, "TASKS", tasks)
+    monkeypatch.setattr(cli, "CONFIG", config)
+
+    cli.cmd_docs_sync(SimpleNamespace(check=False))
+
+    assert "Generated by" in (docs / "index.md").read_text(encoding="utf-8")
+    assert "| [Demo](task/demo.md) | `demo` | `score`, maximize | active |" in (docs / "index.md").read_text(encoding="utf-8")
+    assert "No experiment code" in (docs / "task" / "demo.md").read_text(encoding="utf-8")
+    assert "Experiment products are local logs" in (tasks / "demo" / "README.md").read_text(encoding="utf-8")
+
+
+def test_docs_sync_check_detects_drift(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    cli = load_cli()
+    docs = tmp_path / "docs"
+    tasks = tmp_path / "tasks"
+    write_task(tasks)
+    config = tmp_path / "lab.yaml"
+    write_lab_config(config)
+    monkeypatch.setattr(cli, "DOCS", docs)
+    monkeypatch.setattr(cli, "TASKS", tasks)
+    monkeypatch.setattr(cli, "CONFIG", config)
+
+    cli.cmd_docs_sync(SimpleNamespace(check=False))
+    cli.cmd_docs_sync(SimpleNamespace(check=True))
+    (docs / "index.md").write_text("# stale\n", encoding="utf-8")
+    with pytest.raises(SystemExit):
+        cli.cmd_docs_sync(SimpleNamespace(check=True))
+
+
+def test_task_docs_do_not_require_ignored_reports(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    cli = load_cli()
+    docs = tmp_path / "docs"
+    tasks = tmp_path / "tasks"
+    task = write_task(tasks)
+    for path in (task / "reports").glob("*"):
+        path.unlink()
+    (docs / "task").mkdir(parents=True)
+    (docs / "task" / "demo.md").write_text("# Demo\n", encoding="utf-8")
+    config = tmp_path / "lab.yaml"
+    write_lab_config(config)
+    monkeypatch.setattr(cli, "DOCS", docs)
+    monkeypatch.setattr(cli, "TASKS", tasks)
+    monkeypatch.setattr(cli, "CONFIG", config)
+
+    issues: list[str] = []
+    cli.check_task_docs(issues)
+    assert issues == []
+
+
+def test_task_experiment_paths_are_ignored_except_placeholders() -> None:
+    ignored_paths = ["tasks/demo/code/output.py", "tasks/demo/results/result.json", "tasks/demo/runs/run/events.jsonl"]
+    ignored_results = [
+        subprocess.run(["git", "check-ignore", "-q", path], cwd=ROOT, check=False).returncode
+        for path in ignored_paths
+    ]
+    keep = subprocess.run(
+        ["git", "check-ignore", "-q", "tasks/demo/code/.gitkeep"],
+        cwd=ROOT,
+        check=False,
+    )
+    assert ignored_results == [0, 0, 0]
+    assert keep.returncode == 1
+
+
 def test_codex_lab_wrapper_uses_exec_for_noninteractive_synthesis() -> None:
     text = (ROOT / "bin" / "codex-lab").read_text(encoding="utf-8")
     assert "codex --cd \"$HOME\" --ask-for-approval never" in text
     assert "codex exec -c approval_policy='never'" in text
-
-
-def test_runtime_check_skips_brew_for_python_only_profile(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    cli = load_cli()
-    monkeypatch.setattr(
-        cli,
-        "RUNTIME_PROFILES",
-        {
-            "python-only": {
-                "homebrew": [],
-                "python_imports": ["numpy"],
-                "description": "Python-only test profile.",
-            }
-        },
-    )
-
-    def fail_run_print(*_args: object, **_kwargs: object) -> None:
-        raise AssertionError("python-only runtime profile should not check the Brewfile")
-
-    def fake_run_capture(*_args: object, **_kwargs: object) -> subprocess.CompletedProcess[str]:
-        return subprocess.CompletedProcess(args=[], returncode=0, stdout="ok\n", stderr="")
-
-    monkeypatch.setattr(cli, "run_print", fail_run_print)
-    monkeypatch.setattr(cli, "run_capture", fake_run_capture)
-
-    cli.cmd_runtime_check(SimpleNamespace(profile="python-only", repo=str(tmp_path)))
-
-
-def test_public_terminology_audit_rejects_manual_language(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    cli = load_cli()
-    docs = tmp_path / "docs"
-    docs.mkdir()
-    (docs / "index.md").write_text("# Scientist Manual\n", encoding="utf-8")
-    (tmp_path / "README.md").write_text("# README\n", encoding="utf-8")
-    (tmp_path / "mkdocs.yml").write_text("site_name: AI Lab\n", encoding="utf-8")
-    templates = tmp_path / "research" / "templates"
-    templates.mkdir(parents=True)
-    monkeypatch.setattr(cli, "ROOT", tmp_path)
-    monkeypatch.setattr(cli, "DOCS", docs)
-    issues: list[str] = []
-    cli.check_public_terminology(issues)
-    assert any("Scientist Manual" in issue for issue in issues)
-
-
-def test_docs_audit_rejects_old_active_scientist_paths(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    cli = load_cli()
-    docs = tmp_path / "docs"
-    docs.mkdir()
-    (docs / "index.md").write_text("See tasks/active/demo/scientists/old/report.md\n", encoding="utf-8")
-    monkeypatch.setattr(cli, "ROOT", tmp_path)
-    monkeypatch.setattr(cli, "DOCS", docs)
-    monkeypatch.setattr(cli, "TASKS", tmp_path / "tasks" / "active")
-    monkeypatch.setattr(cli, "SCHEMES", tmp_path / "schemes")
-    monkeypatch.setattr(cli, "EVALUATIONS", tmp_path / "evaluations" / "active")
-    monkeypatch.setattr(cli, "META", tmp_path / "meta" / "active")
-    issues: list[str] = []
-    cli.check_matrix_docs(issues)
-    assert any("old task-nested scientist path" in issue for issue in issues)

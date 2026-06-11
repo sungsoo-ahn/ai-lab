@@ -1,38 +1,16 @@
-# Evaluation Runtime Policy
+# Runtime Policy
 
-This policy covers runtime support packages that are not Python dependencies but are required for evaluation-cell code to execute correctly.
+This policy covers runtime support packages and environment checks needed by task-local AI scientist loops.
 
-## Default
+## Python Dependencies
 
-Runtime changes follow `policies/update-policy.md`. Do not silently install OS packages during ordinary interactive work.
+When the user explicitly authorizes a run or dependency change, agents may use local or inherited `uv` workflows such as `uv sync`, `uv add`, and `uv run`.
 
-## Long-Running Runtime Exception
+## OS Packages
 
-When the user explicitly authorizes an long-running evaluation-cell run with automatic dependency setup, agents may install allowlisted runtime support packages without pausing, subject to all of these limits:
+Only allowlisted runtime support may be installed without a new approval. Docker, Node, connector integrations, credentials, shell configuration, account configuration, and unlisted OS packages require explicit approval.
 
-- the package must be listed in `Brewfile`;
-- the package must be required by a concrete evaluation cell or work unit;
-- the package must be a runtime library or CLI support dependency, not a broad platform such as Docker, Node, a database server, or a credentialed service;
-- the command must be manifest-backed, normally `brew bundle --file /Users/sungs/ai-lab/Brewfile --no-upgrade`;
-- the exact command, package, reason, and verification result must be recorded in the cell or work-unit report;
-- failures must be recorded and should not be hidden by switching evaluation rules.
+## Evidence
 
-The active approved runtime profile is `btc-benchmark-python`, which checks the Python imports needed by the BTC Benchmark checkout. It does not require Homebrew packages, so its runtime check should not fail merely because the broader workstation `Brewfile` baseline has unmet optional tools.
+Record runtime changes and verification results in the relevant task report or run summary. Do not hide dependency drift in raw logs only.
 
-## Helper Command
-
-Check the runtime state:
-
-```sh
-bin/ai-lab runtime check btc-benchmark-python --repo sources/checkouts/btc_benchmark
-```
-
-Ensure the runtime state inside an approved extended run:
-
-```sh
-bin/ai-lab runtime ensure btc-benchmark-python --repo sources/checkouts/btc_benchmark
-```
-
-## Still Requires Explicit Approval
-
-Connector writes, account configuration, shell startup edits, credentials, Docker, Node, browser drivers, kernels, and external submissions still require explicit approval every time.

@@ -1,5 +1,5 @@
 site_name: AI Lab
-site_description: Static AI Lab guides, task pages, scientist scheme pages, evaluation matrix briefs, and meta-scientist notes.
+site_description: W&B-observed local AI scientist workspace.
 site_url: https://sungsoo-ahn.github.io/ai-lab/
 repo_url: https://github.com/sungsoo-ahn/ai-lab
 
@@ -19,9 +19,6 @@ theme:
 plugins:
   - search
 
-not_in_nav: |
-  evaluations/*/work-units/*.md
-
 markdown_extensions:
   - admonition
   - attr_list
@@ -29,45 +26,16 @@ markdown_extensions:
   - pymdownx.details
   - pymdownx.highlight
   - pymdownx.inlinehilite
-  - pymdownx.superfences:
-      custom_fences:
-        - name: mermaid
-          class: mermaid
-          format: !!python/name:pymdownx.superfences.fence_code_format
-
-extra_javascript:
-  - https://cdn.jsdelivr.net/npm/vega@5
-  - https://cdn.jsdelivr.net/npm/vega-lite@5
-  - https://cdn.jsdelivr.net/npm/vega-embed@6
-  - assets/vega-embed.js
+  - pymdownx.superfences
 
 extra_css:
   - assets/extra.css
 
 nav:
-  - Home: index.md
-  - System Guide:
-      - Overview: system/index.md
-      - Architecture: system/architecture.md
-      - Prompt Provenance: system/prompt-provenance.md
-      - Maintenance: system/maintenance.md
-      - Documentation Standards: system/documentation-standards.md
-  - Tasks:
-      - Overview: tasks/index.md
-      - BTC Benchmark: tasks/btc-benchmark.md
-  - Scientist Schemes:
-      - Overview: schemes/index.md
-      - AutoResearch: schemes/autoresearch.md
-      - AutoScientist: schemes/autoscientist.md
-  - Evaluation Matrix:
-      - Overview: evaluations/index.md
-      - BTC Benchmark Extended Runbook: evaluations/btc-benchmark-extended-runbook.md
-      - BTC Benchmark AutoResearch Extended: evaluations/btc-benchmark--autoresearch--extended.md
-      - BTC Benchmark AutoScientist Extended: evaluations/btc-benchmark--autoscientist--extended.md
-      - BTC Benchmark AutoResearch Smoke: evaluations/btc-benchmark--autoresearch--smoke.md
-  - Meta Scientist:
-      - AI Lab Meta v1: meta/ai-lab-meta-v1.md
-  - Reference:
-      - Audience And Terminology: reference/audience-and-terminology.md
-      - Scientist Components: reference/scientist-components.md
-      - Comparable Systems: reference/comparable-systems.md
+  - Dashboard: index.md
+  - BTC Benchmark: task/btc-benchmark.md
+  - Scientist Loop: system/scientist-loop.md
+  - W&B Observability: system/observability.md
+  - Memory And Sources: system/memory-and-sources.md
+  - Maintenance: system/maintenance.md
+

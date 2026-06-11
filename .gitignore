@@ -2,7 +2,6 @@
 .DS_Store
 *.tmp
 *.log
-!evaluations/active/**/runs/**/commands/*.log
 .env
 *.env
 
@@ -14,12 +13,39 @@ __pycache__/
 
 # Generated memory/search indexes
 memory/*.sqlite
-research/active/*/state/*.sqlite
 site/
 
 # Keep raw private exports and bulky generated artifacts out of the audit repo.
-inbox/raw/
-inbox/repos/
-sources/checkouts/
-research/active/tmp/
-research/active/*-raw/
+inbox/raw/**
+!inbox/raw/
+!inbox/raw/.gitkeep
+inbox/repos/**
+!inbox/repos/
+!inbox/repos/.gitkeep
+sources/checkouts/**
+!sources/checkouts/
+!sources/checkouts/.gitkeep
+
+# Task definitions and scaffold are tracked; experiment products are local logs.
+tasks/*/assets/**
+!tasks/*/assets/
+!tasks/*/assets/.gitkeep
+tasks/*/code/**
+!tasks/*/code/
+!tasks/*/code/.gitkeep
+tasks/*/plots/**
+!tasks/*/plots/
+!tasks/*/plots/.gitkeep
+tasks/*/reports/**
+!tasks/*/reports/
+!tasks/*/reports/.gitkeep
+tasks/*/results/**
+!tasks/*/results/
+!tasks/*/results/.gitkeep
+!tasks/*/results/curated/
+!tasks/*/results/curated/.gitkeep
+tasks/*/runs/**
+!tasks/*/runs/
+!tasks/*/runs/.gitkeep
+tasks/*/tmp/
+tasks/*/*-raw/

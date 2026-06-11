@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+set -u
+
+cd "$(dirname "$0")/../../.."
+
+run_id="${1:-btc-benchmark-$(date -u +%Y%m%dT%H%M%SZ)}"
+log_dir="logs/extended"
+mkdir -p "$log_dir"
+
+run_dir="tasks/btc_benchmark/runs/${run_id}"
+launcher_log="${log_dir}/${run_id}.log"
+
+echo "Launching BTC Benchmark AI scientist run."
+echo "Run: ${run_id}"
+echo "Launcher log: ${launcher_log}"
+echo "Run dir: ${run_dir}"
+
+uv run python bin/ai-lab task run btc_benchmark \
+  --continuous \
+  --run-id "$run_id" \
+  > "$launcher_log" 2>&1 &
+pid=$!
+
+status=0
+wait "$pid" || status=$?
+
+echo "Status: ${status}"
+
+if [ "$status" -ne 0 ]; then
+  echo "BTC Benchmark AI scientist run failed."
+  echo "  launcher: ${launcher_log}"
+  echo "  events: ${run_dir}/events.jsonl"
+  echo "  commands: ${run_dir}/commands/"
+  echo "  summary: ${run_dir}/run-summary.md"
+  exit 1
+fi
+
+echo "BTC Benchmark AI scientist run completed."

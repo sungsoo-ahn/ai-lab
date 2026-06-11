@@ -1,7 +1,7 @@
 #!/bin/sh
 set -eu
 
-prompt="Use the account agent setup. Read ~/AGENTS.md and continue from ~/ai-lab."
+prompt="Use the account agent setup. Read ~/ai-lab/policies/development-policy.md and continue from ~/ai-lab."
 
 if [ "$#" -gt 0 ]; then
   prompt="$prompt $*"

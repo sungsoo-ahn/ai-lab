@@ -1,127 +1,62 @@
-# AI Lab Workspace
+# AI Lab
 
-This directory is the local-first workspace for developing reusable AI scientist schemes and comparing them across tasks.
+AI Lab is a local-first workspace for one reusable AI scientist loop.
 
-An AI scientist scheme is a reusable orchestration pattern for agents. An evaluation cell applies one scheme to one task, owns the task-specific metric and run records, and preserves evidence through work units.
+The loop is simple: for a task with a declared metric, an AI agent repeatedly proposes a bounded experiment or audit, runs it, preserves local evidence, and updates canonical task metadata only when the task definition or operating structure changes. The goal is not to compare scientist designs. The goal is to make important observations while keeping enough human-facing state for intervention and review.
 
-The public GitHub Pages site is built with MkDocs Material from `docs/`. It is a static set of system guides, task pages, scientist scheme pages, evaluation-matrix briefs, and meta-scientist notes.
+## Current Shape
 
-## Layout
+- `lab.yaml`: repo-wide defaults, including W&B/Weave observability.
+- `tasks/<task_id>/`: task workspaces with task contract, loop spec, agent instructions, task-local helper scripts, and ignored experiment workspaces.
+- `memory/`: durable non-sensitive preferences, source references, and system memory.
+- `sources/`: source registry plus ignored external checkouts.
+- `policies/`: privacy, connector, runtime, and development boundaries.
+- `docs/`: MkDocs dashboard for humans.
+- `bin/ai-lab`: small helper for task runs, validation, source checks, memory, and docs audit.
 
-- `catalog/`: broad task descriptions and reusable scientist scheme descriptions.
-- `catalog/skill-bundles.yaml`: reusable domain, execution, evaluation, and synthesis capabilities.
-- `catalog/research-tastes.yaml`: scientist prioritization and judgment profiles.
-- `catalog/hypotheses.yaml`: task-specific falsifiable claims under consideration.
-- `tasks/active/`: active task definitions only.
-- `schemes/`: reusable AI scientist scheme definitions.
-- `evaluations/active/`: active task-by-scheme evaluation cells.
-- `meta/active/`: meta-AI scientists that analyze the overall lab.
-- `research/templates/`: reusable Markdown/YAML templates.
-- `sources/`: source registry plus ignored shared code checkouts.
-- `memory/`: durable system memory, source indexes, and history.
-- `policies/`: operating rules for research, privacy, connectors, packages, and approvals.
-- `logs/`: local activity notes.
-- `docs/`: MkDocs public documentation.
-- `reports/system-status.md`: current system status.
-- `bin/ai-lab`: canonical AI Lab helper.
+The first active task is `btc_benchmark`.
 
-## Layer Model
+## W&B Observability
 
-1. Lab: shared catalogs, policies, memory, logs, and scheme knowledge.
-2. Task: a broad, under-specified challenge or dataset family.
-3. Scheme: a reusable AI scientist orchestration pattern.
-4. Skill bundle: reusable capabilities a scientist may use.
-5. Research taste: prioritization and judgment policy for evidence and hypotheses.
-6. Hypothesis: a task-specific falsifiable claim under test.
-7. Evaluation cell: one task-by-scheme application with a concrete metric, scientist composition, run spec, constraints, and evidence.
-8. Work unit: a minimal context for one method, ablation, audit, observation, proxy, synthesis, or infrastructure pass.
-9. Meta scientist: an analysis/proposal layer for improving the overall lab system.
+Normal AI scientist runs require W&B/Weave and log full run traces to `sungsoo-ahn/ai-lab`. Configure credentials outside Git:
 
-## Self-Evolution
+```bash
+wandb login
+# or
+export WANDB_API_KEY=...
+```
 
-Work units can propose changes to a cell's target metric, constraints, scheme usage, or next iteration. Accepted proposals are applied by creating a new evaluation-cell version; current cell metrics are not silently mutated in place.
+Dry runs and tests can opt out explicitly:
 
-The meta scientist can analyze the overall matrix and write proposals, but it does not mutate tasks, schemes, cells, metrics, or run specs automatically.
+```bash
+AI_LAB_DISABLE_WANDB=1 uv run python bin/ai-lab task run btc_benchmark --once --no-wandb
+```
 
 ## Common Commands
 
-```sh
-bin/ai-lab task status btc_benchmark
-bin/ai-lab scheme list
-bin/ai-lab meta status
-uv run python bin/ai-lab cell run-spec validate --all
-uv run python bin/ai-lab cell run-all --continuous --dry-run
-bin/ai-lab work-unit status <cell_id> <work_unit_id>
-bin/ai-lab source status btc_benchmark
-bin/ai-lab docs audit
-bin/run-btc-extended
-bin/ai-lab memory index
-bin/ai-lab memory search btc
-bin/ai-lab memory audit
+```bash
+uv run python bin/ai-lab task status btc_benchmark
+uv run python bin/ai-lab task validate --all
+uv run python bin/ai-lab task run btc_benchmark --once --dry-run
+uv run python bin/ai-lab task run btc_benchmark --continuous
+uv run python bin/ai-lab source status btc_benchmark
+uv run python bin/ai-lab memory search btc
+uv run python bin/ai-lab docs sync
+uv run python bin/ai-lab docs audit
 ```
 
-## Starting Codex
+## Documentation
 
-Use `codex-lab` to start a new session with the account AI Lab prompt and `/Users/sungs` as the working root.
+Preview the dashboard:
 
-```sh
-codex-lab 'Use AI Lab to continue the evaluation matrix.'
-```
-
-## Documentation Site
-
-The site is static and deploys to GitHub Pages from the `main` branch.
-
-Install and preview with `uv`:
-
-```sh
+```bash
 uv run --with-requirements requirements.txt mkdocs serve
 ```
 
-Build locally:
+Build it:
 
-```sh
-bin/ai-lab docs audit
-uv run --with-requirements requirements.txt mkdocs build
+```bash
+uv run --with-requirements requirements.txt mkdocs build --strict
 ```
 
-Fallback without `uv`:
-
-```sh
-python3 -m venv .venv
-source .venv/bin/activate
-python3 -m pip install -r requirements.txt
-mkdocs serve
-```
-
-Deployment uses `.github/workflows/pages.yml`. Push to `main`, then enable GitHub Pages with GitHub Actions as the source if it is not already enabled.
-
-To add or update public documentation, edit the relevant system guide, task page, scheme page, evaluation cell brief, work-unit brief, or meta page under `docs/`. Exact LLM prompts live under evaluation-cell run directories, not under `docs/`.
-
-## Extended Run Automation
-
-For extended evaluation work, start from `research/templates/extended-run-goal.md` and keep run-specific details in the cell `runs/` directory. Authorized long runs may install missing Python dependencies through local `uv` workflows and may use allowlisted runtime profiles such as `btc-benchmark-python`.
-
-For rigid unattended operation, every active evaluation cell should define `run-spec.yaml`. The run spec is the machine-readable contract for source gates, fixed preflight commands, fixed cycle commands, synthesis commands, timeouts, artifacts, and exit conditions. Validate and dry-run specs before running them:
-
-```sh
-uv run python bin/ai-lab cell run-spec validate --all
-uv run python bin/ai-lab cell run-all --dry-run --once
-```
-
-The BTC benchmark AutoResearch extended run has a fixed launcher bounded by a 180-minute run spec with up to five synthesis cycles:
-
-```sh
-bin/run-btc-extended
-```
-
-The full runbook is `docs/evaluations/btc-benchmark-extended-runbook.md`.
-
-Runtime profiles are checked or installed with:
-
-```sh
-bin/ai-lab runtime check btc-benchmark-python --repo sources/checkouts/btc_benchmark
-bin/ai-lab runtime ensure btc-benchmark-python --repo sources/checkouts/btc_benchmark
-```
-
-Runtime installs are still bounded by `policies/update-policy.md` and `policies/evaluation-runtime-policy.md`; connector writes, account configuration, Docker, Node, and unlisted OS packages still require explicit approval.
+GitHub Pages deploys the MkDocs site from `main`.

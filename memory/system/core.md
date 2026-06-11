@@ -2,29 +2,28 @@
 id: system-core
 type: system_memory
 created_at: 2026-06-09
-updated_at: 2026-06-10
+updated_at: 2026-06-11
 confidence: high
 sensitivity: public
 status: active
 links:
-  - /Users/sungs/AGENTS.md
+  - /Users/sungs/ai-lab/policies/development-policy.md
+  - /Users/sungs/ai-lab/README.md
+  - /Users/sungs/ai-lab/lab.yaml
   - /Users/sungs/ai-lab/docs/index.md
-  - /Users/sungs/ai-lab/docs/system/index.md
 ---
 
 # AI Lab Core Memory
 
-This account uses `/Users/sungs/ai-lab` as the local-first workspace for developing reusable AI scientist schemes and comparing them across tasks.
+This account uses `/Users/sungs/ai-lab` as a local-first workspace for one reusable AI scientist loop.
 
-The active model has six layers:
+The active model has four layers:
 
-1. Lab memory for shared behavior, policies, catalogs, and scheme knowledge.
-2. Task memory for broad challenge or dataset-family context.
-3. Scheme memory for reusable AI scientist orchestration patterns.
-4. Evaluation-cell memory for one task-by-scheme application, target metric, constraints, runs, and evidence.
-5. Work-unit memory for one method, ablation, observation, proxy, synthesis, audit, or infrastructure pass.
-6. Meta-scientist memory for system-level analyses and proposals.
+1. Lab configuration, policies, memory, and source registry.
+2. Task workspaces under `tasks/<task_id>/`.
+3. Task-local runs under `tasks/<task_id>/runs/`, ignored by Git.
+4. Local experiment workspaces for ignored code, reports, assets, results, plots, and runs.
 
-Agents should start from this core memory, then follow task, scheme, cell, work-unit, and meta links only as needed.
+Normal AI scientist runs require W&B/Weave observability through `sungsoo-ahn/ai-lab`. Credentials must stay outside Git.
 
 Do not store secrets or raw private connector content in durable memory, logs, reports, proposals, or asset metadata.

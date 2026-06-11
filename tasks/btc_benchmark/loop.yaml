@@ -1,0 +1,67 @@
+schema_version: ai_lab_loop_v1
+task_id: btc_benchmark
+description: W&B-observed AI scientist loop for the frozen BTC Benchmark task.
+loop:
+  mode: continuous
+  sleep_seconds: 0
+  max_cycles: 5
+  max_wall_minutes: 180
+  stop_file: STOP
+source_gates:
+  - source_id: btc_benchmark
+    head_policy: require_registered_ref
+    tracked_clean: true
+    allow_untracked:
+      - uv.lock
+commands:
+  preflight:
+    - id: source_status
+      builtin: source_status
+      args:
+        - btc_benchmark
+      timeout_seconds: 30
+    - id: runtime_check
+      cwd: "{root}"
+      argv:
+        - uv
+        - run
+        - python
+        - bin/ai-lab
+        - runtime
+        - check
+        - btc-benchmark-python
+        - --repo
+        - sources/checkouts/btc_benchmark
+      timeout_seconds: 300
+    - id: referee_contract_tests
+      cwd: "{root}/sources/checkouts/btc_benchmark"
+      argv:
+        - uv
+        - run
+        - python
+        - -m
+        - pytest
+        - tests/test_metrics.py
+        - tests/test_benchmark_contract.py
+        - -q
+      timeout_seconds: 600
+    - id: benchmark_readiness
+      cwd: "{root}/sources/checkouts/btc_benchmark"
+      argv:
+        - uv
+        - run
+        - python
+        - "{root}/tasks/btc_benchmark/bin/btc-benchmark-readiness"
+        - --repo
+        - "."
+        - --run-dir
+        - "{run_dir}"
+      timeout_seconds: 600
+      artifacts:
+        - "{run_dir}/preflight_baseline_report.json"
+        - "{run_dir}/preflight_leaderboard.jsonl"
+  cycle: []
+  agent:
+    - id: ai_scientist
+      builtin: ai_scientist
+      timeout_seconds: 10800

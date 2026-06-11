@@ -1,0 +1,23 @@
+schema_version: ai_lab_task_v1
+task_id: btc_benchmark
+title: BTC Benchmark
+status: active
+created_at: 2026-06-10
+updated_at: 2026-06-11
+category: financial_backtesting
+goal: Make important observations and improve candidate strategies for the frozen BTC 1h benchmark without weakening referee rules, causality gates, costs, splits, or sealed-holdout protection.
+metric:
+  name: referee_dev_score
+  direction: maximize
+  evaluation_context: Local development-fold reports produced by btc_benchmark.run_benchmark.
+observability:
+  provider: wandb_weave
+  required: true
+sources:
+  - source_id: btc_benchmark
+    purpose: Frozen benchmark referee and evaluation contract.
+constraints:
+  - Do not modify benchmark scoring, cost model, train/test split, causality gates, or sealed holdout policy.
+  - Keep experiment code, assets, reports, plots, results, and run logs local under ignored task artifact directories.
+  - External submissions require explicit user approval.
+curated_assets: []

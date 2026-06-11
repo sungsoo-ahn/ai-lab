@@ -1,0 +1,9 @@
+schema_version: ai_lab_config_v1
+title: AI Lab
+observability:
+  provider: wandb_weave
+  entity: sungsoo-ahn
+  project: ai-lab
+  required: true
+  payload: full_trace
+

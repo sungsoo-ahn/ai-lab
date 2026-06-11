@@ -1,36 +1,26 @@
 # Development Policy
 
-## Package Ownership
+Keep changes scoped to the task workspace, runner, memory, docs, or policies needed for the work.
 
-- Homebrew owns OS-level CLI tools.
-- `uv` owns Python projects, Python environments, and Python CLI tools.
-- Project dependencies belong in project manifests and lockfiles.
-- Global installs require a documented reason.
+## Local Edits
 
-## Python
+Local writes under `ai-lab` are allowed for task files, docs, notes, memory, and helper tooling unless the user asks for read-only work.
 
-New Python work must use:
+## Generated Output
 
-- `pyproject.toml` for project metadata and dependencies;
-- `uv.lock` for reproducible dependency resolution;
-- `uv sync` for environment setup;
-- `uv run` for commands;
-- `uv tool install` or `uvx` for Python CLIs.
+Do not commit task experiment products by default. Experiment code, assets, reports, plots, results, and runs stay local under ignored task artifact directories.
 
-Do not install packages into Apple system Python. Avoid direct `pip`, manual `venv`, Poetry, Pipenv, and Conda unless maintaining an inherited project that already uses them.
+## Validation
 
-For explicitly authorized long-running evaluation-cell runs, missing Python dependencies may be installed silently through cell-local or inherited repository-local `uv` workflows. Record the command and result in the cell or work-unit report.
+Prefer the smallest validation set that covers the change:
 
-For Python packages that need runtime checks, use allowlisted runtime profiles from `policies/evaluation-runtime-policy.md`. Example: `btc-benchmark-python` verifies the benchmark checkout's core Python imports.
+```bash
+UV_CACHE_DIR=$PWD/.uv-cache uv run pytest
+UV_CACHE_DIR=$PWD/.uv-cache uv run ruff check .
+UV_CACHE_DIR=$PWD/.uv-cache uv run mypy .
+uv run python bin/ai-lab task validate --all
+uv run python bin/ai-lab docs sync --check
+uv run python bin/ai-lab docs audit
+```
 
-## JavaScript And TypeScript
-
-Do not install Node globally by default. Add Node only when a concrete project needs frontend, TypeScript, or MCP tooling and the user approves it.
-
-## Containers
-
-Do not install Docker Desktop by default. Add container tooling only when a project, service, or sandboxing workflow justifies the footprint and permissions.
-
-## Shell And Configuration
-
-Keep shell startup changes minimal and documented. Prefer reproducible manifests over one-off install commands. Validate shell scripts with `shellcheck` and format with `shfmt` when scripts are part of maintained tooling.
+When running Python validation commands, always use the repo-local uv cache form shown above.

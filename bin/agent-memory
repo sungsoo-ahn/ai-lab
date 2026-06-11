@@ -32,23 +32,14 @@ def classify(path: Path) -> tuple[str, str | None, str | None, str]:
     sub_id = None
     scope = "lab"
     kind = path.suffix.lstrip(".") or "text"
-    if len(parts) >= 3 and parts[0] == "tasks" and parts[1] == "active":
-        owner_id = parts[2]
-        scope = "task"
-    elif len(parts) >= 2 and parts[0] == "schemes":
+    if len(parts) >= 2 and parts[0] == "tasks":
         owner_id = parts[1]
-        scope = "scheme"
-    elif len(parts) >= 3 and parts[0] == "evaluations" and parts[1] == "active":
-        owner_id = parts[2]
-        scope = "evaluation_cell"
-        if "work_units" in parts:
-            i = parts.index("work_units")
+        scope = "task"
+        if "runs" in parts:
+            i = parts.index("runs")
             if len(parts) > i + 1:
                 sub_id = parts[i + 1]
-                scope = "work_unit"
-    elif len(parts) >= 3 and parts[0] == "meta" and parts[1] == "active":
-        owner_id = parts[2]
-        scope = "meta_scientist"
+                scope = "task_run"
     elif parts[0] == "logs":
         scope = "log"
     return scope, owner_id, sub_id, kind
